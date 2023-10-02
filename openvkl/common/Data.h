@@ -4,10 +4,10 @@
 #pragma once
 
 #include <algorithm>
+#include "DataShared.h"
 #include "ManagedObject.h"
 #include "Traits.h"
 #include "openvkl/openvkl.h"
-#include "DataShared.h"
 
 namespace openvkl {
 
@@ -16,15 +16,19 @@ namespace openvkl {
 
   struct OPENVKL_CORE_INTERFACE Data : public ManagedObject
   {
-    Data(size_t numItems,
+    Data(Device *d,
+         size_t numItems,
          VKLDataType dataType,
          const void *source,
          VKLDataCreationFlags dataCreationFlags,
-         size_t byteStride);
+         size_t byteStride,
+         bool ownSharedBuffer = false);
 
-    Data(size_t numItems, VKLDataType dataType);
+    Data(Device *d, size_t numItems, VKLDataType dataType);
 
     virtual ~Data() override;
+
+    rkcommon::memory::Ref<const Data> hostAccessible() const;
 
     virtual std::string toString() const override;
 
@@ -50,7 +54,14 @@ namespace openvkl {
     static ispc::Data1D emptyData1D;  // dummy, zero-initialized
 
    protected:
+    api::memstate *memstate;
     char *addr;
+
+    // transfer ownership of the shared buffer? if so, we will free the memory
+    // on destruction. this flag is only available for internal usages -- not
+    // the public API. the shared buffer in this case must be allocated with
+    // new[].
+    const bool ownSharedBuffer = false;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////
@@ -132,10 +143,13 @@ namespace openvkl {
     using value_type = T;
     using interator  = Iter1D<T>;
 
-    explicit DataT(size_t numItems) : Data(numItems, VKLTypeFor<T>::value) {}
+    explicit DataT(Device *d, size_t numItems)
+        : Data(d, numItems, VKLTypeFor<T>::value)
+    {
+    }
 
-    DataT(size_t numItems, const T &value)
-        : Data(numItems, VKLTypeFor<T>::value)
+    DataT(Device *d, size_t numItems, const T &value)
+        : Data(d, numItems, VKLTypeFor<T>::value)
     {
       std::fill(reinterpret_cast<T *>(addr),
                 reinterpret_cast<T *>(addr + byteStride * numItems),
@@ -181,8 +195,8 @@ namespace openvkl {
   }
 
   template <typename T>
-  inline const Ref<const DataT<T>> ManagedObject::getParamDataT(
-      const char *name, DataT<T> *valIfNotFound)
+  inline const rkcommon::memory::Ref<const DataT<T>>
+  ManagedObject::getParamDataT(const char *name, DataT<T> *valIfNotFound)
   {
     Data *data = getParam<Data *>(name, nullptr);
 
@@ -201,8 +215,8 @@ namespace openvkl {
   }
 
   template <typename T>
-  inline const Ref<const DataT<T>> ManagedObject::getParamDataT(
-      const char *name)
+  inline const rkcommon::memory::Ref<const DataT<T>>
+  ManagedObject::getParamDataT(const char *name)
   {
     Data *data = getParam<Data *>(name);
 
@@ -216,16 +230,19 @@ namespace openvkl {
   }
 
   template <typename T>
-  inline const Ref<const DataT<T>> ManagedObject::getParamDataT(
-      const char *name, size_t expectedSize, T valIfNotFound)
+  inline const rkcommon::memory::Ref<const DataT<T>>
+  ManagedObject::getParamDataT(const char *name,
+                               size_t expectedSize,
+                               T valIfNotFound)
   {
-    Ref<const DataT<T>> data;
+    rkcommon::memory::Ref<const DataT<T>> data;
     try {
       data = getParamDataT<T>(name);
     } catch (...) {
       // Fallback: expand scalar parameters into arrays!
       valIfNotFound = getParam<T>(name, valIfNotFound);
-      Ref<const DataT<T>> d = new DataT<T>(expectedSize, valIfNotFound);
+      rkcommon::memory::Ref<const DataT<T>> d =
+          new DataT<T>(getDevice(), expectedSize, valIfNotFound);
       d->refDec();
       return d;
     }
@@ -255,13 +272,14 @@ namespace openvkl {
 
   // Helper functions /////////////////////////////////////////////////////////
 
-  inline const ispc::Data1D *ispc(const Ref<const Data> &dataRef)
+  inline const ispc::Data1D *ispc(
+      const rkcommon::memory::Ref<const Data> &dataRef)
   {
     return dataRef ? &dataRef->ispc : &Data::emptyData1D;
   }
 
   template <typename T>
-  const ispc::Data1D *ispc(const Ref<const DataT<T>> &dataRef)
+  const ispc::Data1D *ispc(const rkcommon::memory::Ref<const DataT<T>> &dataRef)
   {
     return dataRef ? &dataRef->ispc : &Data::emptyData1D;
   }
@@ -273,7 +291,7 @@ namespace openvkl {
   }
 
   inline std::vector<const ispc::Data1D *> ispcs(
-      const std::vector<Ref<const Data>> &dataRefs)
+      const std::vector<rkcommon::memory::Ref<const Data>> &dataRefs)
   {
     std::vector<const ispc::Data1D *> r;
 
@@ -286,7 +304,7 @@ namespace openvkl {
 
   template <typename T>
   inline std::vector<const ispc::Data1D *> ispcs(
-      const std::vector<Ref<const DataT<T>>> &dataRefs)
+      const std::vector<rkcommon::memory::Ref<const DataT<T>>> &dataRefs)
   {
     std::vector<const ispc::Data1D *> r;
 

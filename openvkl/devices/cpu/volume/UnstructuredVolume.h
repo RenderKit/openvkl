@@ -7,10 +7,10 @@
 #include "../common/export_util.h"
 #include "../common/math.h"
 #include "UnstructuredBVH.h"
-#include "UnstructuredVolume_ispc.h"
 #include "UnstructuredVolumeBase.h"
 #include "UnstructuredVolumeShared.h"
-#include "openvkl/common/StructShared.h"
+#include "UnstructuredVolume_ispc.h"
+#include "openvkl/devices/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -20,6 +20,9 @@ namespace openvkl {
         : public AddStructShared<UnstructuredVolumeBase<W>,
                                  ispc::VKLUnstructuredVolume>
     {
+      UnstructuredVolume(Device *device)
+          : AddStructShared<UnstructuredVolumeBase<W>,
+                            ispc::VKLUnstructuredVolume>(device){};
       ~UnstructuredVolume();
 
       std::string toString() const override;
@@ -39,6 +42,8 @@ namespace openvkl {
       const Node *getNodeRoot() const;
 
       int getBvhDepth() const;
+
+      VKLFeatureFlagsInternal getCellTypeFeatureFlags() const;
 
      private:
       void buildBvhAndCalculateBounds();
@@ -62,19 +67,19 @@ namespace openvkl {
       box3f bounds{empty};
       range1f valueRange{empty};
 
-      Ref<const DataT<vec3f>> vertexPosition;
-      Ref<const DataT<float>> vertexValue;
+      rkcommon::memory::Ref<const DataT<vec3f>> vertexPosition;
+      rkcommon::memory::Ref<const DataT<float>> vertexValue;
 
-      Ref<const DataT<uint32_t>> index32;
-      Ref<const DataT<uint64_t>> index64;
+      rkcommon::memory::Ref<const DataT<uint32_t>> index32;
+      rkcommon::memory::Ref<const DataT<uint64_t>> index64;
 
-      Ref<const DataT<uint32_t>> cellIndex32;
-      Ref<const DataT<uint64_t>> cellIndex64;
+      rkcommon::memory::Ref<const DataT<uint32_t>> cellIndex32;
+      rkcommon::memory::Ref<const DataT<uint64_t>> cellIndex64;
 
-      Ref<const DataT<float>> cellValue;
-      Ref<const DataT<uint8_t>> cellType;
+      rkcommon::memory::Ref<const DataT<float>> cellValue;
+      rkcommon::memory::Ref<const DataT<uint8_t>> cellType;
 
-      Ref<const DataT<float>> background;
+      rkcommon::memory::Ref<const DataT<float>> background;
 
       bool index32Bit{false};
       bool cell32Bit{false};
@@ -82,15 +87,18 @@ namespace openvkl {
       bool hexIterative{false};
 
       // used only if an explicit cell type array is not provided
-      std::vector<uint8_t> generatedCellType;
+      std::unique_ptr<BufferShared<uint8_t>> generatedCellType;
 
-      std::vector<vec3f> faceNormals;
-      std::vector<float> iterativeTolerance;
+      std::unique_ptr<BufferShared<vec3f>> faceNormals;
+      std::unique_ptr<BufferShared<float>> iterativeTolerance;
+
+      VKLFeatureFlagsInternal cellTypeFeatureFlags{VKL_FEATURE_FLAG_NONE};
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
       int bvhDepth{0};
+      std::unique_ptr<BvhBuildAllocator> bvhBuildAllocator;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -144,6 +152,13 @@ namespace openvkl {
     inline uint64_t UnstructuredVolume<W>::getVertexId(uint64_t id) const
     {
       return index32Bit ? (*index32)[id] : (*index64)[id];
+    }
+
+    template <int W>
+    inline VKLFeatureFlagsInternal
+    UnstructuredVolume<W>::getCellTypeFeatureFlags() const
+    {
+      return cellTypeFeatureFlags;
     }
 
   }  // namespace cpu_device

@@ -3,14 +3,9 @@
 
 #pragma once
 
-#include "math/box_utility.ih"
+#include "../math/box_utility.ih"
 
-struct ValueRanges
-{
-  int numRanges;
-  box1f *ranges;
-  box1f rangesMinMax;
-};
+#include "ValueRangesShared.h"
 
 inline uniform ValueRanges make_ValueRanges_full()
 {
@@ -74,13 +69,6 @@ inline void ValueRanges_Constructor(uniform ValueRanges &valueRanges,
                                     uniform int numRanges,
                                     const box1f *uniform ranges)
 {
-  valueRanges.numRanges = numRanges;
-  valueRanges.ranges    = uniform new uniform box1f[numRanges];
-
-  foreach (i = 0 ... numRanges) {
-    valueRanges.ranges[i] = ranges[i];
-  }
-
   ValueRanges_computeMinMax(valueRanges);
 }
 
@@ -89,7 +77,6 @@ inline void ValueRanges_Constructor(uniform ValueRanges &valueRanges,
                                     const float *uniform values)
 {
   valueRanges.numRanges = numValues;
-  valueRanges.ranges    = uniform new uniform box1f[numValues];
 
   foreach (i = 0 ... numValues) {
     valueRanges.ranges[i].lower = values[i];
@@ -101,6 +88,5 @@ inline void ValueRanges_Constructor(uniform ValueRanges &valueRanges,
 
 inline void ValueRanges_Destructor(uniform ValueRanges &valueRanges)
 {
-  delete[] valueRanges.ranges;
   valueRanges.ranges = NULL;
 }

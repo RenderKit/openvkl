@@ -1,7 +1,10 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#ifdef OPENVKL_TESTING_CPU
 #include "Renderer_ispc.h"  // for Renderer_pixelsPerJob()
+#endif
+
 #include "renderer/Renderer.h"
 #include "renderer/Scene.h"
 
@@ -26,6 +29,7 @@ using openvkl::testing::WaveletVdbVolumeFloat;
 static bool rendererIsCompatibleWithDevice(const std::string &rendererType,
                                            std::string &errorString)
 {
+#ifdef OPENVKL_TESTING_CPU
   // ISPC renderers that use iterator APIs must match width with the
   // instantiated VKL device
   if (rendererType.find("ispc") &&
@@ -45,6 +49,7 @@ static bool rendererIsCompatibleWithDevice(const std::string &rendererType,
       return false;
     }
   }
+#endif
 
   return true;
 }
@@ -71,7 +76,7 @@ static void run_benchmark(benchmark::State &state,
                           const std::string &field,
                           const std::string &volumeType,
                           const std::string &rendererType,
-                          const vec2i &resolution,
+                          const vec2i &_resolution,
                           int volumeDimension)
 {
   const std::list<std::string> args = {"vklBenchmark",
@@ -81,20 +86,21 @@ static void run_benchmark(benchmark::State &state,
                                        "-field",
                                        field,
                                        "-framebufferSize",
-                                       std::to_string(resolution.x),
-                                       std::to_string(resolution.y),
+                                       std::to_string(_resolution.x),
+                                       std::to_string(_resolution.y),
                                        "-gridDimensions",
                                        std::to_string(volumeDimension),
                                        std::to_string(volumeDimension),
-                                       std::to_string(volumeDimension),
-                                       "-vdbRepackNodes",
-                                       "1"};
+                                       std::to_string(volumeDimension)};
 
   Scene scene;
   scene.parseCommandLine(args);
 
   auto &scheduler = scene.scheduler;
   auto &volume    = scene.volume;
+
+  scene.rendererParams->fixedFramebufferSize = true;
+  const vec2i resolution = scene.rendererParams->framebufferSize;
 
   volume.updateVKLObjects();
   scene.camera->fitToScreen(volume.getBounds());
@@ -104,9 +110,10 @@ static void run_benchmark(benchmark::State &state,
   assert(rendererPtr);
 
   Renderer &renderer = *(rendererPtr.get());
-  // This call will resize the framebuffer to our desired output
+
+  // This call will resize empty framebuffer to our desired output
   // resolution.
-  renderer.getFramebuffer(resolution.x, resolution.y);
+  renderer.resizeFramebuffer(resolution.x, resolution.y);
 
   scheduler.start(renderer);
   for (auto _ : state) {
@@ -119,13 +126,15 @@ static void run_benchmark(benchmark::State &state,
 
   static size_t ctr = 0;
   std::ostringstream os;
-  os << std::setw(4) << std::setfill('0') << ctr++ << "_" << field
-     << "_" << volumeType << "_" << rendererType << ".ppm";
+  os << std::setw(4) << std::setfill('0') << ctr++ << "_" << field << "_"
+     << volumeType << "_" << rendererType << ".ppm";
 
   const auto &framebuffer = renderer.getFramebuffer(resolution.x, resolution.y);
   const auto &fb          = framebuffer.getFrontBuffer();
-  rkcommon::utility::writePFM(
-      os.str(), fb.getWidth(), fb.getHeight(), fb.getRgba());
+  rkcommon::utility::writePFM(os.str(),
+                              fb.getWidth(),
+                              fb.getHeight(),
+                              reinterpret_cast<const vec3fa *>(fb.getRgba()));
 }
 
 static void render_wavelet_structured_regular(benchmark::State &state,
@@ -146,12 +155,8 @@ static void render_wavelet_vdb(benchmark::State &state,
                                const vec2i &windowSize,
                                int volumeDimension)
 {
-  run_benchmark(state,
-                "wavelet",
-                "vdb",
-                rendererType,
-                windowSize,
-                volumeDimension);
+  run_benchmark(
+      state, "wavelet", "vdb", rendererType, windowSize, volumeDimension);
 }
 
 static void render_wavelet_unstructured_hex(benchmark::State &state,
@@ -173,116 +178,290 @@ int main(int argc, char **argv)
 {
   initializeOpenVKL();
 
+  const int windowDimension             = 1024;
+  const int smallVolumeDimension        = 128;
+  const int bigVolumeDimension          = 512;
+
+#ifdef OPENVKL_TESTING_CPU
   // wavelet structured regular
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  density_pathtracer / 128 / scalar,
+                                  "density_pathtracer",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   density_pathtracer / 512 / scalar,
                                   "density_pathtracer",
-                                  vec2i(1024),
-                                  512);
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  density_pathtracer / 128 / ispc,
+                                  "density_pathtracer_ispc",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   density_pathtracer / 512 / ispc,
                                   "density_pathtracer_ispc",
-                                  vec2i(1024),
-                                  512);
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  hit_iterator / 128 / scalar,
+                                  "hit_iterator_renderer",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   hit_iterator / 512 / scalar,
-                                  "hit_iterator",
-                                  vec2i(1024),
-                                  512);
+                                  "hit_iterator_renderer",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  hit_iterator / 128 / ispc,
+                                  "hit_iterator_renderer_ispc",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   hit_iterator / 512 / ispc,
-                                  "hit_iterator_ispc",
-                                  vec2i(1024),
-                                  512);
+                                  "hit_iterator_renderer_ispc",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  ray_march_iterator / 128 / scalar,
+                                  "ray_march_iterator",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   ray_march_iterator / 512 / scalar,
                                   "ray_march_iterator",
-                                  vec2i(1024),
-                                  512);
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  ray_march_iterator / 128 / ispc,
+                                  "ray_march_iterator_ispc",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   ray_march_iterator / 512 / ispc,
                                   "ray_march_iterator_ispc",
-                                  vec2i(1024),
-                                  512);
+                                  windowDimension,
+                                  bigVolumeDimension);
 
   // wavelet vdb
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  density_pathtracer / 128 / scalar,
+                                  "density_pathtracer",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   density_pathtracer / 512 / scalar,
                                   "density_pathtracer",
-                                  vec2i(1024),
-                                  512);
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  density_pathtracer / 128 / ispc,
+                                  "density_pathtracer_ispc",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   density_pathtracer / 512 / ispc,
                                   "density_pathtracer_ispc",
-                                  vec2i(1024),
-                                  512);
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  hit_iterator / 128 / scalar,
+                                  "hit_iterator_renderer",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   hit_iterator / 512 / scalar,
-                                  "hit_iterator",
-                                  vec2i(1024),
-                                  512);
+                                  "hit_iterator_renderer",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  hit_iterator / 128 / ispc,
+                                  "hit_iterator_renderer_ispc",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   hit_iterator / 512 / ispc,
-                                  "hit_iterator_ispc",
-                                  vec2i(1024),
-                                  512);
+                                  "hit_iterator_renderer_ispc",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  ray_march_iterator / 128 / scalar,
+                                  "ray_march_iterator",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   ray_march_iterator / 512 / scalar,
                                   "ray_march_iterator",
-                                  vec2i(1024),
-                                  512);
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  ray_march_iterator / 128 / ispc,
+                                  "ray_march_iterator_ispc",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   ray_march_iterator / 512 / ispc,
                                   "ray_march_iterator_ispc",
-                                  vec2i(1024),
-                                  512);
+                                  windowDimension,
+                                  bigVolumeDimension);
 
   // wavelet unstructured
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   density_pathtracer / 128 / scalar,
                                   "density_pathtracer",
-                                  vec2i(1024),
-                                  128);
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   density_pathtracer / 128 / ispc,
                                   "density_pathtracer_ispc",
-                                  vec2i(1024),
-                                  128);
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   hit_iterator / 128 / scalar,
-                                  "hit_iterator",
-                                  vec2i(1024),
-                                  128);
+                                  "hit_iterator_renderer",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   hit_iterator / 128 / ispc,
-                                  "hit_iterator_ispc",
-                                  vec2i(1024),
-                                  128);
+                                  "hit_iterator_renderer_ispc",
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   ray_march_iterator / 128 / scalar,
                                   "ray_march_iterator",
-                                  vec2i(1024),
-                                  128);
+                                  windowDimension,
+                                  smallVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   ray_march_iterator / 128 / ispc,
                                   "ray_march_iterator_ispc",
-                                  vec2i(1024),
-                                  128);
+                                  windowDimension,
+                                  smallVolumeDimension);
+#endif
+
+#ifdef OPENVKL_TESTING_GPU
+  // wavelet structured regular
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  density_pathtracer / 128 / gpu,
+                                  "density_pathtracer_gpu",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  density_pathtracer / 512 / gpu,
+                                  "density_pathtracer_gpu",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  hit_iterator / 128 / gpu,
+                                  "hit_iterator_renderer_gpu",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  hit_iterator / 512 / gpu,
+                                  "hit_iterator_renderer_gpu",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  ray_march_iterator / 128 / gpu,
+                                  "ray_march_iterator_gpu",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+                                  ray_march_iterator / 512 / gpu,
+                                  "ray_march_iterator_gpu",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  // wavelet vdb
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  density_pathtracer / 128 / gpu,
+                                  "density_pathtracer_gpu",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  density_pathtracer / 512 / gpu,
+                                  "density_pathtracer_gpu",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  hit_iterator / 128 / gpu,
+                                  "hit_iterator_renderer_gpu",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  hit_iterator / 512 / gpu,
+                                  "hit_iterator_renderer_gpu",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  ray_march_iterator / 128 / gpu,
+                                  "ray_march_iterator_gpu",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
+                                  ray_march_iterator / 512 / gpu,
+                                  "ray_march_iterator_gpu",
+                                  windowDimension,
+                                  bigVolumeDimension);
+
+  // wavelet unstructured
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
+                                  density_pathtracer / 128 / gpu,
+                                  "density_pathtracer_gpu",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
+                                  hit_iterator / 128 / gpu,
+                                  "hit_iterator_renderer_gpu",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
+                                  ray_march_iterator / 128 / gpu,
+                                  "ray_march_iterator_gpu",
+                                  windowDimension,
+                                  smallVolumeDimension);
+
+#endif
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))

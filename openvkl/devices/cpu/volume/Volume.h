@@ -9,15 +9,12 @@
 #include "../iterator/Iterator.h"
 #include "../sampler/Sampler.h"
 #include "VolumeShared.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 #include "openvkl/openvkl.h"
-#include "rkcommon/math/box.h"
 
 #define THROW_NOT_IMPLEMENTED                          \
   throw std::runtime_error(std::string(__FUNCTION__) + \
                            " not implemented in this volume!")
-
-using namespace rkcommon;
 
 namespace openvkl {
   namespace cpu_device {
@@ -39,7 +36,7 @@ namespace openvkl {
     template <int W>
     struct Volume : public AddStructShared<ManagedObject, ispc::VolumeShared>
     {
-      Volume() {}  // not = default, due to ICC 19 compiler bug
+      Volume(Device *device) : AddStructShared<ManagedObject, ispc::VolumeShared>(device) {}  // not = default, due to ICC 19 compiler bug
       virtual ~Volume() override = default;
 
       static Volume *createInstance(Device *device, const std::string &type);

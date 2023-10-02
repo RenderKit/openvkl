@@ -4,14 +4,12 @@
 #pragma once
 
 #include "../UnstructuredBVH.h"
+#include "../UnstructuredVolumeBase.h"
 #include "../Volume.h"
 #include "AMRAccel.h"
-#include "rkcommon/memory/RefCount.h"
 #include "AMRVolumeShared.h"
-#include "../UnstructuredVolumeBase.h"
-#include "openvkl/common/StructShared.h"
-
-using namespace rkcommon::memory;
+#include "openvkl/devices/common/StructShared.h"
+#include "rkcommon/memory/RefCount.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -20,7 +18,7 @@ namespace openvkl {
     struct AMRVolume
         : public AddStructShared<UnstructuredVolumeBase<W>, ispc::AMRVolume>
     {
-      AMRVolume();
+      AMRVolume(Device *);
       ~AMRVolume() override;
 
       std::string toString() const override;
@@ -41,10 +39,10 @@ namespace openvkl {
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
 
-      Ref<const DataT<Data *>> blockDataData;
-      Ref<const DataT<box3i>> blockBoundsData;
-      Ref<const DataT<int>> refinementLevelsData;
-      Ref<const DataT<float>> cellWidthsData;
+      rkcommon::memory::Ref<const DataT<Data *>> blockDataData;
+      rkcommon::memory::Ref<const DataT<box3i>> blockBoundsData;
+      rkcommon::memory::Ref<const DataT<int>> refinementLevelsData;
+      rkcommon::memory::Ref<const DataT<float>> cellWidthsData;
       VKLDataType voxelType;
       range1f valueRange{empty};
       box3f bounds;
@@ -53,13 +51,14 @@ namespace openvkl {
 
       VKLAMRMethod amrMethod{VKL_AMR_CURRENT};
 
-      Ref<const DataT<float>> background;
+      rkcommon::memory::Ref<const DataT<float>> background;
 
       // for interval iteration
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
       int bvhDepth{0};
+      std::unique_ptr<BvhBuildAllocator> bvhBuildAllocator;
 
       void buildBvh();
     };

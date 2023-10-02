@@ -8,23 +8,31 @@
 #       Once you have done a 'make install' of an existing OpenVKL
 #       build, create a separate build directory and invoke CMake on this
 #       directory. If you have 'openvkl_DIR' setup correctly to point to where
-#       you just installed OpenVKL, then this should built the vklTutorial app
+#       you just installed OpenVKL, then this should built
+#       the vklTutorialCPU/vklTutorialGPU app
 #       from that install and NOT use your local build.
 
 cmake_minimum_required(VERSION 3.1)
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
+project(vklTutorial)
 
-project(vklTutorial LANGUAGES C)
+cmake_policy(SET CMP0074 NEW)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 find_package(openvkl REQUIRED)
 
-add_executable(vklTutorial ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.c)
-target_link_libraries(vklTutorial openvkl::openvkl)
+if (TARGET openvkl::openvkl_module_cpu_device)
+  add_executable(vklTutorialCPU ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorialCPU.c)
+  set_target_properties(vklTutorialCPU
+                        PROPERTIES
+                        C_STANDARD 99
+                        C_STANDARD_REQUIRED ON
+                        C_EXTENSIONS OFF)
+  target_link_libraries(vklTutorialCPU PRIVATE openvkl::openvkl openvkl::openvkl_module_cpu_device)
+endif()
 
-add_executable(vklTutorialLinkCPUDevice ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.c)
-target_link_libraries(vklTutorialLinkCPUDevice openvkl::openvkl_module_cpu_device)
+if (TARGET openvkl::openvkl_module_gpu_device)
+  add_executable(vklTutorialGPU ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorialGPU.cpp)
+  target_link_libraries(vklTutorialGPU PRIVATE openvkl::openvkl openvkl::openvkl_module_gpu_device)
+endif()

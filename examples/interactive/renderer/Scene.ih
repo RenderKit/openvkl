@@ -4,6 +4,7 @@
 #pragma once
 
 #include <openvkl/openvkl.isph>
+#include <openvkl/device/openvkl.isph>
 #include "Camera.ih"
 #include "RendererParams.ih"
 #include "TransferFunction.ih"

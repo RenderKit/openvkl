@@ -3,11 +3,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-#include "rkcommon/math/box.h"
-#else
-#include "rkcommon/math/box.ih"
-#endif
 // ospray
 #include "../common/DataShared.h"
 #include "openvkl/VKLDataType.h"
@@ -49,9 +44,9 @@ struct AMRBrick
   box3f bounds;
 // pointer to the actual data values stored in this brick
 #ifdef __cplusplus
-  ispc::Data1D *value;
+  ispc::Data1D value;
 #else
-  Data1D *value;
+  Data1D value;
 #endif
   // dimensions of this box's data
   vec3i dims;
@@ -106,9 +101,9 @@ struct AMR
   //! Voxel data accessor.
   float (*VKL_INTEROP_UNIFORM getVoxel)(
 #ifdef __cplusplus
-      ispc::Data1D *VKL_INTEROP_UNIFORM data,
+      const ispc::Data1D *VKL_INTEROP_UNIFORM data,
 #else
-      Data1D *VKL_INTEROP_UNIFORM data,
+      const Data1D *VKL_INTEROP_UNIFORM data,
 #endif
       const VKL_INTEROP_VARYING vkl_uint32 index);
 };

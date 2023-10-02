@@ -1,14 +1,28 @@
 Open VKL API
 ============
 
-To access the Open VKL API you first need to include the Open VKL header. For
-C99 or C++:
+The Open VKL API is provided in two parts: a host-side API which is responsible
+for object creation and configuration (e.g. instantiating new volumes and
+providing data from the application), and a device-side API which provides
+access to low-level kernels such as volume sampling and iteration. The host-side
+API is identical for all Open VKL device implementations, while the device-side
+API varies slightly between device implementations.
+
+To access the Open VKL host-side API you first need to include the Open VKL
+header. For C99 or C++:
 
     #include <openvkl/openvkl.h>
 
-For the Intel® Implicit SPMD Program Compiler (Intel® ISPC):
+Additionally, the device-side APIs are provided through a device-specific header
+provided by the currently linked-to device:
+
+    #include <openvkl/device/openvkl.h>
+
+CPU applications using the Intel® Implicit SPMD Program Compiler (Intel® ISPC)
+can include the host- and device-side APIs similarly via:
 
     #include <openvkl/openvkl.isph>
+    #include <openvkl/device/openvkl.isph>
 
 This documentation will discuss the C99/C++ API.  The ISPC version has the same
 functionality and flavor.  Looking at the headers, the `vklTutorialISPC`
@@ -17,15 +31,27 @@ example, and this documentation should be enough to figure it out.
 Device initialization and shutdown
 ----------------------------------
 
-To use the API, one of the implemented backends must be loaded.  Currently the
-only one that exists is the CPU device. To load the module that implements the
-CPU device:
+To use the API, one of the implemented backends must be linked at compile time.
+Currently both a CPU and GPU device are available. To link one of these devices
+within CMake, use for example:
 
-    vklLoadModule("cpu_device");
+    target_link_libraries(myApp PRIVATE openvkl openvkl_module_cpu_device)
 
-The device then needs to be instantiated:
+or
+
+    target_link_libraries(myApp PRIVATE openvkl openvkl_module_gpu_device)
+
+The application code must then first initialize Open VKL:
+
+    vklInit();
+
+A device then needs to be instantiated, either via:
 
     VKLDevice device = vklNewDevice("cpu");
+
+or
+
+    VKLDevice device = vklNewDevice("gpu");
 
 By default, the CPU device selects the maximum supported SIMD width (and
 associated ISA) for the system. Optionally, a specific width may be requested
@@ -62,6 +88,15 @@ devices:
   ------ -------------- --------------------------------------------------------
   : Parameters shared by all devices.
 
+Additionally, the following parameters are understood by the `gpu` device:
+
+  ------- -------------- -------------------------------------------------------
+  Type    Name           Description
+  ------- -------------- -------------------------------------------------------
+  void *  syclContext    _REQUIRED_: pointer to a valid SYCL context
+  ------- -------------- -------------------------------------------------------
+  : Parameters understood by the `gpu` device
+
 Once parameters are set, the device must be committed with
 
     vklCommitDevice(device);
@@ -75,8 +110,8 @@ explicitly provided when creating volume and data objects, via `vklNewVolume()`
 and `vklNewData()` respectively. Other object types are automatically associated
 with a device via transitive dependency on a volume.
 
-Open VKL provides vector-wide versions for several APIs. To determine the native
-vector width for a given device, call:
+On CPU, Open VKL provides vector-wide versions for several APIs. To determine
+the native vector width for a given device, call:
 
     int width = vklGetNativeSIMDWidth(VKLDevice device);
 
@@ -196,17 +231,17 @@ Open VKL defines 3-component vectors of integer and float types:
 Vector versions of these are also defined in structure-of-array format for 4, 8,
 and 16 wide types.
 
-      typedef struct
-      {
-        float x[WIDTH];
-        float y[WIDTH];
-        float z[WIDTH];
-      } vkl_vvec3f##WIDTH;
+    typedef struct
+    {
+      float x[WIDTH];
+      float y[WIDTH];
+      float z[WIDTH];
+    } vkl_vvec3f##WIDTH;
 
-      typedef struct
-      {
-        float lower[WIDTH], upper[WIDTH];
-      } vkl_vrange1f##WIDTH;
+    typedef struct
+    {
+      float lower[WIDTH], upper[WIDTH];
+    } vkl_vrange1f##WIDTH;
 
 1-D range and 3-D ranges are defined as ranges and boxes, with no vector
 versions:
@@ -282,9 +317,10 @@ Large data is passed to Open VKL via a `VKLData` handle created with
 
 Data objects can be created as Open VKL owned (`dataCreationFlags =
 VKL_DATA_DEFAULT`), in which the library will make a copy of the data for its
-use, or shared (`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), which will try
-to use the passed pointer for usage.  The library is allowed to copy data when
-a volume is committed.
+use, or shared (`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), which will try to
+use the passed pointer for usage.  The library is allowed to copy data when a
+volume is committed. Note that for the `gpu` device, shared data buffers only
+support source data from USM shared allocations.
 
 The distance between consecutive elements in `source` is given in bytes with
 `byteStride`. If the provided `byteStride` is zero, then it will be determined
@@ -358,59 +394,6 @@ section for specifics. Valid constants are listed in the table below.
   VKL_VOID_PTR               raw memory address
   -------------------------- ---------------------------------------------------
   : Valid named constants for `VKLDataType`.
-
-Observers
----------
-
-Volumes and samplers in Open VKL may provide observers to communicate data back
-to the application. Observers may be created with
-
-    VKLObserver vklNewSamplerObserver(VKLSampler sampler,
-                                      const char *type);
-
-    VKLObserver vklNewVolumeObserver(VKLVolume volume,
-                                     const char *type);
-
-The object passed to `vklNew*Observer` must already be committed.  Valid
-observer type strings are defined by volume implementations (see section
-'Volume types' below).
-
-`vklNew*Observer` returns `NULL` on failure.
-
-To access the underlying data, an observer must first be mapped using
-
-    const void * vklMapObserver(VKLObserver observer);
-
-If this fails, the function returns `NULL`. `vklMapObserver` may fail on
-observers that are already mapped.
-On success, the application may query the underlying type, element size in
-bytes, and the number of elements in the buffer using
-
-    VKLDataType vklGetObserverElementType(VKLObserver observer);
-    size_t vklGetObserverElementSize(VKLObserver observer);
-    size_t vklGetObserverNumElements(VKLObserver observer);
-
-On failure, these functions return `VKL_UNKNOWN` and `0`, respectively.
-Possible data types are defined by the volume that provides the observer , as
-are the semantics of the observation. See section 'Volume types' for details.
-
-The pointer returned by `vklMapObserver` may be cast to the type corresponding
-to the value returned by `vklGetObserverElementType` to access the observation.
-For example, if `vklGetObserverElementType` returns `VKL_FLOAT`, then
-the pointer returned by `vklMapObserver` may be cast to `const float *` to access
-up to `vklGetObserverNumElements` consecutive values of type `float`.
-
-Once the application has finished processing the observation, it should unmap
-the observer using
-
-    void vklUnmapObserver(VKLObserver observer);
-
-so that the observer may be mapped again.
-
-When an observer is no longer needed, it should be released using `vklRelease`.
-
-The observer API is not thread safe, and these functions should not
-be called concurrently on the same object.
 
 
 Volume types
@@ -501,8 +484,8 @@ table below.
                                                                             transformation.
 
   uint32    temporalFormat                   `VKL_TEMPORAL_FORMAT_CONSTANT` The temporal format for this volume.
-                                                                            Use `VKLTemporalFormat` for named 
-                                                                            constants. 
+                                                                            Use `VKLTemporalFormat` for named
+                                                                            constants.
                                                                             Structured regular volumes support
                                                                             `VKL_TEMPORAL_FORMAT_CONSTANT`,
                                                                             `VKL_TEMPORAL_FORMAT_STRUCTURED`, and
@@ -542,7 +525,7 @@ parameters.
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+  int           filter            `VKL_FILTER_LINEAR`    The filter used for reconstructing the
                                                          field. Use `VKLFilter` for named
                                                          constants.
 
@@ -556,7 +539,7 @@ parameters.
 ##### Reconstruction filters
 
 Structured regular volumes support the filter types `VKL_FILTER_NEAREST`,
-`VKL_FILTER_TRILINEAR`, and `VKL_FILTER_TRICUBIC` for both `filter` and
+`VKL_FILTER_LINEAR`, and `VKL_FILTER_CUBIC` for both `filter` and
 `gradientFilter`.
 
 Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`, gradients are
@@ -574,9 +557,9 @@ structured spherical volumes are summarized below.
 
 ![Structured spherical volume coordinate system: radial distance ($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$).][imgStructuredSphericalCoords]
 
-  --------- ----------------------- -------------------------- -----------------------------------
+  --------- ----------------------- -------------------------- ---------------------------------------
   Type      Name                        Default                Description
-  --------- ----------------------- -------------------------- -----------------------------------
+  --------- ----------------------- -------------------------- ---------------------------------------
   vec3i     dimensions                                         number of voxels in each
                                                                dimension $(r, \theta, \phi)$
 
@@ -602,13 +585,16 @@ structured spherical volumes are summarized below.
   vec3f     gridOrigin              $(0, 0, 0)$                origin of the grid in units of
                                                                $(r, \theta, \phi)$; angles in degrees
 
-  vec3f     gridSpacing             $(1, 1, 1)$                size of the grid cells in units of
-                                                               $(r, \theta, \phi)$; angles in degrees
+  vec3f     gridSpacing             $(1, \theta_0, \phi_0)$    size of the grid cells in units of
+                                                               $(r, \theta, \phi)$; angles in degrees.
+                                                               The defaults \theta_0 and \phi_0 are
+                                                               such that the volume occupies a full
+                                                               sphere.
 
   float[]   background              `VKL_BACKGROUND_UNDEFINED` For each attribute, the value that is
                                                                returned when sampling an undefined
                                                                region outside the volume domain.
-  --------- ----------------------- -------------------------- -----------------------------------
+  --------- ----------------------- -------------------------- ---------------------------------------
   : Configuration parameters for structured spherical (`"structuredSpherical"`) volumes.
 
 These grid parameters support flexible specification of spheres, hemispheres,
@@ -627,7 +613,7 @@ parameters.
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+  int           filter            `VKL_FILTER_LINEAR`    The filter used for reconstructing the
                                                          field. Use `VKLFilter` for named
                                                          constants.
 
@@ -902,8 +888,8 @@ following parameters:
                                                                                        attribute must be the same data type.
 
   uint32[]      node.temporalFormat                    `VKL_TEMPORAL_FORMAT_CONSTANT`  The temporal format for this volume.
-                                                                                       Use `VKLTemporalFormat` for named 
-                                                                                       constants. 
+                                                                                       Use `VKLTemporalFormat` for named
+                                                                                       constants.
                                                                                        VDB volumes support
                                                                                        `VKL_TEMPORAL_FORMAT_CONSTANT`,
                                                                                        `VKL_TEMPORAL_FORMAT_STRUCTURED`, and
@@ -916,14 +902,14 @@ following parameters:
 
   VKLData[]     node.temporallyUnstructuredIndices                                     For temporally unstructured variation,
                                                                                        beginning per voxel. Supported data
-                                                                                       types for each node are `VKL_UINT` 
+                                                                                       types for each node are `VKL_UINT`
                                                                                        and `VKL_ULONG`.
                                                                                        Only valid if `temporalFormat` is
                                                                                        `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.
 
   VKLData[]     node.temporallyUnstructuredTimes                                       For temporally unstructured variation,
                                                                                        time values corresponding to values in
-                                                                                       `node.data`. For each node, the data 
+                                                                                       `node.data`. For each node, the data
                                                                                        must be of type `VKL_FLOAT`.
                                                                                        Only valid if `temporalFormat` is
                                                                                        `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.
@@ -978,7 +964,7 @@ objects (sampler object parameters default to volume parameters).
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+  int           filter            `VKL_FILTER_LINEAR`    The filter used for reconstructing the
                                                          field. Use `VKLFilter` for named
                                                          constants.
 
@@ -1027,8 +1013,8 @@ VDB sampler objects support the following observers:
 
 #### Reconstruction filters
 
-VDB volumes support the filter types `VKL_FILTER_NEAREST`, `VKL_FILTER_TRILINEAR`,
-and `VKL_FILTER_TRICUBIC` for both `filter` and `gradientFilter`.
+VDB volumes support the filter types `VKL_FILTER_NEAREST`, `VKL_FILTER_LINEAR`,
+and `VKL_FILTER_CUBIC` for both `filter` and `gradientFilter`.
 
 Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`, gradients are
 always $(0, 0, 0)$.
@@ -1183,17 +1169,17 @@ types. This means that no temporal variation is present in the data.
 
 Temporally structured variation is configured by setting `temporalFormat`
 to `VKL_TEMPORAL_FORMAT_STRUCTURED`. In this mode, the volume expects an
-additional parameter `[node.]temporallyStructuredNumTimesteps`, which 
-specifies how many time steps are provided for all voxels, and must be at 
-least 2.  A volume, or node, with $N$ voxels expects 
+additional parameter `[node.]temporallyStructuredNumTimesteps`, which
+specifies how many time steps are provided for all voxels, and must be at
+least 2.  A volume, or node, with $N$ voxels expects
 $N * temporallyStructuredNumTimesteps$ values for each attribute.
 The values are assumed evenly spaced over times $[0, 1]$:
 $\{0, 1/(N-1), ..., 1\}$
 
 Temporally unstructured variation supports differing time step counts and
-sample times per voxel. 
-For $N$ input voxels, `temporallyUnstructuredIndices` is an array of $N+1$ 
-indices. Voxel $i$ has 
+sample times per voxel.
+For $N$ input voxels, `temporallyUnstructuredIndices` is an array of $N+1$
+indices. Voxel $i$ has
 $N_i = [temporallyUnstructuredIndices[i+1]-temporallyUnstructuredIndices[i])$
 temporal samples starting at index $temporallyUnstructuredIndices[i]$.
 `temporallyUnstructuredTimes` specifies the times corresponding to the sample
@@ -1229,10 +1215,31 @@ attribute of interest; not all volumes support multiple attributes. The time
 value, which must be between 0 and 1, specifies the sampling time. For
 temporally constant volumes, this value has no effect.
 
-    float vklComputeSample(VKLSampler sampler,
+For the `cpu` device, the scalar sampling API is:
+
+    float vklComputeSample(const VKLSampler *sampler,
                            const vkl_vec3f *objectCoordinates,
                            unsigned int attributeIndex,
                            float time);
+
+while on the `gpu` device, it is:
+
+    float vklComputeSample(const VKLSampler *sampler,
+                           const vkl_vec3f *objectCoordinates,
+                           unsigned int attributeIndex,
+                           float time,
+                           const VKLFeatureFlags featureFlags);
+
+Note that the `gpu` sampling API introduces an additional `featureFlags`
+argument. These provided "feature flags" allow Open VKL to prune unnecessary
+code during just-in-time (JIT) compilation on GPU, providing potentially
+significant performance gains. See section 'Feature flag usage on GPU' for
+details.
+
+### Vector-wide and Stream-wide Sampling (CPU device only)
+
+On the `cpu` device, vector-wide and stream-wide sampling APIs are also
+provided.
 
 Vector versions allow sampling at 4, 8, or 16 positions at once.  Depending on
 the machine type and Open VKL device implementation, these can give greater
@@ -1242,21 +1249,21 @@ corresponding to each object coordinate may be provided; a `NULL` value
 indicates all times are zero.
 
     void vklComputeSample4(const int *valid,
-                           VKLSampler sampler,
+                           const VKLSampler *sampler,
                            const vkl_vvec3f4 *objectCoordinates,
                            float *samples,
                            unsigned int attributeIndex,
                            const float *times);
 
     void vklComputeSample8(const int *valid,
-                           VKLSampler sampler,
+                           const VKLSampler *sampler,
                            const vkl_vvec3f8 *objectCoordinates,
                            float *samples,
                            unsigned int attributeIndex,
                            const float *times);
 
     void vklComputeSample16(const int *valid,
-                            VKLSampler sampler,
+                            const VKLSampler *sampler,
                             const vkl_vvec3f16 *objectCoordinates,
                             float *samples,
                             unsigned int attributeIndex,
@@ -1269,7 +1276,7 @@ array-of-structures layout. Thus, the stream API can be used to avoid
 reformatting of data by the application. As with the vector versions, the stream
 API can give greater performance than the scalar API.
 
-      void vklComputeSampleN(VKLSampler sampler,
+      void vklComputeSampleN(const VKLSampler *sampler,
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
                              float *samples,
@@ -1291,18 +1298,37 @@ per attribute).
 A scalar API supports sampling `M` attributes specified by `attributeIndices` on
 a single object space coordinate:
 
-    void vklComputeSampleM(VKLSampler sampler,
+For the `cpu` device, the scalar sampling API is:
+
+    void vklComputeSampleM(const VKLSampler *sampler,
                            const vkl_vec3f *objectCoordinates,
                            float *samples,
                            unsigned int M,
                            const unsigned int *attributeIndices,
                            float time);
 
+while on the `gpu` device, it is:
+
+    void vklComputeSampleM(const VKLSampler *sampler,
+                           const vkl_vec3f *objectCoordinates,
+                           float *samples,
+                           unsigned int M,
+                           const unsigned int *attributeIndices,
+                           float time,
+                           const VKLFeatureFlags featureFlags);
+
+Again, see section 'Feature flag usage on GPU' for details on feature flags.
+
+#### Vector-wide and Stream-wide Multi-Attribute Sampling (CPU device only)
+
+On the `cpu` device, vector-wide and stream-wide sampling APIs are also
+provided.
+
 Vector versions allow sampling at 4, 8, or 16 positions at once across the `M`
 attributes:
 
     void vklComputeSampleM4(const int *valid,
-                            VKLSampler sampler,
+                            const VKLSampler *sampler,
                             const vkl_vvec3f4 *objectCoordinates,
                             float *samples,
                             unsigned int M,
@@ -1310,7 +1336,7 @@ attributes:
                             const float *times);
 
     void vklComputeSampleM8(const int *valid,
-                            VKLSampler sampler,
+                            const VKLSampler *sampler,
                             const vkl_vvec3f8 *objectCoordinates,
                             float *samples,
                             unsigned int M,
@@ -1318,7 +1344,7 @@ attributes:
                             const float *times);
 
     void vklComputeSampleM16(const int *valid,
-                             VKLSampler sampler,
+                             const VKLSampler *sampler,
                              const vkl_vvec3f16 *objectCoordinates,
                              float *samples,
                              unsigned int M,
@@ -1339,7 +1365,7 @@ A stream version allows sampling an arbitrary number of positions at once across
 the `M` attributes. As with single attribute stream sampling, the `N`
 coordinates are provided in an array-of-structures layout.
 
-    void vklComputeSampleMN(VKLSampler sampler,
+    void vklComputeSampleMN(const VKLSampler *sampler,
                             unsigned int N,
                             const vkl_vec3f *objectCoordinates,
                             float *samples,
@@ -1368,29 +1394,44 @@ returning a vec3f instead of a float. NaN values are returned for points outside
 the volume.  The time value, which must be between 0 and 1, specifies the sampling
 time. For temporally constant volumes, this value has no effect.
 
-    vkl_vec3f vklComputeGradient(VKLSampler sampler,
+For the `cpu` device, the scalar sampling API is:
+
+    vkl_vec3f vklComputeGradient(const VKLSampler *sampler,
                                  const vkl_vec3f *objectCoordinates,
                                  unsigned int attributeIndex,
                                  float time);
 
-Vector versions are also provided:
+while on the `gpu` device, it is:
+
+    vkl_vec3f vklComputeGradient(const VKLSampler *sampler,
+                                 const vkl_vec3f *objectCoordinates,
+                                 unsigned int attributeIndex,
+                                 float time,
+                                 const VKLFeatureFlags featureFlags);
+
+### Vector-wide and Stream-wide Gradients (CPU device only)
+
+As with the sampling APIs, on the `cpu` device vector-wide and stream-wide
+gradient APIs are also provided.
+
+The vector versions are:
 
     void vklComputeGradient4(const int *valid,
-                             VKLSampler sampler,
+                             const VKLSampler *sampler,
                              const vkl_vvec3f4 *objectCoordinates,
                              vkl_vvec3f4 *gradients,
                              unsigned int attributeIndex,
                              const float *times);
 
     void vklComputeGradient8(const int *valid,
-                             VKLSampler sampler,
+                             const VKLSampler *sampler,
                              const vkl_vvec3f8 *objectCoordinates,
                              vkl_vvec3f8 *gradients,
                              unsigned int attributeIndex,
                              const float *times);
 
     void vklComputeGradient16(const int *valid,
-                              VKLSampler sampler,
+                              const VKLSampler *sampler,
                               const vkl_vvec3f16 *objectCoordinates,
                               vkl_vvec3f16 *gradients,
                               unsigned int attributeIndex,
@@ -1398,7 +1439,7 @@ Vector versions are also provided:
 
 Finally, a stream version is provided:
 
-    void vklComputeGradientN(VKLSampler sampler,
+    void vklComputeGradientN(const VKLSampler *sampler,
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
                              vkl_vec3f *gradients,
@@ -1469,7 +1510,22 @@ specify the sampling time. These values must be between 0 and 1; for the vector
 versions, a `NULL` value indicates all times are zero. For temporally constant
 volumes, the time values have no effect.
 
-    VKLIntervalIterator vklInitIntervalIterator(VKLIntervalIteratorContext context,
+On a `gpu` device, interval iterators may be initialized via:
+
+    VKLIntervalIterator vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
+                                                const vkl_vec3f *origin,
+                                                const vkl_vec3f *direction,
+                                                const vkl_range1f *tRange,
+                                                float time,
+                                                void *buffer,
+                                                const VKLFeatureFlags featureFlags);
+
+Note again the `featureFlags` argument; see section 'Feature flag usage on GPU`
+for details.
+
+On a `cpu` device, interval iterators can be initialized via:
+
+    VKLIntervalIterator vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
                                                 const vkl_vec3f *origin,
                                                 const vkl_vec3f *direction,
                                                 const vkl_range1f *tRange,
@@ -1477,7 +1533,7 @@ volumes, the time values have no effect.
                                                 void *buffer);
 
     VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
-                                                  VKLIntervalIteratorContext context,
+                                                  const VKLIntervalIteratorContext *context,
                                                   const vkl_vvec3f4 *origin,
                                                   const vkl_vvec3f4 *direction,
                                                   const vkl_vrange1f4 *tRange,
@@ -1485,7 +1541,7 @@ volumes, the time values have no effect.
                                                   void *buffer);
 
     VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
-                                                  VKLIntervalIteratorContext context,
+                                                  const VKLIntervalIteratorContext *context,
                                                   const vkl_vvec3f8 *origin,
                                                   const vkl_vvec3f8 *direction,
                                                   const vkl_vrange1f8 *tRange,
@@ -1493,7 +1549,7 @@ volumes, the time values have no effect.
                                                   void *buffer);
 
     VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
-                                                    VKLIntervalIteratorContext context,
+                                                    const VKLIntervalIteratorContext *context,
                                                     const vkl_vvec3f16 *origin,
                                                     const vkl_vvec3f16 *direction,
                                                     const vkl_vrange1f16 *tRange,
@@ -1507,13 +1563,13 @@ Copying iterator buffers is currently not supported.
 
 The required size, in bytes, of the buffer can be queried with
 
-    size_t vklGetIntervalIteratorSize(VKLIntervalIteratorContext context);
+    size_t vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context);
 
-    size_t vklGetIntervalIteratorSize4(VKLIntervalIteratorContext context);
+    size_t vklGetIntervalIteratorSize4(const VKLIntervalIteratorContext *context);
 
-    size_t vklGetIntervalIteratorSize8(VKLIntervalIteratorContext context);
+    size_t vklGetIntervalIteratorSize8(const VKLIntervalIteratorContext *context);
 
-    size_t vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
+    size_t vklGetIntervalIteratorSize16(const VKLIntervalIteratorContext *context);
 
 The values these functions return may change depending on the parameters set
 on `sampler`.
@@ -1525,7 +1581,15 @@ which is defined in recent versions of ISPC, to provide a less conservative
 size.
 
 Intervals can then be processed by calling `vklIterateInterval` as long as the
-returned lane masks indicates that the iterator is still within the volume:
+returned lane masks indicates that the iterator is still within the volume.
+
+On a `gpu` device this is done via:
+
+    int vklIterateInterval(VKLIntervalIterator iterator,
+                           VKLInterval *interval,
+                           const VKLFeatureFlags featureFlags);
+
+while on a `cpu` device, iteration is via:
 
     int vklIterateInterval(VKLIntervalIterator iterator,
                            VKLInterval *interval);
@@ -1607,7 +1671,19 @@ below.
 The hit iterator context must be committed before being used.
 
 Again, a user allocated buffer must be provided, and a `VKLHitIterator` of the
-desired width must be initialized:
+desired width must be initialized.
+
+On a `gpu` device this is done via:
+
+    VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
+                                      const vkl_vec3f *origin,
+                                      const vkl_vec3f *direction,
+                                      const vkl_range1f *tRange,
+                                      float time,
+                                      void *buffer,
+                                      const VKLFeatureFlags featureFlags);
+
+while on a `cpu` device initialization is via:
 
     VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
                                       const vkl_vec3f *origin,
@@ -1655,6 +1731,14 @@ estimate.
 
 Hits are then queried by looping a call to `vklIterateHit` as long as the
 returned lane mask indicates that the iterator is still within the volume.
+
+On a `gpu` device, this is done via:
+
+    int vklIterateHit(VKLHitIterator iterator,
+                      VKLHit *hit,
+                      const VKLFeatureFlags featureFlags);
+
+while on a `cpu` device, the APIs are:
 
     int vklIterateHit(VKLHitIterator iterator, VKLHit *hit);
 
@@ -1709,8 +1793,82 @@ For both interval and hit iterators, only the vector-wide API for the native
 SIMD width (determined via `vklGetNativeSIMDWidth` can be called. The scalar
 versions are always valid. This restriction will likely be lifted in the future.
 
+
+Observers
+---------
+
+Volumes and samplers in Open VKL may provide observers to communicate data back
+to the application. Please note that observers are currently only allowed for
+the `cpu` device. Observers may be created with
+
+    VKLObserver vklNewSamplerObserver(VKLSampler sampler,
+                                      const char *type);
+
+    VKLObserver vklNewVolumeObserver(VKLVolume volume,
+                                     const char *type);
+
+The object passed to `vklNew*Observer` must already be committed.  Valid
+observer type strings are defined by volume implementations (see section
+'Volume types' below).
+
+`vklNew*Observer` returns `NULL` on failure.
+
+To access the underlying data, an observer must first be mapped using
+
+    const void * vklMapObserver(VKLObserver observer);
+
+If this fails, the function returns `NULL`. `vklMapObserver` may fail on
+observers that are already mapped.
+On success, the application may query the underlying type, element size in
+bytes, and the number of elements in the buffer using
+
+    VKLDataType vklGetObserverElementType(VKLObserver observer);
+    size_t vklGetObserverElementSize(VKLObserver observer);
+    size_t vklGetObserverNumElements(VKLObserver observer);
+
+On failure, these functions return `VKL_UNKNOWN` and `0`, respectively.
+Possible data types are defined by the volume that provides the observer , as
+are the semantics of the observation. See section 'Volume types' for details.
+
+The pointer returned by `vklMapObserver` may be cast to the type corresponding
+to the value returned by `vklGetObserverElementType` to access the observation.
+For example, if `vklGetObserverElementType` returns `VKL_FLOAT`, then
+the pointer returned by `vklMapObserver` may be cast to `const float *` to access
+up to `vklGetObserverNumElements` consecutive values of type `float`.
+
+Once the application has finished processing the observation, it should unmap
+the observer using
+
+    void vklUnmapObserver(VKLObserver observer);
+
+so that the observer may be mapped again.
+
+When an observer is no longer needed, it should be released using `vklRelease`.
+
+The observer API is not thread safe, and these functions should not
+be called concurrently on the same object.
+
+
 Performance Recommendations
 ===========================
+
+Feature flag usage on GPU
+-------------------------
+
+Feature flags are used extensively throughout the device-side APIs defined by
+the `gpu` device. These flags identify the required feature set for a given
+volume and sampler, and are used internally by Open VKL to prune  unnecessary
+code during just-in-time (JIT) compilation on the GPU. Thus, using feature flags
+can provide a significant performance gain on GPU, both for the one-time JIT
+compilation time and of course for kernel execution times.
+
+Feature flags must be populated separately for each `VKLSampler` used in an
+application, via:
+
+    VKLFeatureFlags vklGetFeatureFlags(VKLSampler sampler);
+
+The resulting `VKLFeatureFlags` can be passed to sampling, gradient, interval
+iterator, and hit iterator APIs.
 
 MXCSR control and status register
 ---------------------------------
@@ -1746,24 +1904,24 @@ alternative we recommend stack allocated buffers.
 
 In C99, variable length arrays provide an easy way to achieve this:
 
-    const size_t bufferSize = vklGetIntervalIteratorSize(sampler);
+    const size_t bufferSize = vklGetIntervalIteratorSize(context);
     char buffer[bufferSize];
 
 Note that the call to `vklGetIntervalIteratorSize` or `vklGetHitIteratorSize`
 should not appear in an inner loop as it is relatively costly. The return value
-depends on the volume type, target architecture, and parameters to `sampler`.
+depends on the volume type, target architecture, and parameters to `context`.
 
 In C++, variable length arrays are not part of the standard. Here, users may
 rely on `alloca` and similar functions:
 
     #include <alloca.h>
-    const size_t bufferSize = vklGetIntervalIteratorSize(sampler);
+    const size_t bufferSize = vklGetIntervalIteratorSize(context);
     void *buffer = alloca(bufferSize);
 
 Similarly for ISPC, variable length arrays are not supported, but `alloca` may
 be used:
 
-    const uniform size_t bufferSize = vklGetIntervalIteratorSizeV(sampler);
+    const uniform size_t bufferSize = vklGetIntervalIteratorSizeV(context);
     void *uniform buffer = alloca(bufferSize);
 
 Users should understand the implications of `alloca`. In particular,

@@ -20,7 +20,7 @@ inline void test_scalar_and_vector_gradients(
     const float time                  = 0.f)
 {
   vkl_vec3f scalarGradientValue = vklComputeGradient(
-      sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, time);
+      &sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, time);
 
   REQUIRE(scalarGradientValue.x ==
           Approx(gradientTruth.x).margin(gradientTolerance));
@@ -29,6 +29,9 @@ inline void test_scalar_and_vector_gradients(
   REQUIRE(scalarGradientValue.z ==
           Approx(gradientTruth.z).margin(gradientTolerance));
 
+// OpenVKL API functions used in below part of this function is now available
+// only for CPU device.
+#ifdef OPENVKL_TESTING_CPU
   // since vklComputeGradient() can have a specialized implementation separate
   // from vector gradients, check the vector APIs as well. we only need to
   // check for consistency with the scalar API result, as that has already
@@ -47,7 +50,7 @@ inline void test_scalar_and_vector_gradients(
   float times_4[4]     = {time};
   vkl_vvec3f4 gradients_4;
   vklComputeGradient4(valid.data(),
-                      sampler,
+                      &sampler,
                       (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                       &gradients_4,
                       attributeIndex,
@@ -57,7 +60,7 @@ inline void test_scalar_and_vector_gradients(
   float times_8[8]     = {time};
   vkl_vvec3f8 gradients_8;
   vklComputeGradient8(valid.data(),
-                      sampler,
+                      &sampler,
                       (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                       &gradients_8,
                       attributeIndex,
@@ -67,7 +70,7 @@ inline void test_scalar_and_vector_gradients(
   vkl_vvec3f16 gradients_16;
   float times_16[16] = {time};
   vklComputeGradient16(valid.data(),
-                       sampler,
+                       &sampler,
                        (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                        &gradients_16,
                        attributeIndex,
@@ -84,6 +87,7 @@ inline void test_scalar_and_vector_gradients(
   REQUIRE(scalarGradientValue.x == gradients_16.x[0]);
   REQUIRE(scalarGradientValue.y == gradients_16.y[0]);
   REQUIRE(scalarGradientValue.z == gradients_16.z[0]);
+#endif
 }
 
 // applicable to procedural structured and VDB volumes
@@ -137,6 +141,9 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
   vklRelease(vklSampler);
 }
 
+// OpenVKL API functions used in this function is now available only for CPU
+// device.
+#ifdef OPENVKL_TESTING_CPU
 inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
                                   const unsigned int attributeIndex = 0,
                                   const float time                  = 0.f)
@@ -156,9 +163,10 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
     std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
     std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
 
-    const int maxN = 1024;
+    const std::vector<int> Ns{1,  2,  3,  4,  5,  6,  7,  8,   9,   10,  11,
+                              12, 13, 14, 15, 16, 32, 64, 128, 256, 512, 1024};
 
-    for (int N = 1; N < maxN; N++) {
+    for (const auto &N : Ns) {
       std::vector<vkl_vec3f> objectCoordinates(N);
       std::vector<float> times(N, time);
       std::vector<vkl_vec3f> gradients(N);
@@ -167,7 +175,7 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
         oc = vkl_vec3f{distX(eng), distY(eng), distZ(eng)};
       }
 
-      vklComputeGradientN(vklSampler,
+      vklComputeGradientN(&vklSampler,
                           N,
                           objectCoordinates.data(),
                           gradients.data(),
@@ -176,13 +184,13 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
 
       for (int i = 0; i < N; i++) {
         vkl_vec3f gradientTruth = vklComputeGradient(
-            vklSampler, &objectCoordinates[i], attributeIndex, time);
+            &vklSampler, &objectCoordinates[i], attributeIndex, time);
 
         INFO("gradient = " << i + 1 << " / " << N);
-        INFO("gradientTruth = " << gradientTruth.x << ", "
-                           << gradientTruth.y << ", " << gradientTruth.z);
-        INFO("gradients[i] = " << gradients[i].x << ", "
-                           << gradients[i].y << ", " << gradients[i].z);
+        INFO("gradientTruth = " << gradientTruth.x << ", " << gradientTruth.y
+                                << ", " << gradientTruth.z);
+        INFO("gradients[i] = " << gradients[i].x << ", " << gradients[i].y
+                               << ", " << gradients[i].z);
 
         // gradients may be NaN if out of bounds of the grid (e.g. for gradients
         // in the bounding box of a spherical volume but outside the grid)
@@ -210,3 +218,4 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
   }
   vklRelease(vklSampler);
 }
+#endif

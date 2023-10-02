@@ -1,8 +1,14 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "VdbLeafAccessObserver.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "VdbGrid.h"
+#include "VdbLeafAccessObserver.h"
 #include "VdbSampler.h"
 
 namespace openvkl {

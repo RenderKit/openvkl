@@ -43,7 +43,7 @@ inline float min(float a, float b, float c, float d,
 /* --------------------------------------------------------------------------\
 // versions for pure 32-bit addressing. volume *MUST* be smaller than 2G     \
 // ------------------------------------------------------------------------*/\
-inline float AMR_getVoxel_##type##_32(Data1D *uniform data,                  \
+inline float AMR_getVoxel_##type##_32(const Data1D *uniform data,            \
                                      const varying uint32 index)             \
 {                                                                            \
   /* The voxel value at the given index. */                                  \

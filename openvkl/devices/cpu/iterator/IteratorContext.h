@@ -3,11 +3,12 @@
 
 #pragma once
 
+#include "../../common/BufferShared.h"
+#include "../../common/StructShared.h"
 #include "../common/ManagedObject.h"
-#include "../common/StructShared.h"
-#include "IteratorContextShared.h"
 
-using namespace rkcommon::math;
+#include "../common/ValueRangesShared.h"
+#include "IteratorContextShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -23,7 +24,7 @@ namespace openvkl {
     struct IteratorContext
         : public AddStructShared<ManagedObject, ispc::IteratorContext>
     {
-      IteratorContext(const Sampler<W> &sampler);
+      IteratorContext(Device *device, const Sampler<W> &sampler);
 
       virtual ~IteratorContext();
 
@@ -32,16 +33,18 @@ namespace openvkl {
       const Sampler<W> &getSampler() const;
 
      protected:
-      Ref<const Sampler<W>> sampler;
-      int attributeIndex = 0;
+      rkcommon::memory::Ref<const Sampler<W>> sampler;
+      int attributeIndex           = 0;
       bool SharedStructInitialized = false;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline IteratorContext<W>::IteratorContext(const Sampler<W> &sampler)
-        : sampler(&sampler)
+    inline IteratorContext<W>::IteratorContext(Device *device,
+                                               const Sampler<W> &sampler)
+        : AddStructShared<ManagedObject, ispc::IteratorContext>(device),
+          sampler(&sampler)
     {
     }
 
@@ -65,14 +68,17 @@ namespace openvkl {
         : public AddStructShared<IteratorContext<W>,
                                  ispc::IntervalIteratorContext>
     {
-      IntervalIteratorContext(const Sampler<W> &sampler)
+      IntervalIteratorContext(Device *device, const Sampler<W> &sampler)
           : AddStructShared<IteratorContext<W>, ispc::IntervalIteratorContext>(
-                sampler)
+                device, sampler)
       {
       }
       virtual ~IntervalIteratorContext();
 
       void commit() override;
+
+     protected:
+      std::unique_ptr<BufferShared<range1f>> rangesView;
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -87,15 +93,18 @@ namespace openvkl {
         : public AddStructShared<IntervalIteratorContext<W>,
                                  ispc::HitIteratorContext>
     {
-      HitIteratorContext(const Sampler<W> &sampler)
+      HitIteratorContext(Device *device, const Sampler<W> &sampler)
           : AddStructShared<IntervalIteratorContext<W>,
-                            ispc::HitIteratorContext>(sampler)
+                            ispc::HitIteratorContext>(device, sampler)
       {
       }
 
       virtual ~HitIteratorContext();
 
       void commit() override;
+
+     private:
+      std::unique_ptr<BufferShared<float>> valuesView;
     };
 
   }  // namespace cpu_device

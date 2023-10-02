@@ -13,11 +13,11 @@
 #define __vkl_switch_filter(FilterEnum, F, ...)            \
   {                                                        \
     switch (FilterEnum) {                                  \
-    case VKL_FILTER_TRILINEAR: {                           \
+    case VKL_FILTER_LINEAR: {                              \
       F##Trilinear(__VA_ARGS__);                           \
       break;                                               \
     }                                                      \
-    case VKL_FILTER_TRICUBIC: {                            \
+    case VKL_FILTER_CUBIC: {                               \
       F##Tricubic(__VA_ARGS__);                            \
       break;                                               \
     }                                                      \

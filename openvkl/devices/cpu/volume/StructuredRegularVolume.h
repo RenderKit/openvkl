@@ -11,6 +11,7 @@ namespace openvkl {
     template <int W>
     struct StructuredRegularVolume : public StructuredVolume<W>
     {
+      StructuredRegularVolume<W>(Device *device) : StructuredVolume<W>(device) {};
       std::string toString() const override;
 
       void commit() override;

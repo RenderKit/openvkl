@@ -11,6 +11,7 @@ namespace openvkl {
     template <int W>
     struct DenseVdbVolume : public VdbVolume<W>
     {
+      DenseVdbVolume<W>(Device *device);
       std::string toString() const override;
 
       void commit() override;
@@ -27,14 +28,25 @@ namespace openvkl {
       vec3f gridOrigin;
       vec3f gridSpacing;
       vec3i indexOrigin;
-      std::vector<Ref<const Data>> attributesData;
+      std::vector<rkcommon::memory::Ref<const Data>> attributesData;
       VKLTemporalFormat temporalFormat;
       int temporallyStructuredNumTimesteps;
-      Ref<const Data> temporallyUnstructuredIndices;
-      Ref<const DataT<float>> temporallyUnstructuredTimes;
+      rkcommon::memory::Ref<const Data> temporallyUnstructuredIndices;
+      rkcommon::memory::Ref<const DataT<float>> temporallyUnstructuredTimes;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    DenseVdbVolume<W>::DenseVdbVolume(Device *device) : VdbVolume<W>(device)
+    {
+      ispc::VdbVolume *self = static_cast<ispc::VdbVolume *>(this->getSh());
+
+      // should already be initialized in VdbVolume constructor
+      assert(this->SharedStructInitialized);
+
+      self->super.type = ispc::DeviceVolumeType::VOLUME_TYPE_STRUCTURED_REGULAR;
+    }
 
     template <int W>
     inline std::string DenseVdbVolume<W>::toString() const

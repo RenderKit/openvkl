@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "VdbGridShared.h"
 #include "openvkl/VKLFormat.h"
 #include "openvkl/VKLTemporalFormat.h"
 #include "openvkl/ispc_cpp_interop.h"
@@ -11,9 +12,6 @@
 #if defined(ISPC)
 
 #include "../common/Data.ih"
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/math.ih"
-#include "rkcommon/math/vec.ih"
 
 #elif defined(__cplusplus)
 
@@ -24,76 +22,10 @@ namespace openvkl {
   namespace cpu_device {
 
     using ispc::Data1D;
+    using ispc::VdbGrid;
+    using ispc::VdbLevel;
 
 #endif  // defined(__cplusplus)
-
-struct VdbLevel
-{
-  vkl_uint64 numNodes;
-
-  // For each *node*, the origin in root-relative index space.
-  vec3ui *origin;
-
-  // Voxels for node 0, node 1, node 2, ...
-  vkl_uint64 *voxels;
-
-  // For each voxel, the range of values contained within, by attribute:
-  // (range0, range1, ..., rangeNumAttributes)_0, [...]
-  range1f *valueRange;
-};
-
-/*
- * A grid is a collection of levels.
- */
-struct VdbGrid
-{
-  // Global grid parameters.
-  float objectToIndex[12];  // Row-major transformation matrix, 3x4,
-                            // rotation-shear-scale | translation
-  float indexToObject[12];  // Row-major transformation matrix, 3x4,
-                            // rotation-shear-scale | translation
-  vec3i rootOrigin;         // In index scale space.
-  vec3ui activeSize;        // Size of the root node, in voxels,
-  box3f domainBoundingBox;  // Domain space bounding box (different
-                            // for constant cell data vs vertex centered data
-                            // interpretation)
-  bool constantCellData;    // Data is either considered constant per cell, or
-                            // vertex-centered.
-
-  vkl_uint64 numLeaves;
-  vkl_uint32 numAttributes;
-  bool allLeavesCompact;   // Do we only have compact (non strided) leaf data?
-  bool allLeavesConstant;  // Are all leaf nodes temporally constant?
-
-  vkl_uint32 *attributeTypes;  // Data type for each attribute.
-
-  // Per-node data for sparse / non-dense volumes only.
-  const vkl_int32 *leafStructuredTimesteps;
-  Data1D *leafUnstructuredIndices;
-  Data1D *leafUnstructuredTimes;
-
-  // Per-attribute data for sparse / non-dense volumes only: size [numLeaves *
-  // numAttributes]
-  Data1D *leafData;
-
-  // Optional: per-attribute node-packed data for sparse / non-dense volumes
-  // only: size [numAttributes]
-  bool packedAddressing32;
-  Data1D *nodesPackedDense;
-  Data1D *nodesPackedTile;
-
-  // Parameters for dense volumes only.
-  bool dense;
-  vec3i denseDimensions;
-  Data1D *denseData;  // Per-attribute data: size [numAttributes]
-  VKLTemporalFormat denseTemporalFormat;
-  int denseTemporallyStructuredNumTimesteps;
-  Data1D denseTemporallyUnstructuredIndices;
-  Data1D denseTemporallyUnstructuredTimes;
-
-  // Level data.
-  VdbLevel levels[VKL_VDB_NUM_LEVELS - 1];
-};
 
 /*
  * Obtain a pointer to the given leaf node and attribute.

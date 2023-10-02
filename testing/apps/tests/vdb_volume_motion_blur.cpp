@@ -7,7 +7,7 @@
 using namespace openvkl::testing;
 using openvkl::testing::WaveletVdbVolumeFloat;
 
-#if OPENVKL_DEVICE_CPU_VDB
+#if OPENVKL_DEVICE_CPU_VDB || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("VDB volume motion blur", "[volume_sampling]")
 {
   initializeOpenVKL();

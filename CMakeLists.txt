@@ -17,11 +17,14 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# required for Windows GPU builds
+set(CMAKE_NINJA_CMCLDEPS_RC OFF)
+
 cmake_policy(SET CMP0074 NEW)
 
 ## Establish project ##
 
-project(openvkl VERSION 1.3.2 LANGUAGES C CXX)
+project(openvkl VERSION 2.0.0 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 
@@ -39,6 +42,8 @@ configure_file(
 
 include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME})
 
+include(GNUInstallDirs)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}/version.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
 )
@@ -48,7 +53,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}/versio
 option(BUILD_EXAMPLES "Build example applications." ON)
 option(BUILD_BENCHMARKS "Build benchmark applications." OFF)
 
-include(GNUInstallDirs)
 include(CTest) # Adds 'BUILD_TESTING' variable
 
 if (BUILD_TESTING)

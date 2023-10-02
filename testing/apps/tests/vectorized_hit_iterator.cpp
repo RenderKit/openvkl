@@ -1,11 +1,18 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include <array>
 #include <numeric>
 #include "../../external/catch.hpp"
 #include "../common/Traits.h"
 #include "aos_soa_conversion.h"
+#include "common/DeviceTraits.h"
 #include "openvkl_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 
@@ -24,21 +31,21 @@ void vector_hit_iteration(VKLSampler vklSampler,
                           const AlignedVector<float> &tRangesSOA,
                           const std::vector<float> &isoValues)
 {
-  using VKLHitIteratorW       = typename vklPublicWideTypes<W>::VKLHitIteratorW;
-  using VKLHitW               = typename vklPublicWideTypes<W>::VKLHitW;
-  auto vklGetHitIteratorSizeW = vklPublicWideTypes<W>().vklGetHitIteratorSizeW;
-  auto vklInitHitIteratorW    = vklPublicWideTypes<W>().vklInitHitIteratorW;
-  auto vklIterateHitW         = vklPublicWideTypes<W>().vklIterateHitW;
+  using VKLHitIteratorW       = typename vklDeviceTypes<W>::VKLHitIteratorW;
+  using VKLHitW               = typename vklDeviceTypes<W>::VKLHitW;
+  auto vklGetHitIteratorSizeW = vklDeviceTypes<W>().vklGetHitIteratorSizeW;
+  auto vklInitHitIteratorW    = vklDeviceTypes<W>().vklInitHitIteratorW;
+  auto vklIterateHitW         = vklDeviceTypes<W>().vklIterateHitW;
 
   using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
   using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;
 
   const int numActiveLanes = std::accumulate(valid.begin(), valid.end(), 0);
 
-  std::vector<char> buffer(vklGetHitIteratorSizeW(hitContext));
+  std::vector<char> buffer(vklGetHitIteratorSizeW(&hitContext));
   VKLHitIteratorW iterator =
       vklInitHitIteratorW(valid.data(),
-                          hitContext,
+                          &hitContext,
                           (const vkl_vvec3fW *)originsSOA.data(),
                           (const vkl_vvec3fW *)directionsSOA.data(),
                           (const vkl_vrange1fW *)tRangesSOA.data(),
@@ -95,19 +102,19 @@ void vector_hit_iteration_time_varying(
     const std::vector<float> &times,
     const std::vector<float> &isoValues)
 {
-  using VKLHitIteratorW       = typename vklPublicWideTypes<W>::VKLHitIteratorW;
-  using VKLHitW               = typename vklPublicWideTypes<W>::VKLHitW;
-  auto vklGetHitIteratorSizeW = vklPublicWideTypes<W>().vklGetHitIteratorSizeW;
-  auto vklInitHitIteratorW    = vklPublicWideTypes<W>().vklInitHitIteratorW;
-  auto vklIterateHitW         = vklPublicWideTypes<W>().vklIterateHitW;
+  using VKLHitIteratorW       = typename vklDeviceTypes<W>::VKLHitIteratorW;
+  using VKLHitW               = typename vklDeviceTypes<W>::VKLHitW;
+  auto vklGetHitIteratorSizeW = vklDeviceTypes<W>().vklGetHitIteratorSizeW;
+  auto vklInitHitIteratorW    = vklDeviceTypes<W>().vklInitHitIteratorW;
+  auto vklIterateHitW         = vklDeviceTypes<W>().vklIterateHitW;
 
   using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
   using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;
 
-  std::vector<char> buffer(vklGetHitIteratorSizeW(hitContext));
+  std::vector<char> buffer(vklGetHitIteratorSizeW(&hitContext));
   VKLHitIteratorW iterator =
       vklInitHitIteratorW(valid.data(),
-                          hitContext,
+                          &hitContext,
                           (const vkl_vvec3fW *)originsSOA.data(),
                           (const vkl_vvec3fW *)directionsSOA.data(),
                           (const vkl_vrange1fW *)tRangesSOA.data(),
@@ -473,10 +480,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         const std::vector<float> times(callingWidth, 0.f);
 
         if (callingWidth == 4) {
-          std::vector<char> buffer(vklGetHitIteratorSize4(hitContext));
+          std::vector<char> buffer(vklGetHitIteratorSize4(&hitContext));
           VKLHitIterator4 iterator =
               vklInitHitIterator4(valid.data(),
-                                  hitContext,
+                                  &hitContext,
                                   (const vkl_vvec3f4 *)originsSOA.data(),
                                   (const vkl_vvec3f4 *)directionsSOA.data(),
                                   (const vkl_vrange1f4 *)tRangesSOA.data(),
@@ -536,10 +543,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 8) {
-          std::vector<char> buffer(vklGetHitIteratorSize8(hitContext));
+          std::vector<char> buffer(vklGetHitIteratorSize8(&hitContext));
           VKLHitIterator8 iterator =
               vklInitHitIterator8(valid.data(),
-                                  hitContext,
+                                  &hitContext,
                                   (const vkl_vvec3f8 *)originsSOA.data(),
                                   (const vkl_vvec3f8 *)directionsSOA.data(),
                                   (const vkl_vrange1f8 *)tRangesSOA.data(),
@@ -599,10 +606,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 16) {
-          std::vector<char> buffer(vklGetHitIteratorSize16(hitContext));
+          std::vector<char> buffer(vklGetHitIteratorSize16(&hitContext));
           VKLHitIterator16 iterator =
               vklInitHitIterator16(valid.data(),
-                                   hitContext,
+                                   &hitContext,
                                    (const vkl_vvec3f16 *)originsSOA.data(),
                                    (const vkl_vvec3f16 *)directionsSOA.data(),
                                    (const vkl_vrange1f16 *)tRangesSOA.data(),

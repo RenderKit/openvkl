@@ -11,7 +11,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkStructuredVolume
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkStructuredVolume
@@ -26,7 +26,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkStructuredVolumeMulti
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkStructuredVolumeMulti
@@ -41,7 +41,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkUnstructuredVolume
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkUnstructuredVolume
@@ -56,7 +56,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkVdbVolume
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkVdbVolume
@@ -71,7 +71,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkVdbVolumeMulti
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkVdbVolumeMulti
@@ -86,7 +86,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkParticleVolume
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkParticleVolume
@@ -96,13 +96,19 @@ endif()
 
 # Functional tests
 if (BUILD_TESTING)
+
+  # reset includes used for CPU tests
+  set(ISPC_INCLUDE_DIR "")
+
   include_directories_ispc(
     ${PROJECT_SOURCE_DIR}/openvkl/include
+    ${PROJECT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/openvkl/devices/cpu
+    ${PROJECT_SOURCE_DIR}/openvkl/devices/cpu/include
     ${RKCOMMON_INCLUDE_DIRS}
   )
 
-  openvkl_add_executable_ispc(vklTests
+  openvkl_add_executable_ispc(vklTestsCPU
     vklTests.cpp
     tests/alignment.cpp
     tests/background_undefined.cpp
@@ -144,32 +150,73 @@ if (BUILD_TESTING)
     tests/particle_volume_radius.cpp
     tests/particle_volume_interval_iterator.cpp
     tests/multi_device.cpp
+    tests/feature_flags.cpp
   )
 
-  target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})
+  target_include_directories(vklTestsCPU PRIVATE ${ISPC_TARGET_DIR})
 
-  target_link_libraries(vklTests PRIVATE openvkl_testing openvkl_module_cpu_device)
+  target_link_libraries(vklTestsCPU PRIVATE openvkl_testing_cpu)
 
   # Needed for SIMD conformance tests
   foreach(TARGET_NAME "openvkl_module_cpu_device_4"
                       "openvkl_module_cpu_device_8"
                       "openvkl_module_cpu_device_16")
     if (TARGET ${TARGET_NAME})
-      target_link_libraries(vklTests PRIVATE ${TARGET_NAME})
+      target_link_libraries(vklTestsCPU PRIVATE ${TARGET_NAME})
     endif()
   endforeach()
 
-  install(TARGETS vklTests
+  install(TARGETS vklTestsCPU
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 
-  ## Expose tests to CTest ##
+  if (${OPENVKL_ENABLE_DEVICE_GPU})
 
-  add_test(NAME "simd_conformance"    COMMAND vklTests "[simd_conformance]")
-  add_test(NAME "interval_iterators"  COMMAND vklTests "[interval_iterators]")
-  add_test(NAME "hit_iterators"       COMMAND vklTests "[hit_iterators]")
-  add_test(NAME "volume_bounding_box" COMMAND vklTests "[volume_bounding_box]")
-  add_test(NAME "volume_gradients"    COMMAND vklTests "[volume_gradients]")
-  add_test(NAME "volume_sampling"     COMMAND vklTests "[volume_sampling]")
-  add_test(NAME "volume_value_range"  COMMAND vklTests "[volume_value_range]")
+    # reset includes used for CPU tests
+    set(ISPC_INCLUDE_DIR "")
+
+    include_directories_ispc(
+      ${PROJECT_SOURCE_DIR}/openvkl/include
+      ${PROJECT_SOURCE_DIR}/openvkl/devices/gpu/include
+      ${RKCOMMON_INCLUDE_DIRS}
+    )
+
+    openvkl_add_executable_ispc(vklTestsGPU
+      vklTests.cpp
+      tests/structured_regular_volume_sampling.cpp
+      tests/structured_regular_volume_strides.cpp
+      tests/structured_regular_volume_multi.cpp
+      tests/structured_spherical_volume_sampling.cpp
+      tests/structured_spherical_volume_bounding_box.cpp
+      tests/structured_volume_gradients.cpp
+      tests/structured_volume_value_range.cpp
+      tests/unstructured_volume_gradients.cpp
+      tests/unstructured_volume_sampling.cpp
+      tests/vdb_volume.cpp
+      tests/vdb_volume_multi.cpp
+      tests/vdb_volume_motion_blur.cpp
+      tests/hit_iterator.cpp
+      tests/interval_iterator.cpp
+      tests/multi_device.cpp
+      tests/particle_volume_gradients.cpp
+      tests/particle_volume_interval_iterator.cpp
+      tests/particle_volume_radius.cpp
+      tests/particle_volume_sampling.cpp
+      tests/particle_volume_value_range.cpp
+      tests/amr_volume_sampling.cpp
+      tests/amr_volume_value_range.cpp
+      tests/feature_flags.cpp
+    )
+    target_include_directories(vklTestsGPU PRIVATE ${ISPC_TARGET_DIR})
+
+    target_link_libraries(vklTestsGPU PRIVATE openvkl_testing_gpu)
+
+    # We need to disable catching signals to make USM Shared buffers on GPU work properly
+    target_compile_definitions(vklTestsGPU PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS=1)
+    target_compile_definitions(vklTestsGPU PRIVATE CATCH_CONFIG_NO_WINDOWS_SEH=1)
+
+    install(TARGETS vklTestsGPU
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+  endif()
 endif()

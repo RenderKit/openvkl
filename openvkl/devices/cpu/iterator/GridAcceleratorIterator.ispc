@@ -1,11 +1,15 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
+#include "../common/ValueRanges.ih"
 #include "../common/export_util.h"
 #include "../math/box_utility.ih"
-#include "../common/ValueRanges.ih"
 #include "../volume/GridAccelerator.ih"
 #include "../volume/SharedStructuredVolume.ih"
+
 #include "../iterator/IteratorContextShared.h"
 #include "GridAcceleratorIterator.ih"
 
@@ -45,15 +49,15 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
   univary GridAcceleratorIterator *uniform self =                              \
       (univary GridAcceleratorIterator * uniform) _self;                       \
                                                                                \
-  self->context   = (const IntervalIteratorContext *uniform)_context;          \
-  self->origin    = *((univary vec3f * uniform) _origin);                      \
-  self->direction = *((univary vec3f * uniform) _direction);                   \
-  self->tRange    = *((univary box1f * uniform) _tRange);                      \
-  self->time      = *((univary float *uniform)_time);                          \
+  self->super.context = (const IntervalIteratorContext *uniform)_context;      \
+  self->origin        = *((univary vec3f * uniform) _origin);                  \
+  self->direction     = *((univary vec3f * uniform) _direction);               \
+  self->tRange        = *((univary box1f * uniform) _tRange);                  \
+  self->time          = *((univary float *uniform)_time);                      \
                                                                                \
   const SharedStructuredVolume *uniform volume =                               \
       (const SharedStructuredVolume *uniform)                                  \
-          self->context->super.sampler->volume;                                \
+          self->super.context->super.sampler->volume;                          \
                                                                                \
   self->boundingBoxTRange = intersectBox(                                      \
       self->origin, self->direction, volume->boundingBox, self->tRange);       \
@@ -120,21 +124,22 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
                                                                                \
   const SharedStructuredVolume *uniform volume =                               \
       (const SharedStructuredVolume *uniform)                                  \
-          self->context->super.sampler->volume;                                \
+          self->super.context->super.sampler->volume;                          \
                                                                                \
   while (GridAccelerator_nextCell(volume->accelerator,                         \
                                   self,                                        \
                                   self->intervalState.currentCellIndex,        \
                                   interval->tRange)) {                         \
     univary box1f cellValueRange;                                              \
-    GridAccelerator_getCellValueRange(volume->accelerator,                     \
-                                      self->intervalState.currentCellIndex,    \
-                                      self->context->super.attributeIndex,     \
-                                      cellValueRange);                         \
+    GridAccelerator_getCellValueRange(                                         \
+        volume->accelerator,                                                   \
+        self->intervalState.currentCellIndex,                                  \
+        self->super.context->super.attributeIndex,                             \
+        cellValueRange);                                                       \
                                                                                \
     univary bool returnInterval = false;                                       \
                                                                                \
-    if (valueRangesOverlap(self->context->super.valueRanges,                   \
+    if (valueRangesOverlap(self->super.context->super.valueRanges,             \
                            cellValueRange)) {                                  \
       returnInterval = true;                                                   \
     }                                                                          \
@@ -175,95 +180,96 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
 #define cif_uniform if
 #define cif_varying cif
 
-#define template_GridAcceleratorIterator_iterateHit_internal(univary)          \
-  univary GridAcceleratorIterator *uniform self =                              \
-      (univary GridAcceleratorIterator * uniform) _self;                       \
-                                                                               \
-  const HitIteratorContext *uniform hitContext =                               \
-      (const HitIteratorContext *uniform)self->context;                        \
-                                                                               \
-  univary Hit *uniform hit = (univary Hit * uniform) _hit;                     \
-                                                                               \
-  univary int *uniform result = (univary int *uniform)_result;                 \
-                                                                               \
-  if (isempty1f(self->boundingBoxTRange)) {                                    \
-    *result = false;                                                           \
-    return;                                                                    \
-  }                                                                            \
-                                                                               \
-  if (hitContext->numValues == 0) {                                            \
-    *result = false;                                                           \
-    return;                                                                    \
-  }                                                                            \
-                                                                               \
-  const SharedStructuredVolume *uniform volume =                               \
-      (const SharedStructuredVolume *uniform)                                  \
-          self->context->super.sampler->volume;                                \
-                                                                               \
-  /* first iteration */                                                        \
-  __vkl_concat(cif_, univary)(self->hitState.currentCellIndex.x == -1)         \
-  {                                                                            \
-    self->hitState.activeCell =                                                \
-        GridAccelerator_nextCell(volume->accelerator,                          \
-                                 self,                                         \
-                                 self->hitState.currentCellIndex,              \
-                                 self->hitState.currentCellTRange);            \
-  }                                                                            \
-                                                                               \
-  const uniform float step = reduce_min(volume->gridSpacing);                  \
-                                                                               \
-  while (self->hitState.activeCell) {                                          \
-    univary box1f cellValueRange;                                              \
-    GridAccelerator_getCellValueRange(volume->accelerator,                     \
-                                      self->hitState.currentCellIndex,         \
-                                      self->context->super.attributeIndex,     \
-                                      cellValueRange);                         \
-                                                                               \
-    univary bool cellValueRangeOverlap =                                       \
-        valueRangesOverlap(self->context->super.valueRanges, cellValueRange);  \
-                                                                               \
-    if (cellValueRangeOverlap) {                                               \
-      univary bool foundHit =                                                  \
-          intersectSurfacesNewton(self->context->super.sampler,                \
-                                  self->origin,                                \
-                                  self->direction,                             \
-                                  self->hitState.currentCellTRange,            \
-                                  self->context->super.attributeIndex,         \
-                                  self->time,                                  \
-                                  0.5f * step,                                 \
-                                  hitContext->numValues,                       \
-                                  hitContext->values,                          \
-                                  *hit);                                       \
-                                                                               \
-      if (foundHit) {                                                          \
-        *result                                = true;                         \
-        self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;        \
-                                                                               \
-        /* move to next cell if next t passes the cell boundary */             \
-        if (isempty1f(self->hitState.currentCellTRange)) {                     \
-          self->hitState.activeCell =                                          \
-              GridAccelerator_nextCell(volume->accelerator,                    \
-                                       self,                                   \
-                                       self->hitState.currentCellIndex,        \
-                                       self->hitState.currentCellTRange);      \
-                                                                               \
-          /* continue where we left off */                                     \
-          self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;      \
-        }                                                                      \
-                                                                               \
-        return;                                                                \
-      }                                                                        \
-    }                                                                          \
-                                                                               \
-    /* if no hits are found, move to the next cell; if a hit is found we'll    \
-     stay in the cell to pursue other hits */                                  \
-    self->hitState.activeCell =                                                \
-        GridAccelerator_nextCell(volume->accelerator,                          \
-                                 self,                                         \
-                                 self->hitState.currentCellIndex,              \
-                                 self->hitState.currentCellTRange);            \
-  }                                                                            \
-                                                                               \
+#define template_GridAcceleratorIterator_iterateHit_internal(univary)        \
+  univary GridAcceleratorIterator *uniform self =                            \
+      (univary GridAcceleratorIterator * uniform) _self;                     \
+                                                                             \
+  const HitIteratorContext *uniform hitContext =                             \
+      (const HitIteratorContext *uniform)self->super.context;                \
+                                                                             \
+  univary Hit *uniform hit = (univary Hit * uniform) _hit;                   \
+                                                                             \
+  univary int *uniform result = (univary int *uniform)_result;               \
+                                                                             \
+  if (isempty1f(self->boundingBoxTRange)) {                                  \
+    *result = false;                                                         \
+    return;                                                                  \
+  }                                                                          \
+                                                                             \
+  if (hitContext->numValues == 0) {                                          \
+    *result = false;                                                         \
+    return;                                                                  \
+  }                                                                          \
+                                                                             \
+  const SharedStructuredVolume *uniform volume =                             \
+      (const SharedStructuredVolume *uniform)                                \
+          self->super.context->super.sampler->volume;                        \
+                                                                             \
+  /* first iteration */                                                      \
+  __vkl_concat(cif_, univary)(self->hitState.currentCellIndex.x == -1)       \
+  {                                                                          \
+    self->hitState.activeCell =                                              \
+        GridAccelerator_nextCell(volume->accelerator,                        \
+                                 self,                                       \
+                                 self->hitState.currentCellIndex,            \
+                                 self->hitState.currentCellTRange);          \
+  }                                                                          \
+                                                                             \
+  const uniform float step = reduce_min(volume->gridSpacing);                \
+                                                                             \
+  while (self->hitState.activeCell) {                                        \
+    univary box1f cellValueRange;                                            \
+    GridAccelerator_getCellValueRange(                                       \
+        volume->accelerator,                                                 \
+        self->hitState.currentCellIndex,                                     \
+        self->super.context->super.attributeIndex,                           \
+        cellValueRange);                                                     \
+                                                                             \
+    univary bool cellValueRangeOverlap = valueRangesOverlap(                 \
+        self->super.context->super.valueRanges, cellValueRange);             \
+                                                                             \
+    if (cellValueRangeOverlap) {                                             \
+      univary bool foundHit =                                                \
+          intersectSurfacesBisection(self->super.context->super.sampler,     \
+                                  self->origin,                              \
+                                  self->direction,                           \
+                                  self->hitState.currentCellTRange,          \
+                                  self->super.context->super.attributeIndex, \
+                                  self->time,                                \
+                                  0.5f * step,                               \
+                                  hitContext->numValues,                     \
+                                  hitContext->values,                        \
+                                  *hit);                                     \
+                                                                             \
+      if (foundHit) {                                                        \
+        *result                                = true;                       \
+        self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;      \
+                                                                             \
+        /* move to next cell if next t passes the cell boundary */           \
+        if (isempty1f(self->hitState.currentCellTRange)) {                   \
+          self->hitState.activeCell =                                        \
+              GridAccelerator_nextCell(volume->accelerator,                  \
+                                       self,                                 \
+                                       self->hitState.currentCellIndex,      \
+                                       self->hitState.currentCellTRange);    \
+                                                                             \
+          /* continue where we left off */                                   \
+          self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;    \
+        }                                                                    \
+                                                                             \
+        return;                                                              \
+      }                                                                      \
+    }                                                                        \
+                                                                             \
+    /* if no hits are found, move to the next cell; if a hit is found we'll  \
+     stay in the cell to pursue other hits */                                \
+    self->hitState.activeCell =                                              \
+        GridAccelerator_nextCell(volume->accelerator,                        \
+                                 self,                                       \
+                                 self->hitState.currentCellIndex,            \
+                                 self->hitState.currentCellTRange);          \
+  }                                                                          \
+                                                                             \
   *result = false;
 
 export void EXPORT_UNIQUE(GridAcceleratorIteratorU_iterateHit,

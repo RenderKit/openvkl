@@ -53,18 +53,26 @@ typedef uint64_t vkl_uint64;
 // VKL_OBJECT
 // -----------------------------------------------------------------------------
 
-#if defined(ISPC) || defined(__cplusplus)
-struct ManagedObject
+typedef struct __VKLObject
 {
-};
-#else
-typedef void ManagedObject;
+#ifdef __cplusplus
+  __VKLObject() : host(nullptr), device(nullptr) {}
+
+  operator bool() const
+  {
+    return (host != nullptr);
+  }
 #endif
 
-#if defined(ISPC)
-typedef ManagedObject *uniform VKLObject;
-#else
-typedef ManagedObject *VKLObject;
+  void *host;
+  void *device;
+} VKLObject;
+
+#ifdef __cplusplus
+#include <type_traits>
+
+static_assert(std::is_standard_layout<VKLObject>::value,
+              "VKLObject must be standard layout for C linkage");
 #endif
 
 // -----------------------------------------------------------------------------

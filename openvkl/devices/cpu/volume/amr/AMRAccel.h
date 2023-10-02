@@ -4,6 +4,7 @@
 #pragma once
 
 #include "AMRData.h"
+#include "../../common/Allocator.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -20,7 +21,7 @@ namespace openvkl {
       struct AMRAccel
       {
         /*! constructor that constructs the actual accel from the amr data */
-        AMRAccel(const AMRData &input);
+        AMRAccel(Device *device, const AMRData &input);
         /*! destructor that frees all allocated memory */
         ~AMRAccel();
 
@@ -91,11 +92,20 @@ namespace openvkl {
         }
 
         //! list of levels
-        std::vector<Level> level;
+        AllocatorStl<Level> levelAllocator;
+        std::vector<Level, AllocatorStl<Level>> level;
+
         //! list of inner nodes
-        std::vector<Node> node;
+        AllocatorStl<Node> nodeAllocator;
+        std::vector<Node, AllocatorStl<Node>> node;
+
         //! list of leaf nodes
-        std::vector<Leaf> leaf;
+        AllocatorStl<Leaf> leafAllocator;
+        std::vector<Leaf, AllocatorStl<Leaf>> leaf;
+
+        //! for brick lists inside leaf nodes
+        AllocatorStl<const AMRData::Brick *> brickListAllocator;
+
         //! world bounds of domain
         box3f worldBounds;
 

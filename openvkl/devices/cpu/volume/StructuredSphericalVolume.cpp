@@ -1,8 +1,18 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "StructuredSphericalVolume.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
+#include "GridAccelerator_ispc.h"
+#include "SharedStructuredVolume_ispc.h"
+
 #include "../common/export_util.h"
+#include "StructuredSphericalVolume.h"
+
 #include "StructuredSampler.h"
 
 namespace openvkl {
@@ -11,24 +21,42 @@ namespace openvkl {
     template <int W>
     Sampler<W> *StructuredSphericalVolume<W>::newSampler()
     {
-      return new StructuredSphericalSampler<W>(*this);
+      return new StructuredSphericalSampler<W>(this->getDevice(), *this);
     }
 
     template <int W>
     void StructuredSphericalVolume<W>::commit()
     {
+      if (!this->SharedStructInitialized) {
+        ispc::SharedStructuredVolume *self =
+            static_cast<ispc::SharedStructuredVolume *>(this->getSh());
+
+        static_assert(
+            std::is_trivially_copyable<ispc::SharedStructuredVolume>::value,
+            "ispc::SharedStructuredVolume must be a POD type.");
+
+        memset(self, 0, sizeof(ispc::SharedStructuredVolume));
+
+        SharedStructuredVolume_Constructor(self);
+
+        self->super.type =
+            ispc::DeviceVolumeType::VOLUME_TYPE_STRUCTURED_SPHERICAL;
+
+        this->SharedStructInitialized = true;
+      }
+
       StructuredVolume<W>::commit();
 
-      if (!this->SharedStructInitialized) {
-        CALL_ISPC(SharedStructuredVolume_Constructor, this->getSh());
-        this->SharedStructInitialized = true;
+      // generate default value for gridSpacing, based on the volume dimensions
+      constexpr float epsilon = std::numeric_limits<float>::epsilon();
 
-        if (!this->SharedStructInitialized) {
-          throw std::runtime_error(
-              "could not initialize device-side object for "
-              "StructuredSphericalVolume");
-        }
-      }
+      const vec3f defaultGridSpacing =
+          vec3f(1.f,
+                180.f / (this->dimensions.y - 1) - epsilon,
+                360.f / (this->dimensions.z - 1) - epsilon);
+
+      this->gridSpacing =
+          this->template getParam<vec3f>("gridSpacing", defaultGridSpacing);
 
       // each object coordinate must correspond to a unique logical coordinate;
       // we therefore currently require:
@@ -83,21 +111,21 @@ namespace openvkl {
       std::vector<const ispc::Data1D *> ispcAttributesData =
           ispcs(this->attributesData);
 
-      bool success = CALL_ISPC(SharedStructuredVolume_set,
-                               this->getSh(),
-                               ispcAttributesData.size(),
-                               ispcAttributesData.data(),
-                               this->temporallyStructuredNumTimesteps,
-                               ispc(this->temporallyUnstructuredIndices),
-                               ispc(this->temporallyUnstructuredTimes),
-                               (const ispc::vec3i &)this->dimensions,
-                               ispc::structured_spherical,
-                               (const ispc::vec3f &)gridOriginRadians,
-                               (const ispc::vec3f &)gridSpacingRadians,
-                               (ispc::VKLFilter)this->filter);
+      bool success =
+          SharedStructuredVolume_set(this->getSh(),
+                                     ispcAttributesData.size(),
+                                     ispcAttributesData.data(),
+                                     this->temporallyStructuredNumTimesteps,
+                                     ispc(this->temporallyUnstructuredIndices),
+                                     ispc(this->temporallyUnstructuredTimes),
+                                     this->dimensions,
+                                     ispc::structured_spherical,
+                                     gridOriginRadians,
+                                     gridSpacingRadians,
+                                     (ispc::VKLFilter)this->filter);
 
       if (!success) {
-        CALL_ISPC(SharedStructuredVolume_Destructor, this->getSh());
+        SharedStructuredVolume_Destructor(this->getSh());
         this->SharedStructInitialized = false;
 
         throw std::runtime_error("failed to commit StructuredSphericalVolume");
@@ -107,6 +135,9 @@ namespace openvkl {
 
       // must be last
       this->buildAccelerator();
+
+      // value range for first attribute only, to support interval iterators
+      this->getSh()->valueRange0 = this->getValueRange(0);
     }
 
     VKL_REGISTER_VOLUME(StructuredSphericalVolume<VKL_TARGET_WIDTH>,

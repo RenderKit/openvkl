@@ -3,9 +3,9 @@
 
 #pragma once
 
+#include "../common/export_util.h"
 #include "openvkl/VKLFilter.h"
 #include "openvkl/ispc_cpp_interop.h"
-#include "../common/export_util.h"
 
 #include "SamplerShared.h"
 
@@ -15,11 +15,10 @@
  */
 
 export void EXPORT_UNIQUE(Sampler_create,
-                          const void* uniform _volume,
+                          const void *uniform _volume,
                           void *uniform _sampler);
 
-export void EXPORT_UNIQUE(Sampler_destroy,
-                          void *uniform _sampler);
+export void EXPORT_UNIQUE(Sampler_destroy, void *uniform _sampler);
 
 export void EXPORT_UNIQUE(Sampler_setFilters,
                           void *uniform _sampler,

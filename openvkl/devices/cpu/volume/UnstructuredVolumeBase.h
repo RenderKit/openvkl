@@ -8,7 +8,7 @@
 #include "../common/math.h"
 #include "Volume.h"
 #include "UnstructuredVolumeBaseShared.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -19,7 +19,7 @@ namespace openvkl {
     {
       std::string toString() const override;
 
-      UnstructuredVolumeBase(){};  // not = default, due to ICC 19 compiler bug
+      UnstructuredVolumeBase(Device *device) : AddStructShared<Volume<W>, ispc::VKLUnstructuredBase>(device) {};  // not = default, due to ICC 19 compiler bug
       ~UnstructuredVolumeBase(){};
 
       virtual void commit() override;

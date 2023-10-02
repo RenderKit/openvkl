@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 #include <iostream>
 #include <vector>
 
@@ -13,7 +14,7 @@
 
 int main()
 {
-  vklLoadModule("cpu_device");
+  vklInit();
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
@@ -100,7 +101,8 @@ int main()
 
   vklCommit(hitContext);
 
-  ispc::demo_ispc(volume, sampler, intervalContext, hitContext, ranges, values);
+  ispc::demo_ispc(
+      &volume, &sampler, &intervalContext, &hitContext, ranges, values);
 
   vklRelease(hitContext);
   vklRelease(intervalContext);

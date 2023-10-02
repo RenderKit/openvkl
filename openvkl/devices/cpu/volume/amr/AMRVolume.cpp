@@ -1,10 +1,16 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "AMRVolume.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../../common/export_util.h"
 #include "../common/Data.h"
 #include "AMRSampler.h"
+#include "AMRVolume.h"
 // rkcommon
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
@@ -50,21 +56,34 @@ namespace openvkl {
       {
         assert(numPrims == 1);
 
-        auto id          = (uint64_t(prims->geomID) << 32) | prims->primID;
-        auto range       = ((AMRLeafNodeUserData *)userPtr)[id].range;
-        auto cellWidth   = ((AMRLeafNodeUserData *)userPtr)[id].cellWidth;
-        auto gridSpacing = ((AMRLeafNodeUserData *)userPtr)[id].gridSpacing;
+        userPtrStruct *uPS = static_cast<userPtrStruct *>(userPtr);
 
-        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(AMRLeafNode), 16);
-        return (void *)new (ptr) AMRLeafNode(
+        assert(is_aligned_for_type<AlignedVector<AMRLeafNodeUserData> *>(
+            uPS->payload));
+        AlignedVector<AMRLeafNodeUserData> *aud =
+            static_cast<AlignedVector<AMRLeafNodeUserData> *>(uPS->payload);
+
+        AMRLeafNodeUserData *myData = aud->data();
+        auto id          = (uint64_t(prims->geomID) << 32) | prims->primID;
+        auto range       = myData[id].range;
+        auto cellWidth   = myData[id].cellWidth;
+        auto gridSpacing = myData[id].gridSpacing;
+
+        return uPS->allocator->newObject<AMRLeafNode>(
             id, *(const box3fa *)prims, range, cellWidth, gridSpacing);
       }
     };
 
     template <int W>
-    AMRVolume<W>::AMRVolume()
+    AMRVolume<W>::AMRVolume(Device *device)
+        : AddStructShared<UnstructuredVolumeBase<W>, ispc::AMRVolume>(device)
     {
-      CALL_ISPC(AMRVolume_Constructor, this->getSh());
+      ispc::AMRVolume *self = static_cast<ispc::AMRVolume *>(this->getSh());
+
+      memset(self, 0, sizeof(ispc::AMRVolume));
+
+      CALL_ISPC(AMRVolume_Constructor, self);
+      self->super.super.type        = ispc::DeviceVolumeType::VOLUME_TYPE_AMR;
       this->SharedStructInitialized = true;
     }
 
@@ -129,7 +148,8 @@ namespace openvkl {
       // create the AMR data structure. This creates the logical blocks, which
       // contain the actual data and block-level metadata, such as cell width
       // and refinement level
-      data = make_unique<amr::AMRData>(*blockBoundsData,
+      data = make_unique<amr::AMRData>(this->getDevice(),
+                                       *blockBoundsData,
                                        *refinementLevelsData,
                                        *cellWidthsData,
                                        *blockDataData);
@@ -138,7 +158,7 @@ namespace openvkl {
       // representation of the blocks in the AMRData object. In short, blocks at
       // the highest refinement level (i.e. with the most detail) are leaf
       // nodes, and parents have progressively lower resolution
-      accel = make_unique<amr::AMRAccel>(*data);
+      accel = make_unique<amr::AMRAccel>(this->getDevice(), *data);
 
       float coarsestCellWidth =
           *std::max_element(cellWidthsData->begin(), cellWidthsData->end());
@@ -178,8 +198,7 @@ namespace openvkl {
       // parse the k-d tree to compute the voxel range of each leaf node.
       // This enables empty space skipping within the hierarchical structure
       tasking::parallel_for(accel->leaf.size(), [&](size_t leafID) {
-        CALL_ISPC(
-            AMRVolume_computeValueRangeOfLeaf, this->getSh(), leafID);
+        CALL_ISPC(AMRVolume_computeValueRangeOfLeaf, this->getSh(), leafID);
       });
 
       // compute value range over the full volume
@@ -196,7 +215,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *AMRVolume<W>::newSampler()
     {
-      return new AMRSampler<W>(*this);
+      return new AMRSampler<W>(this->getDevice(), *this);
     }
 
     template <int W>
@@ -246,8 +265,9 @@ namespace openvkl {
       }
       rtcSetDeviceErrorFunction(rtcDevice, errorFunction, this->device.ptr);
 
-      containers::AlignedVector<RTCBuildPrimitive> prims;
-      containers::AlignedVector<AMRLeafNodeUserData> userData;
+      AlignedVector<RTCBuildPrimitive> prims;
+      AlignedVector<AMRLeafNodeUserData> userData;
+
       prims.resize(numLeaves);
       userData.resize(numLeaves);
 
@@ -270,6 +290,10 @@ namespace openvkl {
         userData[taskIndex].cellWidth   = leaf.brickList[0]->cellWidth;
         userData[taskIndex].gridSpacing = spacing;
       });
+
+      bvhBuildAllocator = make_unique<BvhBuildAllocator>(this->getDevice());
+
+      userPtrStruct myUPS{&userData, bvhBuildAllocator.get()};
 
       rtcBVH = rtcNewBVH(rtcDevice);
       if (!rtcBVH) {
@@ -297,7 +321,7 @@ namespace openvkl {
       arguments.createLeaf             = AMRLeafNode::create;
       arguments.splitPrimitive         = nullptr;
       arguments.buildProgress          = nullptr;
-      arguments.userPtr                = userData.data();
+      arguments.userPtr                = &myUPS;
 
       rtcRoot = (Node *)rtcBuildBVH(&arguments);
       if (!rtcRoot) {

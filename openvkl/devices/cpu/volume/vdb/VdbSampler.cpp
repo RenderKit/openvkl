@@ -1,17 +1,26 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "VdbSampler.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
+#include "VdbGrid.h"
 #include "VdbLeafAccessObserver.h"
+#include "VdbSampler.h"
 #include "VdbSampler_ispc.h"
 #include "VdbVolume.h"
+#include "openvkl/VKLDataType.h"
 
 namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    VdbSampler<W>::VdbSampler(VdbVolume<W> &volume)
-        : AddStructShared<VdbSamplerBase<W>, ispc::VdbSamplerShared>(volume)
+    VdbSampler<W>::VdbSampler(Device *device, VdbVolume<W> &volume)
+        : AddStructShared<VdbSamplerBase<W>, ispc::VdbSamplerShared>(device,
+                                                                     volume)
     {
       CALL_ISPC(VdbSampler_create,
                 volume.getSh(),
@@ -47,6 +56,75 @@ namespace openvkl {
                 (ispc::VKLFilter)filter,
                 (ispc::VKLFilter)gradientFilter,
                 maxSamplingDepth);
+    }
+
+    template <int W>
+    VKLFeatureFlagsInternal VdbSampler<W>::getFeatureFlags() const
+    {
+      if (this->isSpecConstsDisabled()) {
+        return VKL_FEATURE_FLAG_ALL;
+      }
+
+      VKLFeatureFlagsInternal ff = VKL_FEATURE_FLAG_NONE;
+
+      // volume type
+      if (this->getSh()->grid->dense) {
+        ff |= VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME;
+      } else {
+        ff |= VKL_FEATURE_FLAG_VDB_VOLUME;
+      }
+
+      // sampling filter
+      VKLFilter sampleFilter = this->getSh()->super.super.filter;
+
+      switch (sampleFilter) {
+      case VKL_FILTER_NEAREST:
+        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_NEAREST;
+        break;
+
+      case VKL_FILTER_LINEAR:
+        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_LINEAR;
+        break;
+
+      case VKL_FILTER_CUBIC:
+        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_CUBIC;
+        break;
+
+      default:
+        assert(false);
+      }
+
+      // gradient filter
+      VKLFilter gradientFilter = this->getSh()->super.super.gradientFilter;
+
+      switch (gradientFilter) {
+      case VKL_FILTER_NEAREST:
+        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_NEAREST;
+        break;
+
+      case VKL_FILTER_LINEAR:
+        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_LINEAR;
+        break;
+
+      case VKL_FILTER_CUBIC:
+        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_CUBIC;
+        break;
+
+      default:
+        assert(false);
+      }
+
+      // temporal mode
+      ff |= volume->getTemporalFeatureFlags();
+
+      // VDB-specific
+      if (this->getSh()->grid->nodesPackedDense) {
+        ff |= VKL_FEATURE_FLAG_VDB_NODES_PACKED;
+      } else {
+        ff |= VKL_FEATURE_FLAG_VDB_NODES_NOT_PACKED;
+      }
+
+      return ff;
     }
 
     template <int W>

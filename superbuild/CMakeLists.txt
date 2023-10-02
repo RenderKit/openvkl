@@ -95,28 +95,30 @@ option(BUILD_OPENVKL_BENCHMARKS
 
 option(BUILD_ISPC "Build the Intel SPMD Program Compiler or search in environment?" ON)
 if (BUILD_ISPC)
-  set(ISPC_VERSION "1.19.0")
+  set(ISPC_VERSION "1.21.0")
   set(ISPC_BASE_URL "https://github.com/ispc/ispc/releases/download/v${ISPC_VERSION}")
   if (APPLE)
-    set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-macOS.tar.gz")
-    set(_ISPC_HASH "f61993807ba00d5deeb46f65be7e38d7c95bcfb6e6e114993afa53b44320556c")
+    set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-macOS.universal.tar.gz")
+    set(_ISPC_HASH "ea220fbf1b7e6a1211fe4c81827474ecf539c8c1cf278f7f7b8961f074dfa293")
   elseif(WIN32)
     set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-windows.zip")
-    set(_ISPC_HASH "3f2953f9328290adfd0143707dce13e342f6df1099b3be5148a25e41347f958c")
+    set(_ISPC_HASH "b8823c03c050152aeae19594160d9a1a00e21817fc0cd86f21be2b4f22ab17bf")
   else()
     set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-linux.tar.gz")
-    set(_ISPC_HASH "f99a0afd4c8b5e8aceb46af8e90a7ba0813bf4c4111044ced27d498591304f9c")
+    set(_ISPC_HASH "fe658893799af46c9cac0153f0bdc9a2ff93541fff9b17cf6b09ffc7576cfdcc")
   endif()
   set(ISPC_URL "${_ISPC_URL}" CACHE STRING "URL of the ISPC archive.")
   set(ISPC_HASH "${_ISPC_HASH}" CACHE STRING "SHA256 hash of the ISPC archive.")
   include(dep_ispc)
+  include(dep_ispcrt)
 endif()
 
+option(BUILD_ISPCRT_GPU "Build the ISPC Runtime with GPU support?" OFF)
 
 option(BUILD_TBB "Build Intel Threading Building Blocks or search in environment?" ON)
 option(BUILD_TBB_FROM_SOURCE "Build Intel Threading Building Blocks from source or use pre-built version?" OFF)
 if (BUILD_TBB)
-  set(TBB_VERSION "2021.8.0" CACHE STRING "TBB version to download")
+  set(TBB_VERSION "2021.10.0" CACHE STRING "TBB version to download")
   if (BUILD_TBB_FROM_SOURCE)
     if (TBB_VERSION VERSION_LESS 2021)
       message(FATAL_ERROR "Only TBB 2021 and later are supported when building TBB from source")
@@ -124,7 +126,7 @@ if (BUILD_TBB)
 
     string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" TBB_ARCHIVE ${TBB_VERSION})
     set(_TBB_URL "https://github.com/oneapi-src/oneTBB/archive/refs/tags/${TBB_ARCHIVE}.zip")
-    set(_TBB_HASH "a99635a411d86315b37c72ab525de59cd47aa5bd765c5544640ab08f971f83fe")
+    set(_TBB_HASH "78fb7bb29b415f53de21a68c4fdf97de8ae035090d9ee9caa221e32c6e79567c")
   else()
     if (TBB_VERSION VERSION_LESS 2021)
       set(TBB_BASE_URL "https://github.com/oneapi-src/oneTBB/releases/download/v${TBB_VERSION}/tbb-${TBB_VERSION}")
@@ -133,15 +135,15 @@ if (BUILD_TBB)
     endif()
     if (APPLE)
       set(_TBB_URL "${TBB_BASE_URL}-mac.tgz")
-      set(_TBB_HASH "9d620781d12d36a279bb27f4feb8c3b25d12c133e0d5b8661b867405d2445ee8")
+      set(_TBB_HASH "20899b66b8a42d649283209276e70dd7e10ab10d90fd3c7372fc6e28dbc9a94b")
       set(TBB_LIB_SUBDIR "")
     elseif(WIN32)
       set(_TBB_URL "${TBB_BASE_URL}-win.zip")
-      set(_TBB_HASH "b9265d4dc5b74e27176c6a6b696882935f605191d014a62c010c9610904e7f65")
+      set(_TBB_HASH "d517205d6cc2f80a56500a7f7e1428d47e7cfc55ea66675027024c7b90047ecb")
       set(TBB_LIB_SUBDIR "intel64/vc14")
     else()
       set(_TBB_URL "${TBB_BASE_URL}-lin.tgz")
-      set(_TBB_HASH "ee410e991bb44ce11437fbf93abedc7c4b1d0cb254e9b91cc2e0ddb0f5375566")
+      set(_TBB_HASH "d5be4164a1f2e67a8c7bc927cbe2b36690815adb48d36e50b9e3b8afa4c99310")
       set(TBB_LIB_SUBDIR "intel64/gcc4.8")
     endif()
   endif()
@@ -153,11 +155,10 @@ endif()
 
 option(BUILD_RKCOMMON "Build rkcommon or search in environment?" ON)
 if (BUILD_RKCOMMON)
-  set(RKCOMMON_VERSION "v1.11.0" CACHE STRING "rkcommon version to download")
+  set(RKCOMMON_VERSION "v1.12.0" CACHE STRING "rkcommon version to download")
   set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_VERSION}.zip"
     CACHE STRING "URL of the rkcommon archive.")
-  set(RKCOMMON_HASH "8e70462a2d6a882040b9968ed7d820dbae56d02668041b186afccc9043ab3df9"
-    CACHE STRING "SHA256 hash of the rkcommon archive.")
+  set(RKCOMMON_HASH "514be81fb9bc95bf8a36ee9dfe1289a0d09ad0b9d76263866c284066449c75ae" CACHE STRING "SHA256 hash of the rkcommon archive.")
   include(dep_rkcommon)
 endif()
 
@@ -165,24 +166,25 @@ endif()
 # Embree can either be build from source or downloaded as binaries.
 option(BUILD_EMBREE "Build Intel Embree or search in environment?" ON)
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree from source or use pre-built version? (Only used when BUILD_EMBREE=ON)" ON)
+option(BUILD_EMBREE_SYCL "Build Intel Embree with SYCL support?" OFF)
 if (BUILD_EMBREE)
-  set(EMBREE_VERSION "v4.0.0" CACHE STRING "Embree version to download")
+  set(EMBREE_VERSION "v4.3.0" CACHE STRING "Embree version to download")
   if (BUILD_EMBREE_FROM_SOURCE)
     set(_EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_VERSION}.zip")
-    set(_EMBREE_HASH "e00d1f6f19ff12d7067420a081afc994744d4862f95c527bfb0436f5f0908794")
+    set(_EMBREE_HASH "e248e69b7a6debceb66b9f9af8ff5f7b46c19e696473b7ccaa3e3b7a37d65287")
   else()
     # Embree binary package URLs do not use the "v" prefix
     string(REPLACE "v" "" EMBREE_VERSION_NUMBER ${EMBREE_VERSION})
     set(EMBREE_BASE_URL "https://github.com/embree/embree/releases/download/${EMBREE_VERSION}")
     if (APPLE)
       set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.zip")
-      set(_EMBREE_HASH "837c49702d688623b48ba40ee10fb39f9dd39be6b73ccb4d910c32c5d5415836")
+      set(_EMBREE_HASH "eed7a677bb5944f90238ad61dfdb4d602ed4568b2085af9ffd0b5d90cceee181")
     elseif (WIN32)
-      set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
-      set(_EMBREE_HASH "4f375d71d70b4fcf1dd18ca88f26a1255ff0d827bf3db62a88f204cc9089dc1f")
+      set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION_NUMBER}.x64.windows.zip")
+      set(_EMBREE_HASH "4efe5269353168063ecb3ae24876c8ac868d5644c12bae75c86084c566b2acdb")
     else()
       set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION_NUMBER}.x86_64.linux.tar.gz")
-      set(_EMBREE_HASH "524842e2f141dca0db584c33a0821176373e7058f3ec2201bfb19d9e9a1b80b9")
+      set(_EMBREE_HASH "93507aea3e35dcf1bc40aafa20ca9e882ded562a8909eeacc02d0b3de17691d0")
     endif()
   endif()
   set(EMBREE_URL "${_EMBREE_URL}"  CACHE STRING "URL of the Embree source archive.")
@@ -200,7 +202,6 @@ if (BUILD_GLFW)
     CACHE STRING "SHA256 hash of the GLFW source archive.")
   include(dep_glfw)
 endif()
-
 
 # We always build or download OpenVDB and all its dependencies if OpenVDB is
 # enabled, and to not attempt to find them in the environment.
@@ -223,34 +224,34 @@ if (BUILD_OPENVDB)
     message(WARNING "Open VKL superbuild currently does not support building OpenVDB on Windows with TBB 2021")
     set(BUILD_OPENVDB OFF)
   else()
-    set(ILMBASE_VERSION "2.5.8")
+    set(ILMBASE_VERSION "2.5.9")
     set(ILMBASE_URL "https://github.com/AcademySoftwareFoundation/openexr/archive/v${ILMBASE_VERSION}.zip"
       CACHE STRING "URL of the IlmBase archive.")
-    set(ILMBASE_HASH "3eafee956ae36cad536497988df4bda88d811a602ad93630dbed38bb10b8a7e4"
+    set(ILMBASE_HASH "3b23a2b16b09ab0419db5e1517d2e81b41b4b32606f95169a83e320504f0976f"
       CACHE STRING "SHA256 hash of the IlmBase archive.")
     include(dep_ilmbase)
 
-    set(ZLIB_VERSION "1.2.13")
+    set(ZLIB_VERSION "1.3")
     set(ZLIB_URL "https://www.zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz"
       CACHE STRING "URL of the zlib archive.")
-    set(ZLIB_HASH "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30"
+    set(ZLIB_HASH "ff0ba4c292013dbc27530b3a81e1f9a813cd39de01ca5e0f8bf355702efa593e"
       CACHE STRING "SHA256 hash of the zlib archive.")
     include(dep_zlib)
 
-    set(BOOST_VERSION "1.81.0")
+    set(BOOST_VERSION "1.83.0")
     string(REPLACE "." "_" BOOST_FILE_BASE "${BOOST_VERSION}")
     set(BOOST_BASE_URL "https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost")
     set(_BOOST_URL "${BOOST_BASE_URL}_${BOOST_FILE_BASE}.tar.gz")
-    set(_BOOST_HASH "205666dea9f6a7cfed87c7a6dfbeb52a2c1b9de55712c9c1a87735d7181452b6")
+    set(_BOOST_HASH "c0685b68dd44cc46574cce86c4e17c0f611b15e195be9848dfd0769a0a207628")
     set(BOOST_URL "${_BOOST_URL}" CACHE STRING "URL of the boost archive.")
     set(BOOST_HASH "${_BOOST_HASH}" CACHE STRING "SHA256 hash of the boost archive.")
     include(dep_boost)
 
     if (BUILD_BLOSC)
-      set(BLOSC_VERSION "1.21.2")
+      set(BLOSC_VERSION "1.21.5")
       set(BLOSC_URL "https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.zip"
         CACHE STRING "URL of the c-BLOSC archive.")
-      set(BLOSC_HASH "a1dd1fa4bad3b97d1fd8a1f20923dd8161028ccf674a07da62662891c3219aa4"
+      set(BLOSC_HASH "bc022fd194e40421531d2ef69831f2793d405d98f60e759c697ccc02dad765ec"
         CACHE STRING "SHA256 hash of the c-BLOSC archive.")
       include(dep_blosc)
     endif()
@@ -311,6 +312,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
   ExternalProject_Add_StepDependencies(openvkl
   configure
     $<$<BOOL:${BUILD_ISPC}>:ispc>
+    $<$<BOOL:${BUILD_ISPC}>:ispcrt>
     $<$<BOOL:${BUILD_TBB}>:tbb>
     $<$<BOOL:${BUILD_RKCOMMON}>:rkcommon>
     $<$<BOOL:${BUILD_GLFW}>:glfw>

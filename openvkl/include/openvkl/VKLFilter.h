@@ -5,9 +5,9 @@
 
 #include "ispc_cpp_interop.h"
 
-// ========================================================================== //
-// An enum that represents the different filter types available in vdb volumes.
-// ========================================================================== //
+// ======================================================================== //
+// An enum that represents the different filter types available in volumes.
+// ======================================================================== //
 enum VKLFilter
 #if __cplusplus >= 201103L
 : vkl_uint32
@@ -18,9 +18,9 @@ enum VKLFilter
   VKL_FILTER_NEAREST = 0,
   // Read the eight voxels surrounding the sample position, and
   // interpolate trilinearly.
-  VKL_FILTER_TRILINEAR = 100,
+  VKL_FILTER_LINEAR = 100,
   // Tricubic interpolation.
-  VKL_FILTER_TRICUBIC = 200,
+  VKL_FILTER_CUBIC = 200,
 };
 
 

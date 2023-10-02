@@ -1,17 +1,20 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "Traits.h"
 
 namespace openvkl {
   VKLTYPEFOR_DEFINITION(VKLDevice);
+  VKLTYPEFOR_DEFINITION(openvkl::ManagedObject *);
+  VKLTYPEFOR_DEFINITION(openvkl::Data *);
   VKLTYPEFOR_DEFINITION(void *);
   VKLTYPEFOR_DEFINITION(bool);
-  VKLTYPEFOR_DEFINITION(VKLObject);
-  VKLTYPEFOR_DEFINITION(openvkl::ManagedObject *);
-  VKLTYPEFOR_DEFINITION(VKLData);
-  VKLTYPEFOR_DEFINITION(openvkl::Data *);
-  VKLTYPEFOR_DEFINITION(VKLVolume);
   VKLTYPEFOR_DEFINITION(char *);
   VKLTYPEFOR_DEFINITION(const char *);
   VKLTYPEFOR_DEFINITION(const char[]);
@@ -55,4 +58,4 @@ namespace openvkl {
   VKLTYPEFOR_DEFINITION(rkcommon::math::linear3f);
   VKLTYPEFOR_DEFINITION(rkcommon::math::affine2f);
   VKLTYPEFOR_DEFINITION(rkcommon::math::affine3f);
-}
+}  // namespace openvkl

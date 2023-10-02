@@ -5,6 +5,8 @@
 #include "openvkl_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 
+#include "wrappers.h"
+
 using namespace rkcommon;
 using namespace openvkl::testing;
 
@@ -48,7 +50,7 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
                                 << objectCoordinates.z);
 
     REQUIRE(
-        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates) ==
+        vklComputeSampleWrapper(&vklSampler, (const vkl_vec3f *)&objectCoordinates, 0, 0.f) ==
         Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
   }
 

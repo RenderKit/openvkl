@@ -9,6 +9,8 @@
 #include "openvkl_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 
+#include "wrappers.h"
+
 using namespace openvkl::testing;
 
 // Returns true if the provided coordinate is near the boundary of a box with
@@ -38,8 +40,8 @@ inline void test_scalar_and_vector_sampling(
     const unsigned int attributeIndex = 0,
     const float time                  = 0.f)
 {
-  float scalarSampledValue = vklComputeSample(
-      sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, time);
+  float scalarSampledValue = vklComputeSampleWrapper(
+      &sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, time);
 
   REQUIRE(scalarSampledValue == Approx(sampleTruth).margin(sampleTolerance));
 
@@ -48,6 +50,9 @@ inline void test_scalar_and_vector_sampling(
   // check for consistency with the scalar API result, as that has already
   // been validated.
 
+// OpenVKL API functions used in below part of this function is now available
+// only for CPU device.
+#ifdef OPENVKL_TESTING_CPU
   // permutations of valid mask we will test (first 4 elements only)
   const std::vector<std::vector<int>> valids = {{1, 0, 0, 1}};
 
@@ -70,7 +75,7 @@ inline void test_scalar_and_vector_sampling(
     objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 4);
     float samples_4[4]   = {0.f};
     vklComputeSample4(valid.data(),
-                      sampler,
+                      &sampler,
                       (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                       samples_4,
                       attributeIndex,
@@ -79,7 +84,7 @@ inline void test_scalar_and_vector_sampling(
     objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
     float samples_8[8]   = {0.f};
     vklComputeSample8(valid.data(),
-                      sampler,
+                      &sampler,
                       (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                       samples_8,
                       attributeIndex,
@@ -88,7 +93,7 @@ inline void test_scalar_and_vector_sampling(
     objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
     float samples_16[16] = {0.f};
     vklComputeSample16(valid.data(),
-                       sampler,
+                       &sampler,
                        (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                        samples_16,
                        attributeIndex,
@@ -110,6 +115,7 @@ inline void test_scalar_and_vector_sampling(
       }
     }
   }
+#endif
 }
 
 inline void test_scalar_and_vector_sampling_multi(
@@ -122,18 +128,21 @@ inline void test_scalar_and_vector_sampling_multi(
 {
   std::vector<float> scalarSampledValues(attributeIndices.size());
 
-  vklComputeSampleM(sampler,
-                    (const vkl_vec3f *)&objectCoordinates,
-                    scalarSampledValues.data(),
-                    attributeIndices.size(),
-                    attributeIndices.data(),
-                    time);
+  vklComputeSampleMWrapper(&sampler,
+                           (const vkl_vec3f *)&objectCoordinates,
+                           scalarSampledValues.data(),
+                           attributeIndices.size(),
+                           attributeIndices.data(),
+                           time);
 
   for (unsigned int a = 0; a < attributeIndices.size(); a++) {
     REQUIRE(scalarSampledValues[a] ==
             Approx(sampleTruths[a]).margin(sampleTolerance));
   }
 
+// OpenVKL API functions used in below part of this function is now available
+// only for CPU device.
+#ifdef OPENVKL_TESTING_CPU
   // since vklComputeSample() can have a specialized implementation separate
   // from vector sampling, check the vector APIs as well. we only need to
   // check for consistency with the scalar API result, as that has already
@@ -161,7 +170,7 @@ inline void test_scalar_and_vector_sampling_multi(
     objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 4);
     std::vector<float> samples_4(4 * attributeIndices.size(), 0.f);
     vklComputeSampleM4(valid.data(),
-                       sampler,
+                       &sampler,
                        (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                        samples_4.data(),
                        attributeIndices.size(),
@@ -171,7 +180,7 @@ inline void test_scalar_and_vector_sampling_multi(
     objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
     std::vector<float> samples_8(8 * attributeIndices.size(), 0.f);
     vklComputeSampleM8(valid.data(),
-                       sampler,
+                       &sampler,
                        (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                        samples_8.data(),
                        attributeIndices.size(),
@@ -181,7 +190,7 @@ inline void test_scalar_and_vector_sampling_multi(
     objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
     std::vector<float> samples_16(16 * attributeIndices.size(), 0.f);
     vklComputeSampleM16(valid.data(),
-                        sampler,
+                        &sampler,
                         (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                         samples_16.data(),
                         attributeIndices.size(),
@@ -198,16 +207,17 @@ inline void test_scalar_and_vector_sampling_multi(
       }
     }
   }
+#endif
 }
 
 // applicable to procedural structured and VDB volumes
 template <typename VOLUME_TYPE>
 inline void sampling_on_vertices_vs_procedural_values_multi(
     std::shared_ptr<VOLUME_TYPE> v,
-    vec3i step    = vec3i(1),
-    int lowerSpan = 0,
-    int upperSpan = 0,
-    VKLFilter filter = VKL_FILTER_TRILINEAR)
+    vec3i step       = vec3i(1),
+    int lowerSpan    = 0,
+    int upperSpan    = 0,
+    VKLFilter filter = VKL_FILTER_LINEAR)
 {
   const float sampleTolerance = 1e-4f;
 
@@ -264,6 +274,9 @@ inline void sampling_on_vertices_vs_procedural_values_multi(
   vklRelease(vklSampler);
 }
 
+// OpenVKL API functions used in this function is now available only for CPU
+// device.
+#ifdef OPENVKL_TESTING_CPU
 inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
                                  const unsigned int attributeIndex = 0,
                                  const float time                  = 0.f)
@@ -286,9 +299,10 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
     std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
     std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
 
-    const int maxN = 1024;
+    const std::vector<int> Ns{1,  2,  3,  4,  5,  6,  7,  8,   9,   10,  11,
+                              12, 13, 14, 15, 16, 32, 64, 128, 256, 512, 1024};
 
-    for (int N = 1; N < maxN; N++) {
+    for (const auto &N : Ns) {
       std::vector<vkl_vec3f> objectCoordinates(N);
       std::vector<float> times(N, time);
       std::vector<float> samples(N);
@@ -297,7 +311,7 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
         oc = vkl_vec3f{distX(eng), distY(eng), distZ(eng)};
       }
 
-      vklComputeSampleN(vklSampler,
+      vklComputeSampleN(&vklSampler,
                         N,
                         objectCoordinates.data(),
                         samples.data(),
@@ -306,7 +320,7 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
 
       for (int i = 0; i < N; i++) {
         float sampleTruth = vklComputeSample(
-            vklSampler, &objectCoordinates[i], attributeIndex, time);
+            &vklSampler, &objectCoordinates[i], attributeIndex, time);
 
         INFO("sample = " << i + 1 << " / " << N);
 
@@ -318,16 +332,19 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
         static constexpr float tolerance = 1e-5f;
 #endif
 
-        REQUIRE(
-            ((sampleTruth == Approx(samples[i]).margin(tolerance)) ||
-             (std::isnan(sampleTruth) && std::isnan(samples[i]))));
+        REQUIRE(((sampleTruth == Approx(samples[i]).margin(tolerance)) ||
+                 (std::isnan(sampleTruth) && std::isnan(samples[i]))));
       }
     }
   }
 
   vklRelease(vklSampler);
 }
+#endif
 
+// OpenVKL API functions used in this function is now available only for CPU
+// device.
+#ifdef OPENVKL_TESTING_CPU
 inline void test_stream_sampling_multi(
     std::shared_ptr<TestingVolume> v,
     const std::vector<unsigned int> &attributeIndices,
@@ -351,9 +368,10 @@ inline void test_stream_sampling_multi(
     std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
     std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
 
-    const int maxN = 1024;
+    const std::vector<int> Ns{1,  2,  3,  4,  5,  6,  7,  8,   9,   10,  11,
+                              12, 13, 14, 15, 16, 32, 64, 128, 256, 512, 1024};
 
-    for (int N = 1; N < maxN; N++) {
+    for (const auto &N : Ns) {
       std::vector<vkl_vec3f> objectCoordinates(N);
       std::vector<float> times(N, time);
       std::vector<float> samples(N * attributeIndices.size());
@@ -362,7 +380,7 @@ inline void test_stream_sampling_multi(
         oc = vkl_vec3f{distX(eng), distY(eng), distZ(eng)};
       }
 
-      vklComputeSampleMN(vklSampler,
+      vklComputeSampleMN(&vklSampler,
                          N,
                          objectCoordinates.data(),
                          samples.data(),
@@ -372,8 +390,10 @@ inline void test_stream_sampling_multi(
 
       for (unsigned int a = 0; a < attributeIndices.size(); a++) {
         for (int i = 0; i < N; i++) {
-          float sampleTruth = vklComputeSample(
-              vklSampler, &objectCoordinates[i], attributeIndices[a], times[i]);
+          float sampleTruth = vklComputeSample(&vklSampler,
+                                               &objectCoordinates[i],
+                                               attributeIndices[a],
+                                               times[i]);
 
           INFO("sample = " << i + 1 << " / " << N
                            << ", attributeIndex = " << a);
@@ -388,9 +408,9 @@ inline void test_stream_sampling_multi(
           static constexpr float tolerance = 1e-5f;
 #endif
 
-          REQUIRE(
-              ((sampleTruth == Approx(samples[sampleIndex]).margin(tolerance)) ||
-               (std::isnan(sampleTruth) && std::isnan(samples[sampleIndex]))));
+          REQUIRE((
+              (sampleTruth == Approx(samples[sampleIndex]).margin(tolerance)) ||
+              (std::isnan(sampleTruth) && std::isnan(samples[sampleIndex]))));
         }
       }
     }
@@ -398,3 +418,4 @@ inline void test_stream_sampling_multi(
 
   vklRelease(vklSampler);
 }
+#endif

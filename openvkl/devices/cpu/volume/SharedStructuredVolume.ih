@@ -4,19 +4,11 @@
 #pragma once
 
 #include "../common/Data.ih"
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
 #include "openvkl/VKLDataType.h"
 #include "openvkl/VKLFilter.h"
 
 struct GridAccelerator;
 struct SharedStructuredVolume;
-
-enum SharedStructuredVolumeGridType
-{
-  structured_regular,
-  structured_spherical
-};
 
 #include "StructuredVolumeShared.h"
 

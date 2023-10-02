@@ -1,12 +1,18 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../../external/catch.hpp"
 #include "../common/Traits.h"
 #include "../common/simd.h"
+#include "common/DeviceTraits.h"
 #include "openvkl_testing.h"
 
-using namespace rkcommon;
 using namespace openvkl;
 using namespace openvkl::testing;
 
@@ -32,9 +38,9 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   vklCommit(hitContext);
 
-  std::vector<char> buffer(vklGetHitIteratorSize(hitContext));
+  std::vector<char> buffer(vklGetHitIteratorSize(&hitContext));
   VKLHitIterator iterator = vklInitHitIterator(
-      hitContext, &origin, &direction, &tRange, time, buffer.data());
+      &hitContext, &origin, &direction, &tRange, time, buffer.data());
 
   VKLHit hit;
   hit.epsilon = 0.f;
@@ -64,11 +70,11 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
                          const vkl_vec3f &origin = vkl_vec3f{0.5f, 0.5f, -1.f},
                          const vkl_vec3f &direction = vkl_vec3f{0.f, 0.f, 1.f})
 {
-  using VKLHitIteratorW       = typename vklPublicWideTypes<W>::VKLHitIteratorW;
-  using VKLHitW               = typename vklPublicWideTypes<W>::VKLHitW;
-  auto vklGetHitIteratorSizeW = vklPublicWideTypes<W>().vklGetHitIteratorSizeW;
-  auto vklInitHitIteratorW    = vklPublicWideTypes<W>().vklInitHitIteratorW;
-  auto vklIterateHitW         = vklPublicWideTypes<W>().vklIterateHitW;
+  using VKLHitIteratorW       = typename vklDeviceTypes<W>::VKLHitIteratorW;
+  using VKLHitW               = typename vklDeviceTypes<W>::VKLHitW;
+  auto vklGetHitIteratorSizeW = vklDeviceTypes<W>().vklGetHitIteratorSizeW;
+  auto vklInitHitIteratorW    = vklDeviceTypes<W>().vklInitHitIteratorW;
+  auto vklIterateHitW         = vklDeviceTypes<W>().vklIterateHitW;
 
   using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
   using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;
@@ -112,9 +118,9 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   // lanes
   valid[1] = 0;
 
-  std::vector<char> buffer(vklGetHitIteratorSizeW(hitContext));
+  std::vector<char> buffer(vklGetHitIteratorSizeW(&hitContext));
   VKLHitIteratorW iterator = vklInitHitIteratorW(valid.data(),
-                                                 hitContext,
+                                                 &hitContext,
                                                  (vkl_vvec3fW *)&origins,
                                                  (vkl_vvec3fW *)&directions,
                                                  (vkl_vrange1fW *)&tRanges,

@@ -3,15 +3,12 @@
 
 #pragma once
 
-#include "Framebuffer.h"
-#include "Ray.h"
+#include <atomic>
+#include <thread>
+
 #include "Scene.h"
 #include "Scheduler.h"
-
-#include <rkcommon/math/vec.h>
-#include <atomic>
-#include <mutex>
-#include <thread>
+#include "framebuffer/Framebuffer.h"
 
 namespace openvkl {
   namespace examples {
@@ -36,6 +33,8 @@ namespace openvkl {
       {
         return scene;
       }
+
+      virtual const void resizeFramebuffer(size_t w, size_t h) = 0;
 
       /*
        * Retrieve the current framebuffer, either in raw form or as an
@@ -84,7 +83,7 @@ namespace openvkl {
      protected:
       void renderFrame()
       {
-        bool clearFramebuffer = false;
+        bool clearFramebuffer = isClearFramebufferFlagSet();
         beforeFrame(clearFramebuffer);
         renderFrameImpl(clearFramebuffer);
         afterFrame();
@@ -99,8 +98,18 @@ namespace openvkl {
       virtual void renderFrameImpl(bool clearFramebuffer) = 0;
 
       vec4f sampleTransferFunction(float value) const;
+      void setClearFramebufferFlag()
+      {
+        clearFramebufferFlag = true;
+      }
 
      private:
+      bool isClearFramebufferFlagSet(const bool newState=false)
+      {
+        const bool clearFramebuffer = clearFramebufferFlag.load();
+        clearFramebufferFlag = newState;
+        return clearFramebuffer;
+      }
       friend class Scheduler;
       friend class Scheduler::Synchronous;
       friend class Scheduler::Asynchronous;
@@ -108,62 +117,7 @@ namespace openvkl {
       // Used from the asynchronous scheduler
       std::thread renderThread;
       std::atomic_bool run{false};
+      std::atomic_bool clearFramebufferFlag{false};
     };
-
-    /*
-     * A renderer based on the host.
-     * This base class expects the renderer to fill the front buffer
-     * in renderFrameImpl().
-     */
-    class HostRenderer : public Renderer
-    {
-     public:
-      HostRenderer(Scene &scene);
-      ~HostRenderer();
-
-      const Framebuffer &getFramebuffer(size_t w, size_t h) override final;
-
-     protected:
-      Framebuffer framebuffer;
-    };
-
-    /*
-     * A renderer based on the host, which does not use any vectorization.
-     */
-    class ScalarRenderer : public HostRenderer
-    {
-     public:
-      ScalarRenderer(Scene &scene);
-
-     protected:
-      void renderFrameImpl(bool clearFramebuffer) override final;
-      virtual void renderPixel(size_t seed,
-                               Ray &ray,
-                               vec4f &rgba,
-                               float &weight) const = 0;
-    };
-
-    /*
-     * A renderer based on the host, but using vectorization with ISPC.
-     */
-    class IspcRenderer : public HostRenderer
-    {
-     public:
-      IspcRenderer(Scene &scene);
-      ~IspcRenderer();
-      void beforeStart() override;
-      void beforeFrame(bool &needToClear) override;
-
-     protected:
-      void renderFrameImpl(bool clearFramebuffer) override final;
-      virtual void renderPixelBlock(const vec2i &resolution,
-                                    uint32_t block,
-                                    vec4f *rgbas,
-                                    float *weights) const = 0;
-
-     protected:
-      void *ispcScene{nullptr};
-    };
-
   }  // namespace examples
 }  // namespace openvkl

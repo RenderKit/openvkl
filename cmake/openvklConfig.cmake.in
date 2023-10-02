@@ -22,3 +22,56 @@ set(OPENVKL_ISA_NEON2X @OPENVKL_ISA_NEON2X@)
 ## Standard signal that the package was found ##
 
 set(@PROJECT_NAME@_FOUND TRUE)
+
+## Dependencies
+
+# Assume this file is in "lib/cmake/openvkl-*/", and form the install root
+set(OPENVKL_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../..)
+
+# Setup library path vars
+if (WIN32)
+  set(LIBRARY_PATH_PREFIX ${OPENVKL_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_IMPORT_LIBRARY_PREFIX})
+else()
+  set(LIBRARY_PATH_PREFIX ${OPENVKL_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX})
+endif()
+
+# only needed for GPU device
+if (TARGET openvkl::openvkl_module_gpu_device)
+
+  if (WIN32)
+    set(LIB_SUFFIX lib)
+  else()
+    # on other platforms need to handle libs like librkcommon.so.1
+    set(LIB_SUFFIX *)
+  endif()
+
+  if (TARGET rkcommon::rkcommon)
+    set(RKCOMMON_LIBRARY rkcommon::rkcommon)
+  else()
+    file(GLOB_RECURSE RKCOMMON_LIBRARY ${LIBRARY_PATH_PREFIX}rkcommon*.${LIB_SUFFIX})
+  endif()
+
+  if (TARGET ispcrt::ispcrt)
+    set(ISPCRT_LIBRARY ispcrt::ispcrt)
+  else()
+    file(GLOB_RECURSE ISPCRT_LIBRARY ${LIBRARY_PATH_PREFIX}ispcrt.${LIB_SUFFIX})
+  endif()
+
+  if (TARGET embree)
+    set(EMBREE_LIBRARY embree)
+  else()
+    file(GLOB_RECURSE EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree*.${LIB_SUFFIX})
+  endif()
+
+  if (TARGET TBB::tbb AND TARGET TBB::tbbmalloc)
+    set (TBB_LIBRARY TBB::tbb TBB::tbbmalloc)
+  else()
+    file(GLOB_RECURSE TBB_LIBRARY ${LIBRARY_PATH_PREFIX}tbb.${LIB_SUFFIX})
+  endif()
+
+  # Add missing targets to libraries
+  set_target_properties(openvkl::openvkl_module_gpu_device PROPERTIES
+    INTERFACE_LINK_LIBRARIES "${RKCOMMON_LIBRARY};${ISPCRT_LIBRARY};${EMBREE_LIBRARY};${TBB_LIBRARY}"
+  )
+
+endif()

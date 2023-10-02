@@ -4,13 +4,150 @@
 #pragma once
 
 #include <algorithm>
+#include <mutex>
 #include <vector>
+#include "../../common/BufferShared.h"
 #include "../common/math.h"
+
+// While we build the Open VKL GPU device with -fsycl, we want to use Embree in
+// non-SYCL mode.
+#define SYCL_LANGUAGE_VERSION_COPY SYCL_LANGUAGE_VERSION
+#undef SYCL_LANGUAGE_VERSION
 #include "embree4/rtcore.h"
+#define SYCL_LANGUAGE_VERSION SYCL_LANGUAGE_VERSION_COPY
+#undef SYCL_LANGUAGE_VERSION_COPY
+
+#include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
+
+using rkcommon::containers::AlignedVector;
 
 namespace openvkl {
   namespace cpu_device {
+
+    // allocator used during embree BVH creation
+    struct BvhBuildAllocator
+    {
+      BvhBuildAllocator(Device *device, size_t chunkAllocationBytes = 0)
+          : device(device), chunkAllocationBytes(chunkAllocationBytes)
+      {
+      }
+
+      BvhBuildAllocator(const BvhBuildAllocator &)            = delete;
+      BvhBuildAllocator &operator=(const BvhBuildAllocator &) = delete;
+
+      template <typename T, typename... Args>
+      T *newObject(Args &&...args)
+      {
+        void *ptr = nullptr;
+
+        if (chunkAllocationBytes) {
+          assert(chunkAllocationBytes >= sizeof(T));
+
+          memGuard.lock();
+
+          if (chunkBytesRemaining < sizeof(T)) {
+            allocateNewChunk();
+          }
+
+          ptr = chunkPtr;
+          chunkPtr += sizeof(T);
+          chunkBytesRemaining -= sizeof(T);
+
+          memGuard.unlock();
+        } else {
+          auto mv = BufferSharedCreate(device.ptr, sizeof(T));
+          ptr     = ispcrtSharedPtr(mv);
+          memGuard.lock();
+          memRefs.push_back(mv);
+          memGuard.unlock();
+        }
+
+        if (!is_aligned_for_type<T>(ptr)) {
+          throw std::runtime_error("BvhBuildAllocator: alignment error");
+        }
+
+        return new (ptr) T(std::forward<Args>(args)...);
+      }
+
+      template <typename T>
+      T *newBuffer(size_t num)
+      {
+        void *ptr = nullptr;
+
+        if (chunkAllocationBytes) {
+          assert(chunkAllocationBytes >= num * sizeof(T));
+
+          memGuard.lock();
+
+          if (chunkBytesRemaining < num * sizeof(T)) {
+            allocateNewChunk();
+          }
+
+          ptr = chunkPtr;
+          chunkPtr += num * sizeof(T);
+          chunkBytesRemaining -= num * sizeof(T);
+
+          memGuard.unlock();
+        } else {
+          auto mv = BufferSharedCreate(device.ptr, num * sizeof(T));
+          ptr     = ispcrtSharedPtr(mv);
+          memGuard.lock();
+          memRefs.push_back(mv);
+          memGuard.unlock();
+        }
+
+        if (!is_aligned_for_type<T>(ptr)) {
+          throw std::runtime_error("BvhBuildAllocator: alignment error");
+        }
+
+        return (T *)ptr;
+      }
+
+      virtual ~BvhBuildAllocator()
+      {
+        for (auto mv : memRefs) {
+          BufferSharedDelete(mv);
+        }
+      }
+
+     private:
+      // device to allocate within
+      rkcommon::memory::IntrusivePtr<Device> device;
+
+      // thread safety for memory operations
+      std::mutex memGuard;
+
+      // data to free eventually
+      std::vector<ISPCRTMemoryView> memRefs;
+
+      // how many bytes to allocate per "chunk", if 0 then no chunking
+      // allocation is used
+      size_t chunkAllocationBytes;
+
+      // only used when chunkAllocationBytes != 0
+      char *chunkPtr                = nullptr;
+      long long chunkBytesRemaining = 0;
+
+      void allocateNewChunk()
+      {
+        // memGuard should already be locked!
+
+        ISPCRTMemoryView mv =
+            BufferSharedCreate(device.ptr, chunkAllocationBytes);
+        memRefs.push_back(mv);
+
+        chunkPtr            = static_cast<char *>(ispcrtSharedPtr(mv));
+        chunkBytesRemaining = chunkAllocationBytes;
+      }
+    };
+
+    // callback structured for embree BVH create allocators
+    struct userPtrStruct
+    {
+      void *payload;  // varies dependent on subclass
+      BvhBuildAllocator *allocator;
+    };
 
     // BVH definitions ////////////////////////////////////////////////////////
 
@@ -53,12 +190,16 @@ namespace openvkl {
       {
         assert(numPrims == 1);
 
-        auto id    = (uint64_t(prims->geomID) << 32) | prims->primID;
-        auto range = ((range1f *)userPtr)[id];
+        auto id            = (uint64_t(prims->geomID) << 32) | prims->primID;
+        userPtrStruct *uPS = static_cast<userPtrStruct *>(userPtr);
 
-        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(LeafNodeSingle), 16);
-        return (void *)new (ptr)
-            LeafNodeSingle(id, *(const box3fa *)prims, range);
+        assert(is_aligned_for_type<range1f *>(uPS->payload));
+        range1f *ranges = static_cast<range1f *>(uPS->payload);
+
+        auto range = ranges[id];
+
+        return uPS->allocator->newObject<LeafNodeSingle>(
+            id, *(const box3fa *)prims, range);
       }
     };
 
@@ -95,8 +236,8 @@ namespace openvkl {
                           void *userPtr)
       {
         assert(numChildren == 2);
-        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(InnerNode), 16);
-        return (void *)new (ptr) InnerNode;
+        userPtrStruct *uPS = static_cast<userPtrStruct *>(userPtr);
+        return uPS->allocator->newObject<InnerNode>();
       }
 
       static void setChildren(void *nodePtr,

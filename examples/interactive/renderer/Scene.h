@@ -26,7 +26,7 @@ namespace openvkl {
     {
      public:
       Volume();
-      Volume(const Volume &) = delete;
+      Volume(const Volume &)            = delete;
       Volume &operator=(const Volume &) = delete;
       Volume(Volume &&other);
       Volume &operator=(Volume &&other);
@@ -37,7 +37,12 @@ namespace openvkl {
       // are fully hidden.
       VKLVolume getVolume() const
       {
-        return vklVolume;
+        return *vklVolume;
+      }
+
+      const VKLVolume *getVolumePtr() const
+      {
+        return vklVolume.get();
       }
 
       const box3f &getBounds() const
@@ -52,7 +57,14 @@ namespace openvkl {
 
       VKLSampler getSampler() const
       {
-        return vklSampler;
+        assert(vklSampler);
+        return *vklSampler;
+      }
+
+      const VKLSampler *getSamplerPtr() const
+      {
+        assert(vklSampler);
+        return vklSampler.get();
       }
 
       VolumeParams &getVolumeParams()
@@ -60,11 +72,13 @@ namespace openvkl {
         return volumeParams;
       }
 
-      void setVolumeDirty() {
+      void setVolumeDirty()
+      {
         volumeNeedsUpdate = true;
       }
 
-      bool volumeIsDirty() const {
+      bool volumeIsDirty() const
+      {
         return volumeNeedsUpdate;
       }
 
@@ -73,7 +87,8 @@ namespace openvkl {
         return samplerParams;
       }
 
-      void setSamplerDirty() {
+      void setSamplerDirty()
+      {
         samplerNeedsUpdate = true;
       }
 
@@ -112,10 +127,10 @@ namespace openvkl {
       bool samplerNeedsUpdate{true};
 
       std::unique_ptr<testing::TestingVolume> testingVolume;
-      VKLVolume vklVolume{nullptr};
+      std::unique_ptr<VKLVolume> vklVolume;
       box3f volumeBounds;
       unsigned int numAttributes{0};
-      VKLSampler vklSampler{nullptr};
+      std::unique_ptr<VKLSampler> vklSampler;
     };
 
     struct Scene
@@ -129,6 +144,7 @@ namespace openvkl {
       // through the GUI.
       bool disableVSync{false};
       bool interactive{true};
+      bool printStats{false};
       unsigned batchModeSpp{1};
       std::vector<std::string> rendererTypes;
 

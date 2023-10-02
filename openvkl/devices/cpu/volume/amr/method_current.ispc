@@ -1,11 +1,14 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "AMRVolume.ih"
 #include "CellRef.ih"
 #include "DualCell.ih"
-#include "common/export_util.h"
-#include "sampler/SamplerShared.h"
+#include "../../common/export_util.h"
+#include "../../sampler/SamplerShared.h"
 
 varying float AMR_current(const SamplerShared *uniform self,
                           const varying vec3f &P,

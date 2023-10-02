@@ -65,7 +65,12 @@ inline void test_32bit_addressing(VKLDataCreationFlags dataCreationFlags,
       strideFactor * sizeof(typename VOLUME_TYPE::voxelType);
   INFO("byteStride = " << byteStride);
 
+  // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+  const vec3i step = vec3i(8);
+#else
   const vec3i step = vec3i(2);
+#endif
 
   sampling_on_vertices_vs_procedural_values<VOLUME_TYPE>(
       vec3i(128), dataCreationFlags, byteStride, step);

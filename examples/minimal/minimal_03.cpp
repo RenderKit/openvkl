@@ -6,13 +6,14 @@
 
 // We must include the openvkl header.
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 
 int main(int argc, char **argv)
 {
-  vklLoadModule("cpu_device");
+  vklInit();
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
-  
+
   // "Load data from disk". (We generate the array procedurally).
   constexpr size_t res      = 128;
   std::vector<float> voxels = createVoxels(res);
@@ -61,7 +62,7 @@ int main(int argc, char **argv)
   fb.generate([&](float fx, float fy) {
     // To sample, we call vklComputeSample on our sampler object.
     const vkl_vec3f p = {fx, fy, 0.f};
-    return transferFunction(vklComputeSample(sampler, &p));
+    return transferFunction(vklComputeSample(&sampler, &p));
   });
 
   fb.drawToTerminal();

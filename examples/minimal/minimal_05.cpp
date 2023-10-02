@@ -5,10 +5,11 @@
 #include "framebuffer.h"
 
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 
 int main(int argc, char **argv)
 {
-  vklLoadModule("cpu_device");
+  vklInit();
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
 
@@ -44,13 +45,13 @@ int main(int argc, char **argv)
     for (int i = 0; i < numSteps; ++i)
     {
         const vkl_vec3f p = {fx, fy, i * tStep};
-        const Color c = transferFunction(vklComputeSample(sampler, &p));
+        const Color c = transferFunction(vklComputeSample(&sampler, &p));
 
         // We use the over operator to blend semi-transparent
         // "surfaces" together.
         color = over(color, c);
 
-        // Now we've created a very simple volume renderer using 
+        // Now we've created a very simple volume renderer using
         // Open VKL!
     }
     return color;

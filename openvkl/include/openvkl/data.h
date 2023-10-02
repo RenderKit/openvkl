@@ -27,15 +27,14 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-struct Data : public ManagedObject
+struct VKLData : public VKLObject
 {
 };
 #else
-typedef ManagedObject Data;
+typedef VKLObject VKLData;
 #endif
 
-typedef Data *VKLData;
-
+NOWARN_C_LINKAGE_PUSH
 OPENVKL_INTERFACE VKLData vklNewData(VKLDevice device,
                                      size_t numItems,
                                      VKLDataType dataType,
@@ -43,6 +42,7 @@ OPENVKL_INTERFACE VKLData vklNewData(VKLDevice device,
                                      VKLDataCreationFlags dataCreationFlags
                                          VKL_DEFAULT_VAL(= VKL_DATA_DEFAULT),
                                      size_t byteStride VKL_DEFAULT_VAL(= 0));
+NOWARN_C_LINKAGE_POP
 
 #ifdef __cplusplus
 }  // extern "C"

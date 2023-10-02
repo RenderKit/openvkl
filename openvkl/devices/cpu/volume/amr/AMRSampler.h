@@ -13,7 +13,7 @@
 #include "method_current_ispc.h"
 #include "method_finest_ispc.h"
 #include "method_octant_ispc.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -28,10 +28,12 @@ namespace openvkl {
     struct AMRSampler : public AddStructShared<AMRSamplerBase<W>,
                                                ispc::UnstructuredSamplerShared>
     {
-      AMRSampler(AMRVolume<W> &volume);
+      AMRSampler(Device *, AMRVolume<W> &volume);
       ~AMRSampler() override;
 
       void commit() override;
+
+      VKLFeatureFlagsInternal getFeatureFlags() const override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -64,9 +66,9 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline AMRSampler<W>::AMRSampler(AMRVolume<W> &volume)
+    inline AMRSampler<W>::AMRSampler(Device *device, AMRVolume<W> &volume)
         : AddStructShared<AMRSamplerBase<W>, ispc::UnstructuredSamplerShared>(
-              volume)
+              device, volume)
     {
       CALL_ISPC(AMRSampler_create, volume.getSh(), this->getSh());
     }
@@ -80,8 +82,9 @@ namespace openvkl {
     template <int W>
     inline void AMRSampler<W>::commit()
     {
-      const VKLAMRMethod amrMethod = (VKLAMRMethod)(
-          this->template getParam<int>("method", volume->getAMRMethod()));
+      const VKLAMRMethod amrMethod =
+          (VKLAMRMethod)(this->template getParam<int>("method",
+                                                      volume->getAMRMethod()));
       ispc::SamplerShared *ss = &(this->getSh()->super.super);
       if (amrMethod == VKL_AMR_CURRENT)
         CALL_ISPC(AMR_install_current, ss);
@@ -91,6 +94,16 @@ namespace openvkl {
         CALL_ISPC(AMR_install_octant, ss);
       else
         throw std::runtime_error("AMRSampler: illegal method specified");
+    }
+
+    template <int W>
+    inline VKLFeatureFlagsInternal AMRSampler<W>::getFeatureFlags() const
+    {
+      if (this->isSpecConstsDisabled()) {
+        return VKL_FEATURE_FLAG_ALL;
+      }
+
+      return VKL_FEATURE_FLAG_AMR_VOLUME;
     }
 
     template <int W>

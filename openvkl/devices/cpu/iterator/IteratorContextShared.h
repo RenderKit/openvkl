@@ -11,31 +11,6 @@ namespace ispc {
 
   struct SamplerShared;
 
-#ifdef __cplusplus
-
-#ifndef __ISPC_STRUCT_box1f__
-#define __ISPC_STRUCT_box1f__
-  struct box1f
-  {
-    float lower;
-    float upper;
-  };
-#endif
-
-#ifndef __ISPC_STRUCT_ValueRanges__
-#define __ISPC_STRUCT_ValueRanges__
-  struct ValueRanges
-  {
-    int numRanges;
-    box1f *ranges;
-    box1f rangesMinMax;
-  };
-#endif
-
-#else
-#include "../devices/cpu/common/ValueRanges.ih"
-#endif
-
 #ifndef __ISPC_STRUCT_IteratorContext__
 #define __ISPC_STRUCT_IteratorContext__
   struct IteratorContext

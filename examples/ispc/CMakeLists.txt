@@ -21,6 +21,9 @@ include_directories_ispc(
   ${RKCOMMON_INCLUDE_DIRS}
 )
 
+get_target_property(CPU_DEVICE_INCLUDE_DIRS openvkl_module_cpu_device INTERFACE_INCLUDE_DIRECTORIES)
+include_directories_ispc(${CPU_DEVICE_INCLUDE_DIRS})
+
 add_executable_ispc(vklTutorialISPC
   vklTutorialISPC.ispc
   vklTutorialISPC.cpp
@@ -28,7 +31,7 @@ add_executable_ispc(vklTutorialISPC
 
 target_include_directories(vklTutorialISPC PRIVATE ${ISPC_TARGET_DIR})
 
-target_link_libraries(vklTutorialISPC PRIVATE openvkl)
+target_link_libraries(vklTutorialISPC PRIVATE openvkl openvkl_module_cpu_device)
 
 install(TARGETS vklTutorialISPC
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

@@ -3,11 +3,9 @@
 
 #pragma once
 
+#include "../../common/Allocator.h"
 #include "../common/Data.h"
 #include "../common/math.h"
-#include "rkcommon/math/box.h"
-
-using namespace rkcommon;
 
 namespace openvkl {
   namespace cpu_device {
@@ -17,7 +15,8 @@ namespace openvkl {
           data - ie, what we get from the scene graph or application */
       struct AMRData
       {
-        AMRData(const DataT<box3i> &blockBoundsData,
+        AMRData(Device *device,
+                const DataT<box3i> &blockBoundsData,
                 const DataT<int> &refinementLevelsData,
                 const DataT<float> &cellWidthsData,
                 const DataT<Data *> &blockDataData);
@@ -61,8 +60,8 @@ namespace openvkl {
              above!) */
           box3f worldBounds;
 
-          //! pointer to the actual data values stored in this brick
-          const ispc::Data1D *value{nullptr};
+          //! the actual data values stored in this brick
+          ispc::Data1D value;
           //! dimensions of this box's data
           vec3i dims;
           //! scale factor from grid space to world space (ie,1.f/cellWidth)
@@ -74,7 +73,8 @@ namespace openvkl {
         };
 
         //! our own, internal representation of a brick
-        std::vector<Brick> brick;
+        AllocatorStl<Brick> allocator;
+        std::vector<Brick, AllocatorStl<Brick>> brick;
 
         /*! compute world-space bounding box (lot in _logical_ space,
             but in _absolute_ space, with proper cell width as specified

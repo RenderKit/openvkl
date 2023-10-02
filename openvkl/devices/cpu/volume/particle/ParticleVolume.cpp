@@ -1,9 +1,15 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "ParticleVolume.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../common/Data.h"
 #include "ParticleSampler.h"
+#include "ParticleVolume.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
 
@@ -138,7 +144,19 @@ namespace openvkl {
       buildBvhAndCalculateBounds();
 
       if (!this->SharedStructInitialized) {
-        CALL_ISPC(VKLParticleVolume_Constructor, this->getSh());
+        ispc::VKLParticleVolume *self =
+            static_cast<ispc::VKLParticleVolume *>(this->getSh());
+
+        static_assert(
+            std::is_trivially_copyable<ispc::VKLParticleVolume>::value,
+            "ispc::VKLParticleVolume must be a POD type.");
+
+        memset(self, 0, sizeof(ispc::VKLParticleVolume));
+
+        CALL_ISPC(VKLParticleVolume_Constructor, self);
+
+        self->super.super.type = ispc::DeviceVolumeType::VOLUME_TYPE_PARTICLE;
+
         this->SharedStructInitialized = true;
       }
 
@@ -162,7 +180,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *ParticleVolume<W>::newSampler()
     {
-      return new ParticleSampler<W>(*this);
+      return new ParticleSampler<W>(this->getDevice(), *this);
     }
 
     template <int W>
@@ -174,8 +192,8 @@ namespace openvkl {
       }
       rtcSetDeviceErrorFunction(rtcDevice, errorFunction, this->device.ptr);
 
-      containers::AlignedVector<RTCBuildPrimitive> prims;
-      containers::AlignedVector<float> primRadii;
+      AlignedVector<RTCBuildPrimitive> prims;
+      AlignedVector<float> primRadii;
 
       const size_t numParticles = positions->size();
 
@@ -207,7 +225,7 @@ namespace openvkl {
           primRadii.begin(), primRadii.end(), [](float r) { return r <= 0; });
 
       if (haveZeroRadiiParticles) {
-        containers::AlignedVector<RTCBuildPrimitive> primsFiltered;
+        AlignedVector<RTCBuildPrimitive> primsFiltered;
         primsFiltered.reserve(numParticles);
 
         std::copy_if(
@@ -228,6 +246,10 @@ namespace openvkl {
       }
 
       numBVHParticles = prims.size();
+
+      bvhBuildAllocator = make_unique<BvhBuildAllocator>(this->getDevice());
+
+      userPtrStruct myUPS{&primRadii, bvhBuildAllocator.get()};
 
       rtcBVH = rtcNewBVH(rtcDevice);
       if (!rtcBVH) {
@@ -255,7 +277,7 @@ namespace openvkl {
       arguments.createLeaf             = ParticleLeafNode::create;
       arguments.splitPrimitive         = nullptr;
       arguments.buildProgress          = nullptr;
-      arguments.userPtr                = primRadii.data();
+      arguments.userPtr                = &myUPS;
 
       rtcRoot = (Node *)rtcBuildBVH(&arguments);
       if (!rtcRoot) {

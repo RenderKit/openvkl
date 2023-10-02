@@ -11,7 +11,7 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Structured regular volume multiple attributes",
           "[volume_multi_attributes]")
 {
@@ -26,7 +26,12 @@ TEST_CASE("Structured regular volume multiple attributes",
 
   const std::vector<bool> useAOSLayouts{true, false};
 
+  // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+  const vec3i step = vec3i(16);
+#else
   const vec3i step = vec3i(4);
+#endif
 
   for (const auto &dcf : dataCreationFlags) {
     for (const auto &aos : useAOSLayouts) {
@@ -54,14 +59,19 @@ TEST_CASE("Structured regular volume multiple attributes",
 
         for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
           computed_vs_api_value_range(v, i);
+
+#ifdef OPENVKL_TESTING_CPU
           test_stream_sampling(v, i);
           test_stream_gradients(v, i);
+#endif
         }
 
+#ifdef OPENVKL_TESTING_CPU
         std::vector<unsigned int> attributeIndices(v->getNumAttributes());
         std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
 
         test_stream_sampling_multi(v, attributeIndices);
+#endif
       }
     }
   }

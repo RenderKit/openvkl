@@ -3,6 +3,8 @@
 
 #pragma once
 
+#define TRANSFER_FUNCTION_DEFAULT_NUM_SAMPLES 256
+
 #include <vector>
 #include "rkcommon/math/box.h"
 

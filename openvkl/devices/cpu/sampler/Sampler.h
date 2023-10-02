@@ -9,11 +9,10 @@
 #include "../iterator/IteratorContext.h"
 #include "../observer/Observer.h"
 #include "openvkl/openvkl.h"
-#include "rkcommon/math/vec.h"
-#include "../common/StructShared.h"
-#include "SamplerShared.h"
+#include "rkcommon/utility/getEnvVar.h"
 
-using namespace rkcommon;
+#include "../../common/StructShared.h"
+#include "SamplerShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -70,13 +69,15 @@ namespace openvkl {
     template <int W>
     struct Sampler : public AddStructShared<ManagedObject, ispc::SamplerShared>
     {
-      Sampler() {}  // not = default, due to ICC 19 compiler bug
+      Sampler(Device *device) : AddStructShared<ManagedObject, ispc::SamplerShared>(device) {}  // not = default, due to ICC 19 compiler bug
       Sampler(Sampler &&) = delete;
       Sampler &operator=(Sampler &&) = delete;
       Sampler(const Sampler &)       = delete;
       Sampler &operator=(const Sampler &) = delete;
 
       virtual ~Sampler();
+
+      virtual VKLFeatureFlagsInternal getFeatureFlags() const = 0;
 
       // single attribute /////////////////////////////////////////////////////
 
@@ -152,6 +153,11 @@ namespace openvkl {
       virtual const IteratorFactory<W, HitIterator, HitIteratorContext>
           &getHitIteratorFactory() const = 0;
 
+     protected:
+      /*
+       * Return if specialization constants (feature flags) should be disabled.
+       */
+      bool isSpecConstsDisabled() const;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -237,6 +243,14 @@ namespace openvkl {
       }
     }
 
+    template <int W>
+    inline bool Sampler<W>::isSpecConstsDisabled() const
+    {
+      return bool(rkcommon::utility::getEnvVar<int>(
+                      "OPENVKL_GPU_DEVICE_DEBUG_DISABLE_SPEC_CONST")
+                      .value_or(0));
+    }
+
     ///////////////////////////////////////////////////////////////////////////
 
     // SamplerBase is the base class for all concrete sampler types.
@@ -253,8 +267,8 @@ namespace openvkl {
     struct SamplerBase
         : public AddStructShared<Sampler<W>, ispc::SamplerBaseShared>
     {
-      explicit SamplerBase(VolumeT<W> &volume)
-          : AddStructShared<Sampler<W>, ispc::SamplerBaseShared>(),
+      explicit SamplerBase(Device *device, VolumeT<W> &volume)
+          : AddStructShared<Sampler<W>, ispc::SamplerBaseShared>(device),
             volume(&volume)
       {
       }
@@ -291,7 +305,7 @@ namespace openvkl {
       }
 
      protected:
-      Ref<VolumeT<W>> volume;
+      rkcommon::memory::Ref<VolumeT<W>> volume;
       IntervalIteratorFactory<W> intervalIteratorFactory;
       HitIteratorFactory<W> hitIteratorFactory;
     };

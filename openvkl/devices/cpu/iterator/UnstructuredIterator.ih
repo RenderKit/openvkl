@@ -8,8 +8,6 @@
 #include "DefaultIterator.ih"
 #include "../volume/UnstructuredSamplerBase.ih"
 #include "../volume/UnstructuredVolume.ih"
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
 
 struct UnstructuredTraversalStatePublic
 {
@@ -22,15 +20,6 @@ struct UnstructuredTraversalState
   uniform Node *node;
   uint32 bitstack;
 };
-
-inline uniform UnstructuredTraversalState make_UnstructuredTraversalState(
-    uniform Node *uniform node, const uniform uint32 bitstack)
-{
-  uniform UnstructuredTraversalState uts;
-  uts.node     = node;
-  uts.bitstack = bitstack;
-  return uts;
-}
 
 struct UnstructuredIterator
 {

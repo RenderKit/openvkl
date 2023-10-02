@@ -17,12 +17,11 @@ namespace openvkl {
     {
       using IntervalIterator<W>::IntervalIterator;
 
-      void initializeIntervalV(
-          const vintn<W> &valid,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const vfloatn<W> &times) override final;
+      void initializeIntervalV(const vintn<W> &valid,
+                               const vvec3fn<W> &origin,
+                               const vvec3fn<W> &direction,
+                               const vrange1fn<W> &tRange,
+                               const vfloatn<W> &times) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalN<W> &interval,
@@ -30,7 +29,7 @@ namespace openvkl {
 
       void *getIspcStorage() override final
       {
-        return reinterpret_cast<void*>(ispcStorage);
+        return reinterpret_cast<void *>(ispcStorage);
       }
 
      protected:
@@ -48,7 +47,8 @@ namespace openvkl {
                                 IntervalIteratorContext>;
 
     template <int W>
-    using UnstructuredHitIterator = DefaultHitIterator<W, UnstructuredIntervalIterator<W>>;
+    using UnstructuredHitIterator =
+        DefaultHitIterator<W, UnstructuredIntervalIterator<W>>;
 
     template <int W>
     using UnstructuredHitIteratorFactory =

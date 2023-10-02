@@ -70,7 +70,7 @@ namespace openvkl {
               new rkcommon::tasking::AsyncTask<AsyncResult>([=]() {
                 // Load remaining leaves, but use the usage buffer as guidance.
                 AsyncResult result;
-                result.volume = nullptr;
+                result.volume = VKLVolume();
 
                 rkcommon::utility::CodeTimer loadTimer;
                 loadTimer.start();
@@ -122,7 +122,7 @@ namespace openvkl {
 
       VKLObserver newLeafAccessObserver(VKLSampler sampler) const override
       {
-        VKLObserver observer = nullptr;
+        VKLObserver observer;
         if (grid.numDeferred() > 0)
           observer = vklNewSamplerObserver(sampler, "LeafNodeAccess");
         return observer;
@@ -131,7 +131,7 @@ namespace openvkl {
      protected:
       struct AsyncResult
       {
-        VKLVolume volume{nullptr};
+        VKLVolume volume;
         uint64_t loadMS{0};    // The time it took to load leaves.
         uint64_t commitMS{0};  // The time it took to commit.
       };
@@ -252,7 +252,7 @@ namespace openvkl {
 
       VKLObserver newLeafAccessObserver(VKLSampler sampler) const override
       {
-        return nullptr;
+        return VKLObserver();
       }
 
      protected:

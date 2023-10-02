@@ -13,6 +13,8 @@
 #include "rkcommon/math/range.h"
 #include "rkcommon/math/vec.h"
 
+#include "apps/tests/wrappers.h"
+
 namespace openvkl {
   namespace testing {
 
@@ -127,7 +129,11 @@ namespace openvkl {
                                          numParticles,
                                          VKL_VEC3F,
                                          particles.data(),
+#if defined(OPENVKL_TESTING_GPU)
+                                         VKL_DATA_DEFAULT,
+#else
                                          VKL_DATA_SHARED_BUFFER,
+#endif
                                          sizeof(vec4f));
       vklSetData(volume, "particle.position", positionsData);
       vklRelease(positionsData);
@@ -136,7 +142,11 @@ namespace openvkl {
                                      numParticles,
                                      VKL_FLOAT,
                                      &(particles.data()[0].w),
-                                     VKL_DATA_SHARED_BUFFER,
+#if defined(OPENVKL_TESTING_GPU)
+                                         VKL_DATA_DEFAULT,
+#else
+                                         VKL_DATA_SHARED_BUFFER,
+#endif
                                      sizeof(vec4f));
       vklSetData(volume, "particle.radius", radiiData);
       vklRelease(radiiData);
@@ -181,12 +191,16 @@ namespace openvkl {
       for (int z = 0; z < samplesPerDimension; z++) {
         for (int y = 0; y < samplesPerDimension; y++) {
           for (int x = 0; x < samplesPerDimension; x++) {
-            vec3f objectCoordinates =
+            const vec3f objectCoordinates =
                 bounds.lower +
                 vec3f(x, y, z) / float(samplesPerDimension - 1) * bounds.size();
-
+#if defined(OPENVKL_TESTING_GPU)
+            computedValueRange.extend(
+                computeProceduralValueImpl(objectCoordinates, 0));
+#else
             computedValueRange.extend(vklComputeSample(
-                sampler, (const vkl_vec3f *)&objectCoordinates));
+                &sampler, (const vkl_vec3f *)&objectCoordinates));
+#endif
           }
         }
       };

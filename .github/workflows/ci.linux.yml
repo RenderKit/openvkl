@@ -11,67 +11,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-centos7:
+  build-rocky87:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:7
-      artifact-out: build-centos7
+      image: rockylinux:8.7
+      artifact-out: build-rocky87
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         gitlab/build.sh
 
-  test-centos7:
-    needs: build-centos7
+  test-rocky87:
+    needs: build-rocky87
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-centos7
-      image: centos:7
+      artifact-in: build-rocky87
+      image: rockylinux:8.7
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
-  build-centos7-icc:
+
+
+  build-rocky87-icx:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:7
-      artifact-out: build-centos7-icc
-      artifact-path: ./build/install ./build/openvkl/build
-      cmd: |
-        module load cmake
-        module load intel/2019.4
-        export CC=icc
-        export CXX=icpc
-        export CXXFLAGS="-static-intel -fPIC"
-        gitlab/build.sh
-
-  test-centos7-icc:
-    needs: build-centos7-icc
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      artifact-in: build-centos7-icc
-      image: centos:7
-      cmd: |
-        ./build/openvkl/build/vklTutorial
-        ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
-
-  build-centos7-icx:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
-      image: centos:7
-      artifact-out: build-centos7-icx
+      image: rockylinux:8.7
+      artifact-out: build-rocky87-icx
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         module load cmake
@@ -82,26 +56,27 @@ jobs:
         export LDFLAGS="-static-intel"
         gitlab/build.sh
 
-  test-centos7-icx:
-    needs: build-centos7-icx
+  test-rocky87-icx:
+    needs: build-rocky87-icx
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-centos7-icx
-      image: centos:7
+      artifact-in: build-rocky87-icx
+      image: rockylinux:8.7
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
-  build-centos7-icx-tbb2020:
+  build-rocky87-icx-tbb2020:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:7
-      artifact-out: build-centos7-icx-tbb2020
+      image: rockylinux:8.7
+      artifact-out: build-rocky87-icx-tbb2020
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         module load cmake
@@ -112,26 +87,27 @@ jobs:
         export LDFLAGS="-static-intel"
         gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
 
-  test-centos7-icx-tbb2020:
-    needs: build-centos7-icx-tbb2020
+  test-rocky87-icx-tbb2020:
+    needs: build-rocky87-icx-tbb2020
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-centos7-icx-tbb2020
-      image: centos:7
+      artifact-in: build-rocky87-icx-tbb2020
+      image: rockylinux:8.7
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
-  build-centos7-icx-tbb2020-avx512_8:
+  build-rocky87-icx-tbb2020-avx512_8:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:7
-      artifact-out: build-centos7-icx-tbb2020-avx512_8
+      image: rockylinux:8.7
+      artifact-out: build-rocky87-icx-tbb2020-avx512_8
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         module load cmake
@@ -142,17 +118,18 @@ jobs:
         export LDFLAGS="-static-intel"
         gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH="" -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_AVX512SKX_8_WIDE=ON -DOPENVKL_ISA_AVX512SKX=OFF"
 
-  test-centos7-icx-tbb2020-avx512_8:
-    needs: build-centos7-icx-tbb2020-avx512_8
+  test-rocky87-icx-tbb2020-avx512_8:
+    needs: build-rocky87-icx-tbb2020-avx512_8
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-centos7-icx-tbb2020-avx512_8
-      image: centos:7
+      artifact-in: build-rocky87-icx-tbb2020-avx512_8
+      image: rockylinux:8.7
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos8:
     secrets: inherit
@@ -174,9 +151,10 @@ jobs:
       artifact-in: build-centos8
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   # uses a newer CMake which allows OpenVDB to build
   build-centos8-module-cmake:
@@ -200,9 +178,10 @@ jobs:
       artifact-in: build-centos8-module-cmake
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-ubuntu18_04:
     secrets: inherit
@@ -249,9 +228,10 @@ jobs:
       image: ubuntu:18.04
       cmd: |
         export LD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-ubuntu20_04:
     needs: build-ubuntu20_04
@@ -262,9 +242,10 @@ jobs:
       image: ubuntu:20.04
       cmd: |
         export LD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-ubuntu22_04:
     needs: build-ubuntu22_04
@@ -275,9 +256,10 @@ jobs:
       image: ubuntu:22.04
       cmd: |
         export LD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch:
     secrets: inherit
@@ -299,9 +281,10 @@ jobs:
       artifact-in: build-arch
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-clang:
     secrets: inherit
@@ -325,9 +308,10 @@ jobs:
       artifact-in: build-arch-clang
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-address-sanitizer:
     secrets: inherit
@@ -352,9 +336,10 @@ jobs:
       artifact-in: build-arch-address-sanitizer
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-debug:
     secrets: inherit
@@ -376,9 +361,10 @@ jobs:
       artifact-in: build-arch-debug
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-TBB2020:
     secrets: inherit
@@ -400,9 +386,10 @@ jobs:
       artifact-in: build-arch-TBB2020
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-devel-rkdeps:
     secrets: inherit
@@ -424,9 +411,10 @@ jobs:
       artifact-in: build-arch-devel-rkdeps
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-linux-arch:
     secrets: inherit
@@ -450,37 +438,40 @@ jobs:
       image: ospray/docker-images:arch
       cmd: |
         export LD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
-  build-from-install-centos7:
-    needs: build-centos7
+  build-from-install-rocky87:
+    needs: build-rocky87
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-centos7
-      image: centos:7
+      artifact-in: build-rocky87
+      image: rockylinux:8.7
       cmd: |
         gitlab/build-from-install.sh
 
-  kw-build-scan-report:
+  static-analysis:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
     with:
-      project: openvkl
+      coverity: true
+      project: OpenVKL
       submodules: true
-      prebuild: |
-        mkdir build
-        cd build
-        export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
-        cmake -DBUILD_JOBS=`nproc` -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_GLFW=OFF "$@" ../superbuild
-        cmake --build .
-        mkdir openvkl_build
-        cd openvkl_build
-        DEP_INSTALL_DIR=`pwd`/../install
-        export rkcommon_DIR=$DEP_INSTALL_DIR
-        export embree_DIR=$DEP_INSTALL_DIR
-        cmake -DISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc -DBUILD_EXAMPLES=OFF -DRKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR ../..
+      prebuild: >
+        mkdir build &&
+        cd build &&
+        export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH} &&
+        cmake -DBUILD_JOBS=`nproc` -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_GLFW=OFF "$@" ../superbuild &&
+        cmake --build . &&
+        mkdir openvkl_build &&
+        cd openvkl_build &&
+        DEP_INSTALL_DIR=`pwd`/../install &&
+        export rkcommon_DIR=$DEP_INSTALL_DIR &&
+        export embree_DIR=$DEP_INSTALL_DIR &&
+        export ispcrt_DIR=$DEP_INSTALL_DIR &&
+        cmake -DISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc -DBUILD_EXAMPLES=OFF -DRKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR ../.. &&
         cd ../..
       build: cmake --build ./build/openvkl_build

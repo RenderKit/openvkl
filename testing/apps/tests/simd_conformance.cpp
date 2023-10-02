@@ -1,15 +1,22 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include <algorithm>
 #include "../../external/catch.hpp"
 #include "../common/Traits.h"
 #include "../common/simd.h"
+#include "common/DeviceTraits.h"
+#include "common/device_simd.h"
 #include "openvkl/common.h"
 #include "openvkl_testing.h"
 #include "simd_conformance_ispc.h"
 
-using namespace rkcommon;
 using namespace openvkl::testing;
 using namespace openvkl;
 
@@ -20,8 +27,8 @@ void public_wide_types_conformance_test()
 
   using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
   using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;
-  using VKLIntervalW  = typename vklPublicWideTypes<W>::VKLIntervalW;
-  using VKLHitW       = typename vklPublicWideTypes<W>::VKLHitW;
+  using VKLIntervalW  = typename vklDeviceTypes<W>::VKLIntervalW;
+  using VKLHitW       = typename vklDeviceTypes<W>::VKLHitW;
 
   REQUIRE(sizeof(vvec3fn<W>) == sizeof(vkl_vvec3fW));
   REQUIRE(alignof(vvec3fn<W>) == alignof(vkl_vvec3fW));
@@ -92,7 +99,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
   public_wide_types_conformance_test<8>();
   public_wide_types_conformance_test<16>();
 
-  vklLoadModule("cpu_device");
+  vklInit();
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
@@ -197,9 +204,9 @@ void max_iterator_size_conformance_test(VKLDevice device)
         vklNewIntervalIteratorContext(sampler);
     VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
     maxIntervalSize                  = std::max<size_t>(
-        maxIntervalSize, vklGetIntervalIteratorSize(intervalContext));
+        maxIntervalSize, vklGetIntervalIteratorSize(&intervalContext));
     maxHitSize =
-        std::max<size_t>(maxHitSize, vklGetHitIteratorSize(hitContext));
+        std::max<size_t>(maxHitSize, vklGetHitIteratorSize(&hitContext));
     vklRelease(hitContext);
     vklRelease(intervalContext);
     vklRelease(sampler);
@@ -223,7 +230,7 @@ void max_iterator_size_conformance_test(VKLDevice device)
 
 TEST_CASE("Max iterator size", "[simd_conformance]")
 {
-  vklLoadModule("cpu_device");
+  vklInit();
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);

@@ -37,42 +37,58 @@ if (OPENGL_FOUND)
   target_compile_definitions(imgui PUBLIC VKL_HAVE_IMGUI)
 endif()
 
+set(ENABLED_TARGETS "CPU")
+
+if (${OPENVKL_ENABLE_DEVICE_GPU})
+  list(APPEND ENABLED_TARGETS "GPU")
+endif()
+
 if (TARGET imgui)
-  add_executable(vklExamples
-    vklExamples.cpp
-    BatchApplication.cpp
-    InteractiveApplication.cpp
-    ParameterGui.cpp
-    RenderView.cpp
-    TransferFunctionWidget.cpp
-    ${VKL_RESOURCE}
-  )
 
-  target_link_libraries(vklExamples
-    PRIVATE
-      imgui
-      vkl_example_renderers
-  )
+  foreach (ET IN LISTS ENABLED_TARGETS)  
+    add_executable(vklExamples${ET}
+      vklExamples.cpp
+      BatchApplication.cpp
+      InteractiveApplication.cpp
+      ParameterGui.cpp
+      RenderView.cpp
+      TransferFunctionWidget.cpp
+      ${VKL_RESOURCE}
+    )
 
-  install(TARGETS vklExamples
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  )
+    string(TOLOWER ${ET} ET_LOWER)
+
+    target_link_libraries(vklExamples${ET}
+      PRIVATE
+        imgui
+        vkl_example_renderers_${ET_LOWER}
+    )
+
+    install(TARGETS vklExamples${ET}
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+  endforeach()
+
 endif()
 
 ### vklBenchmark app ##
 
 if (BUILD_BENCHMARKS)
-  add_executable(vklBenchmark
-    vklBenchmark.cpp
-    ${VKL_RESOURCE}
-  )
+  foreach (ET IN LISTS ENABLED_TARGETS)  
+    add_executable(vklBenchmark${ET}
+      vklBenchmark.cpp
+      ${VKL_RESOURCE}
+    )
 
-  target_link_libraries(vklBenchmark
-  PRIVATE
-    benchmark
-    openvkl_testing
-    vkl_example_renderers
-  )
+    string(TOLOWER ${ET} ET_LOWER)
 
-  install(TARGETS vklBenchmark RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    target_link_libraries(vklBenchmark${ET}
+    PRIVATE
+      benchmark
+      openvkl_testing_${ET_LOWER}
+      vkl_example_renderers_${ET_LOWER}
+    )
+
+    install(TARGETS vklBenchmark${ET} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endforeach()
 endif()

@@ -62,7 +62,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
   vklRelease(vklSampler);
 }
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
+#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -70,7 +70,13 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
   SECTION("32-bit addressing")
   {
     const vec3i dimensions = vec3i(128);
-    const vec3i step       = vec3i(2);
+
+    // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+    const vec3i step = vec3i(8);
+#else
+    const vec3i step = vec3i(2);
+#endif
 
     SECTION("unsigned char")
     {
@@ -90,11 +96,13 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
           WaveletStructuredSphericalVolumeUShort>(dimensions, step);
     }
 
+#if HALF_FLOAT_SUPPORT
     SECTION("half")
     {
       sampling_on_interior_vertices_vs_procedural_values<
           WaveletStructuredSphericalVolumeHalf>(dimensions, step);
     }
+#endif
 
     SECTION("float")
     {
@@ -102,13 +110,16 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
           WaveletStructuredSphericalVolumeFloat>(dimensions, step);
     }
 
+#if DOUBLE_SUPPORT
     SECTION("double")
     {
       sampling_on_interior_vertices_vs_procedural_values<
           WaveletStructuredSphericalVolumeDouble>(dimensions, step);
     }
+#endif
   }
 
+#if OPENVKL_TESTING_CPU || defined(OPENVKL_TESTING_GPU)
   // these are necessarily longer-running tests, so should maybe be split out
   // into a "large" test suite later.
   SECTION("64/32-bit addressing")
@@ -136,6 +147,7 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
           get_dimensions_for_64_32bit_addressing(sizeof(unsigned short)), step);
     }
 
+#if HALF_FLOAT_SUPPORT
     SECTION("half")
     {
       sampling_on_interior_vertices_vs_procedural_values<
@@ -143,6 +155,7 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
           get_dimensions_for_64_32bit_addressing(sizeof(half_float::half)),
           step);
     }
+#endif
 
     SECTION("float")
     {
@@ -151,13 +164,16 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
           get_dimensions_for_64_32bit_addressing(sizeof(float)), step);
     }
 
+#if DOUBLE_SUPPORT
     SECTION("double")
     {
       sampling_on_interior_vertices_vs_procedural_values<
           WaveletStructuredSphericalVolumeDouble>(
           get_dimensions_for_64_32bit_addressing(sizeof(double)), step);
     }
+#endif
   }
+#endif
 
   // 64-bit addressing mode is sufficiently addressed in structured regular
   // sampling tests

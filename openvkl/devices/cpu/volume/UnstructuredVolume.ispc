@@ -1,6 +1,9 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "../common/export_util.h"
 #include "UnstructuredSamplerShared.h"
 #include "UnstructuredVolume.ih"
@@ -1409,16 +1412,6 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_gradient_export,
     *gradients =
         VKLUnstructuredVolume_computeGradient(sampler, *objectCoordinates);
   }
-}
-
-export void EXPORT_UNIQUE(VKLUnstructuredVolume_Constructor,
-                          void *uniform _self)
-{
-  memset(_self, 0, sizeof(uniform VKLUnstructuredVolume));
-}
-
-export void EXPORT_UNIQUE(VKLUnstructuredVolume_Destructor, void *uniform _self)
-{
 }
 
 export void EXPORT_UNIQUE(VKLUnstructuredVolume_set,

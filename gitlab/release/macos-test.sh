@@ -29,7 +29,7 @@ cmake --build .
 
 export DYLD_LIBRARY_PATH=${openvkl_DIR}/lib:${DYLD_LIBRARY_PATH}
 
-./vklTutorial
+./vklTutorialCPU
 
 #### Run binaries from release package to verify functionality ####
 

@@ -4,7 +4,7 @@
 #pragma once
 
 #include "ParameterGui.h"
-#include "renderer/Framebuffer.h"
+#include "renderer/framebuffer/Framebuffer.h"
 
 #include <rkcommon/math/vec.h>
 #include <cassert>
@@ -67,7 +67,7 @@ namespace openvkl {
       void drawFramebuffer(const Scheduler &scheduler,
                            const ImVec2 &canvasOrigin,
                            const ImVec2 &canvasSize) const;
-      void drawStats(const Framebuffer::Stats &stats,
+      void drawStats(const Stats &stats,
                      const vec2i &origin) const;
 
      private:

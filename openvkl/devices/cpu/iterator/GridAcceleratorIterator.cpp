@@ -1,10 +1,19 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "GridAcceleratorIterator.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
+#include "GridAccelerator_ispc.h"
+#include "SharedStructuredVolume_ispc.h"
+
 #include "../common/export_util.h"
 #include "../common/math.h"
 #include "../volume/StructuredRegularVolume.h"
+#include "GridAcceleratorIterator.h"
 #include "GridAcceleratorIterator_ispc.h"
 
 namespace openvkl {
@@ -137,7 +146,8 @@ namespace openvkl {
 
     template class GridAcceleratorHitIterator<VKL_TARGET_WIDTH>;
 
-    __vkl_verify_max_hit_iterator_size(GridAcceleratorHitIterator<VKL_TARGET_WIDTH>)
+    __vkl_verify_max_hit_iterator_size(
+        GridAcceleratorHitIterator<VKL_TARGET_WIDTH>)
 
   }  // namespace cpu_device
 }  // namespace openvkl

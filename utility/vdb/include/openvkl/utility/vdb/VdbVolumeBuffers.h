@@ -388,20 +388,20 @@ namespace openvkl {
         this->temporalFormat.push_back(VKL_TEMPORAL_FORMAT_STRUCTURED);
         this->temporallyStructuredNumTimesteps.push_back(
             temporallyStructuredNumTimesteps);
-        this->temporallyUnstructuredIndices.push_back(nullptr);
-        this->temporallyUnstructuredTimes.push_back(nullptr);
+        this->temporallyUnstructuredIndices.push_back(VKLData());
+        this->temporallyUnstructuredTimes.push_back(VKLData());
         dataSize = temporallyStructuredNumTimesteps;
       } else if (temporallyUnstructuredIndices && temporallyUnstructuredTimes) {
         this->temporallyStructuredNumTimesteps.push_back(0);
-        this->temporallyUnstructuredIndices.push_back(nullptr);
-        this->temporallyUnstructuredTimes.push_back(nullptr);
+        this->temporallyUnstructuredIndices.push_back(VKLData());
+        this->temporallyUnstructuredTimes.push_back(VKLData());
         throw std::runtime_error("NOT IMPLEMENTED");
         assert(false);
       } else {
         this->temporalFormat.push_back(VKL_TEMPORAL_FORMAT_CONSTANT);
         this->temporallyStructuredNumTimesteps.push_back(0);
-        this->temporallyUnstructuredIndices.push_back(nullptr);
-        this->temporallyUnstructuredTimes.push_back(nullptr);
+        this->temporallyUnstructuredIndices.push_back(VKLData());
+        this->temporallyUnstructuredTimes.push_back(VKLData());
       }
 
       if (repackNodes) {
@@ -501,11 +501,11 @@ namespace openvkl {
       format.push_back(VKL_FORMAT_INVALID);
       this->temporalFormat.push_back(VKL_TEMPORAL_FORMAT_INVALID);
       this->temporallyStructuredNumTimesteps.push_back(0);
-      this->temporallyUnstructuredIndices.push_back(nullptr);
-      this->temporallyUnstructuredTimes.push_back(nullptr);
+      this->temporallyUnstructuredIndices.push_back(VKLData());
+      this->temporallyUnstructuredTimes.push_back(VKLData());
 
       if (!repackNodes) {
-        data.push_back(nullptr);
+        data.push_back(VKLData());
       }
 
       makeConstant(nodeIndex,

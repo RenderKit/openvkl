@@ -13,7 +13,7 @@ namespace openvkl {
 
     template <int W>
     class VdbSampler;
-    struct VdbGrid;
+    using ispc::VdbGrid;
 
     /*
      * The leaf access observer simply wraps the buffer allocated by VdbVolume.
@@ -23,9 +23,9 @@ namespace openvkl {
     {
       VdbLeafAccessObserver(VdbSampler<W> &target, const VdbGrid &grid);
 
-      VdbLeafAccessObserver(VdbLeafAccessObserver &&) = delete;
-      VdbLeafAccessObserver &operator=(VdbLeafAccessObserver &&) = delete;
-      VdbLeafAccessObserver(const VdbLeafAccessObserver &)       = delete;
+      VdbLeafAccessObserver(VdbLeafAccessObserver &&)                 = delete;
+      VdbLeafAccessObserver &operator=(VdbLeafAccessObserver &&)      = delete;
+      VdbLeafAccessObserver(const VdbLeafAccessObserver &)            = delete;
       VdbLeafAccessObserver &operator=(const VdbLeafAccessObserver &) = delete;
 
       ~VdbLeafAccessObserver();
@@ -40,7 +40,7 @@ namespace openvkl {
       ObserverRegistry<W> &getRegistry();
 
      private:
-      Allocator allocator;
+      Allocator allocator{this->getDevice()};
       size_t size{0};
       vkl_uint32 *accessBuffer{nullptr};
     };

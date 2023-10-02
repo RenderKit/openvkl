@@ -22,8 +22,7 @@ namespace openvkl {
 
     struct RandomSTD
     {
-      template <typename T>
-      RandomSTD(const T &, const T &)
+      RandomSTD(const unsigned int &, const unsigned int &)
       {
       }
 
@@ -37,11 +36,10 @@ namespace openvkl {
 #else
 
     // TEA - Random numbers based on Tiny Encryption Algorithm //
-
-    template <typename T, int NUM_ROUNDS = 8>
-    inline void tea8(T &v0, T &v1)
+    const unsigned int NUM_ROUNDS = 8;
+    inline void tea8(unsigned int &v0, unsigned int &v1)
     {
-      T sum{0};
+      unsigned int sum{0};
 
       for (int i = 0; i < NUM_ROUNDS; i++) {
         sum += 0x9e3779b9;
@@ -50,22 +48,21 @@ namespace openvkl {
       }
     }
 
-    template <typename T, int NUM_TEA_ROUNDS = 8>
     struct RandomTEA
     {
-      RandomTEA(const T &idx, const T &seed) : v0(idx), v1(seed) {}
+      RandomTEA(const unsigned int &idx, const unsigned int &seed) : v0(idx), v1(seed) {}
 
       vec2f getFloats()
       {
-        tea8<T, NUM_TEA_ROUNDS>(v0, v1);
+        tea8(v0, v1);
         const float tofloat = 2.3283064365386962890625e-10f;  // 1/2^32
         return vec2f{v0 * tofloat, v1 * tofloat};
       }
 
-      T v0, v1;
+      unsigned int v0, v1;
     };
 
-    using RNG = RandomTEA<unsigned int, 8>;
+    using RNG = RandomTEA;
 #endif
 
   }  // namespace examples

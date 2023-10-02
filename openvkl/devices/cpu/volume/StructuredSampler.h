@@ -10,11 +10,11 @@
 #include "Sampler_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredRegularVolume.h"
+#include "StructuredSamplerShared.h"
 #include "StructuredSphericalVolume.h"
 #include "StructuredVolume.h"
 #include "openvkl/VKLFilter.h"
-#include "../common/StructShared.h"
-#include "StructuredSamplerShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -23,7 +23,8 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
     struct StructuredSampler
         : public AddStructShared<SamplerBase<W,
                                              StructuredVolume,
@@ -31,10 +32,12 @@ namespace openvkl {
                                              HitIteratorFactory>,
                                  ispc::StructuredSamplerShared>
     {
-      StructuredSampler(StructuredVolume<W> &volume);
+      StructuredSampler(Device *device, StructuredVolume<W> &volume);
       ~StructuredSampler() override;
 
       void commit() override;
+
+      VKLFeatureFlagsInternal getFeatureFlags() const override;
 
       // single attribute /////////////////////////////////////////////////////
 
@@ -107,38 +110,54 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        StructuredSampler(StructuredVolume<W> &volume)
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline StructuredSampler<
+        W,
+        IntervalIteratorFactory,
+        HitIteratorFactory,
+        featureFlags>::StructuredSampler(Device *device,
+                                         StructuredVolume<W> &volume)
         : AddStructShared<SamplerBase<W,
                                       StructuredVolume,
                                       IntervalIteratorFactory,
                                       HitIteratorFactory>,
-                          ispc::StructuredSamplerShared>(volume),
+                          ispc::StructuredSamplerShared>(device, volume),
           filter(volume.getFilter()),
           gradientFilter(volume.getGradientFilter())
     {
-      CALL_ISPC(StructuredSampler_create, volume.getSh(), this->getSh());
+      ispc::StructuredSamplerShared *ssampler =
+          (ispc::StructuredSamplerShared *)this->getSh();
+      memset(ssampler, 0, sizeof(ispc::StructuredSamplerShared));
+
+      ispc::SamplerShared *sampler = &ssampler->super.super;
+      sampler->volume              = (const ispc::VolumeShared *)volume.getSh();
+      CALL_ISPC(assignStructuredSamplerKernels, this->getSh());
     }
 
     template <int W,
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        ~StructuredSampler()
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline StructuredSampler<W,
+                             IntervalIteratorFactory,
+                             HitIteratorFactory,
+                             featureFlags>::~StructuredSampler()
     {
-      CALL_ISPC(StructuredSampler_destroy, this->getSh());
     }
 
     template <int W,
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline void
-    StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::commit()
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline void StructuredSampler<W,
+                                  IntervalIteratorFactory,
+                                  HitIteratorFactory,
+                                  featureFlags>::commit()
     {
       filter = (VKLFilter)this->template getParam<int>("filter", filter);
 
@@ -159,13 +178,35 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline void
-    StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        computeSample(const vvec3fn<1> &objectCoordinates,
-                      vfloatn<1> &samples,
-                      unsigned int attributeIndex,
-                      const vfloatn<1> &time) const
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline VKLFeatureFlagsInternal
+    StructuredSampler<W,
+                      IntervalIteratorFactory,
+                      HitIteratorFactory,
+                      featureFlags>::getFeatureFlags() const
+    {
+      if (this->isSpecConstsDisabled()) {
+        return VKL_FEATURE_FLAG_ALL;
+      }
+
+      return featureFlags;
+    }
+
+    template <int W,
+              template <int>
+              class IntervalIteratorFactory,
+              template <int>
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline void StructuredSampler<
+        W,
+        IntervalIteratorFactory,
+        HitIteratorFactory,
+        featureFlags>::computeSample(const vvec3fn<1> &objectCoordinates,
+                                     vfloatn<1> &samples,
+                                     unsigned int attributeIndex,
+                                     const vfloatn<1> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
       assertValidTime(time[0]);
@@ -181,14 +222,17 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline void
-    StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        computeSampleV(const vintn<W> &valid,
-                       const vvec3fn<W> &objectCoordinates,
-                       vfloatn<W> &samples,
-                       unsigned int attributeIndex,
-                       const vfloatn<W> &time) const
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline void StructuredSampler<
+        W,
+        IntervalIteratorFactory,
+        HitIteratorFactory,
+        featureFlags>::computeSampleV(const vintn<W> &valid,
+                                      const vvec3fn<W> &objectCoordinates,
+                                      vfloatn<W> &samples,
+                                      unsigned int attributeIndex,
+                                      const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
       assertValidTimes(valid, time);
@@ -205,14 +249,17 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline void
-    StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        computeSampleN(unsigned int N,
-                       const vvec3fn<1> *objectCoordinates,
-                       float *samples,
-                       unsigned int attributeIndex,
-                       const float *times) const
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline void StructuredSampler<
+        W,
+        IntervalIteratorFactory,
+        HitIteratorFactory,
+        featureFlags>::computeSampleN(unsigned int N,
+                                      const vvec3fn<1> *objectCoordinates,
+                                      float *samples,
+                                      unsigned int attributeIndex,
+                                      const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
       assertAllValidTimes(N, times);
@@ -229,14 +276,17 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline void
-    StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        computeGradientV(const vintn<W> &valid,
-                         const vvec3fn<W> &objectCoordinates,
-                         vvec3fn<W> &gradients,
-                         unsigned int attributeIndex,
-                         const vfloatn<W> &time) const
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline void StructuredSampler<
+        W,
+        IntervalIteratorFactory,
+        HitIteratorFactory,
+        featureFlags>::computeGradientV(const vintn<W> &valid,
+                                        const vvec3fn<W> &objectCoordinates,
+                                        vvec3fn<W> &gradients,
+                                        unsigned int attributeIndex,
+                                        const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
       assertValidTimes(valid, time);
@@ -253,14 +303,17 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline void
-    StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        computeGradientN(unsigned int N,
-                         const vvec3fn<1> *objectCoordinates,
-                         vvec3fn<1> *gradients,
-                         unsigned int attributeIndex,
-                         const float *times) const
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline void StructuredSampler<
+        W,
+        IntervalIteratorFactory,
+        HitIteratorFactory,
+        featureFlags>::computeGradientN(unsigned int N,
+                                        const vvec3fn<1> *objectCoordinates,
+                                        vvec3fn<1> *gradients,
+                                        unsigned int attributeIndex,
+                                        const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
       assertAllValidTimes(N, times);
@@ -277,14 +330,17 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline void
-    StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        computeSampleM(const vvec3fn<1> &objectCoordinates,
-                       float *samples,
-                       unsigned int M,
-                       const unsigned int *attributeIndices,
-                       const vfloatn<1> &time) const
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline void StructuredSampler<
+        W,
+        IntervalIteratorFactory,
+        HitIteratorFactory,
+        featureFlags>::computeSampleM(const vvec3fn<1> &objectCoordinates,
+                                      float *samples,
+                                      unsigned int M,
+                                      const unsigned int *attributeIndices,
+                                      const vfloatn<1> &time) const
     {
       assertValidAttributeIndices(volume, M, attributeIndices);
       assertValidTime(time[0]);
@@ -301,15 +357,18 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline void
-    StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        computeSampleMV(const vintn<W> &valid,
-                        const vvec3fn<W> &objectCoordinates,
-                        float *samples,
-                        unsigned int M,
-                        const unsigned int *attributeIndices,
-                        const vfloatn<W> &time) const
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline void StructuredSampler<
+        W,
+        IntervalIteratorFactory,
+        HitIteratorFactory,
+        featureFlags>::computeSampleMV(const vintn<W> &valid,
+                                       const vvec3fn<W> &objectCoordinates,
+                                       float *samples,
+                                       unsigned int M,
+                                       const unsigned int *attributeIndices,
+                                       const vfloatn<W> &time) const
     {
       assertValidAttributeIndices(volume, M, attributeIndices);
       assertValidTimes(valid, time);
@@ -327,15 +386,18 @@ namespace openvkl {
               template <int>
               class IntervalIteratorFactory,
               template <int>
-              class HitIteratorFactory>
-    inline void
-    StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        computeSampleMN(unsigned int N,
-                        const vvec3fn<1> *objectCoordinates,
-                        float *samples,
-                        unsigned int M,
-                        const unsigned int *attributeIndices,
-                        const float *times) const
+              class HitIteratorFactory,
+              VKLFeatureFlagsInternal featureFlags>
+    inline void StructuredSampler<
+        W,
+        IntervalIteratorFactory,
+        HitIteratorFactory,
+        featureFlags>::computeSampleMN(unsigned int N,
+                                       const vvec3fn<1> *objectCoordinates,
+                                       float *samples,
+                                       unsigned int M,
+                                       const unsigned int *attributeIndices,
+                                       const float *times) const
     {
       assertValidAttributeIndices(volume, M, attributeIndices);
       assertAllValidTimes(N, times);
@@ -353,7 +415,8 @@ namespace openvkl {
     using StructuredRegularSampler =
         StructuredSampler<W,
                           GridAcceleratorIntervalIteratorFactory,
-                          GridAcceleratorHitIteratorFactory>;
+                          GridAcceleratorHitIteratorFactory,
+                          VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME>;
 
     template <int W>
     using StructuredSphericalIntervalIteratorFactory =
@@ -379,7 +442,8 @@ namespace openvkl {
     using StructuredSphericalSampler =
         StructuredSampler<W,
                           StructuredSphericalIntervalIteratorFactory,
-                          StructuredSphericalHitIteratorFactory>;
+                          StructuredSphericalHitIteratorFactory,
+                          VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME>;
 
   }  // namespace cpu_device
 }  // namespace openvkl

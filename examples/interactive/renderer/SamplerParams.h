@@ -20,9 +20,9 @@ namespace openvkl {
       switch (filter) {
       case VKL_FILTER_NEAREST:
         return "nearest";
-      case VKL_FILTER_TRILINEAR:
+      case VKL_FILTER_LINEAR:
         return "trilinear";
-      case VKL_FILTER_TRICUBIC:
+      case VKL_FILTER_CUBIC:
         return "tricubic";
       default:
         break;
@@ -33,22 +33,22 @@ namespace openvkl {
     inline VKLFilter stringToFilter(const std::string &filterArg)
     {
       if (filterArg == "trilinear")
-        return VKL_FILTER_TRILINEAR;
+        return VKL_FILTER_LINEAR;
       else if (filterArg == "tricubic")
-        return VKL_FILTER_TRICUBIC;
+        return VKL_FILTER_CUBIC;
       else if (filterArg == "nearest")
         return VKL_FILTER_NEAREST;
       else
         throw std::runtime_error("unsupported filter specified: " + filterArg);
-      return VKL_FILTER_TRILINEAR;
+      return VKL_FILTER_LINEAR;
     }
 
 
     struct SamplerParams
     {
       int maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
-      VKLFilter filter{VKL_FILTER_TRILINEAR};
-      VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
+      VKLFilter filter{VKL_FILTER_LINEAR};
+      VKLFilter gradientFilter{VKL_FILTER_LINEAR};
 
       void parseCommandLine(std::list<std::string> &args,
           const VolumeParams &volumeParams);
@@ -64,8 +64,8 @@ namespace openvkl {
         {
           static const std::vector<VKLFilter> types = {
             VKL_FILTER_NEAREST,
-            VKL_FILTER_TRILINEAR,
-            VKL_FILTER_TRICUBIC
+            VKL_FILTER_LINEAR,
+            VKL_FILTER_CUBIC
           };
           return types;
         }

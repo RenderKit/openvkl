@@ -1,17 +1,20 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
+#include "../../common/ValueRanges.ih"
 #include "VdbGrid.h"
 #include "VdbIterator.ih"
 #include "VdbQueryVoxelDense.ih"
 #include "VdbSamplerShared.h"
-#include "common/export_util.h"
-#include "math/box_utility.ih"
-#include "rkcommon/math/math.ih"
+#include "../../common/export_util.h"
+#include "../../math/box_utility.ih"
 
 // Generated headers.
-#include "openvkl_vdb/VdbQueryVoxel_0.ih"
 #include "openvkl_vdb/HDDA_0.ih"
+#include "openvkl_vdb/VdbQueryVoxel_0.ih"
 
 // Ignore warning about exporting uniform-pointer-to-varying, as this is in
 // fact legal.
@@ -44,13 +47,13 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
-  self->super.context = (const IntervalIteratorContext *uniform)_context;
-  self->super.iterate = VdbIterator_iterateIntervalInternal;
+  self->super.super.context = (const IntervalIteratorContext *uniform)_context;
+  self->super.iterate       = VdbIterator_iterateIntervalInternal;
   self->super.elementaryCellIterationSupported = false;
 
   const uniform VdbSamplerShared *uniform sampler =
       (const uniform VdbSamplerShared *uniform)(
-          self->super.context->super.sampler);
+          self->super.super.context->super.sampler);
   const uniform VdbGrid *uniform grid = sampler->grid;
 
   self->grid = grid;
@@ -85,7 +88,7 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
     ddaInit(rayOrg,
             rayDir,
             tRangeIntersected.lower,
-            self->super.context->super.maxIteratorDepth,
+            self->super.super.context->super.maxIteratorDepth,
             self->dda);
   }
 }
@@ -120,7 +123,7 @@ inline void VdbIterator_iterateIntervalInternal(
           self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
           self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
           self->dda.level,
-          self->super.context->super.attributeIndex,
+          self->super.super.context->super.attributeIndex,
           inputValueRanges,
           voxel);
     } else {
@@ -129,7 +132,7 @@ inline void VdbIterator_iterateIntervalInternal(
                              self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
                              self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
                              self->dda.level,
-                             self->super.context->super.attributeIndex,
+                             self->super.super.context->super.attributeIndex,
                              inputValueRanges,
                              voxel);
     }
@@ -167,10 +170,11 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
-  VdbIterator_iterateIntervalInternal(imask,
-                                      _self,
-                                      _interval,
-                                      self->super.context->super.valueRanges,
-                                      false,
-                                      _result);
+  VdbIterator_iterateIntervalInternal(
+      imask,
+      _self,
+      _interval,
+      self->super.super.context->super.valueRanges,
+      false,
+      _result);
 }

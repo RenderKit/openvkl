@@ -5,22 +5,27 @@
 
 #include "common.isph"
 
-struct OpenVKLVolume;
-typedef OpenVKLVolume *uniform VKLVolume;
+typedef uniform VKLObject VKLVolume;
 
-VKL_API void vklGetBoundingBoxRef(VKLVolume volume,
+VKL_API void vklGetBoundingBoxRef(const VKLVolume *uniform volume,
                                   vkl_box3f *uniform boundingBox);
 
 VKL_FORCEINLINE uniform vkl_box3f vklGetBoundingBox(VKLVolume volume)
 {
   uniform vkl_box3f result;
-  vklGetBoundingBoxRef(volume, &result);
+  vklGetBoundingBoxRef(&volume, &result);
   return result;
 }
 
-VKL_API uniform unsigned int vklGetNumAttributes(VKLVolume volume);
+VKL_API uniform unsigned int vklGetNumAttributesRef(
+    const VKLVolume *uniform volume);
 
-VKL_API void vklGetValueRangeRef(VKLVolume volume,
+VKL_FORCEINLINE uniform unsigned int vklGetNumAttributes(VKLVolume volume)
+{
+  return vklGetNumAttributesRef(&volume);
+}
+
+VKL_API void vklGetValueRangeRef(const VKLVolume *uniform volume,
                                  uniform unsigned int attributeIndex,
                                  vkl_range1f *uniform valueRange);
 
@@ -28,6 +33,6 @@ VKL_FORCEINLINE uniform vkl_range1f
 vklGetValueRange(VKLVolume volume, uniform unsigned int attributeIndex = 0)
 {
   uniform vkl_range1f result;
-  vklGetValueRangeRef(volume, attributeIndex, &result);
+  vklGetValueRangeRef(&volume, attributeIndex, &result);
   return result;
 }

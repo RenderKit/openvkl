@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "BatchApplication.h"
-#include "renderer/Framebuffer.h"
 #include "renderer/Renderer.h"
 #include "renderer/Scene.h"
 #include "renderer/Scheduler.h"
+#include "renderer/framebuffer/Framebuffer.h"
 
 #include "rkcommon/utility/SaveImage.h"
 
@@ -19,7 +19,7 @@ namespace openvkl {
     void BatchApplication::run(Scene &scene)
     {
       if (scene.rendererTypes.empty()) {
-        scene.rendererTypes = {"density_path_tracer_ispc"};
+        scene.rendererTypes = {scene.supportedRendererTypes()[0]};
       }
 
       auto &scheduler = scene.scheduler;
@@ -41,19 +41,28 @@ namespace openvkl {
         }
 
         Renderer &renderer = *(rendererPtr.get());
-        // This call will resize the framebuffer to our desired output
+
+        // This call will resize empty framebuffer to our desired output
         // resolution.
-        renderer.getFramebuffer(resolution.x, resolution.y);
+        renderer.resizeFramebuffer(resolution.x, resolution.y);
 
         const std::string filename = type + ".pfm";
 
         std::cout << "Rendering with " << type << " ..." << std::endl;
 
         scheduler.start(renderer);
+
         for (unsigned i = 0; i < scene.batchModeSpp; ++i) {
           std::cout << "\r" << i << " / " << scene.batchModeSpp << " spp"
                     << std::flush;
           scheduler.renderFrame(renderer);
+
+          if (scene.printStats) {
+            const auto &framebuffer =
+                renderer.getFramebuffer(resolution.x, resolution.y);
+            const auto &fb = framebuffer.getFrontBuffer();
+            fb.getStats().printToStdout();
+          }
         }
         scheduler.stop(renderer);
         std::cout << std::endl;
@@ -63,10 +72,12 @@ namespace openvkl {
         const auto &fb = framebuffer.getFrontBuffer();
         std::cout << "Writing " << filename << " ..." << std::endl;
         rkcommon::utility::writePFM(
-            filename, fb.getWidth(), fb.getHeight(), fb.getRgba());
+            filename,
+            fb.getWidth(),
+            fb.getHeight(),
+            reinterpret_cast<const vec3fa *>(fb.getRgba()));
       }
     }
 
   }  // namespace examples
 }  // namespace openvkl
-

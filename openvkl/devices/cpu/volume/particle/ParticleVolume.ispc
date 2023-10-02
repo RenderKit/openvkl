@@ -1,13 +1,14 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "../../common/Data.ih"
 #include "../../common/export_util.h"
 #include "../UnstructuredSamplerShared.h"
 #include "../UnstructuredVolume.ih"
 #include "ParticleVolumeShared.h"
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
 
 inline void getParticleContributionsGaussian(
     const VKLParticleVolume *uniform self,

@@ -152,7 +152,7 @@ namespace openvkl {
 
         size_t fbw = 0;
         size_t fbh = 0;
-        Framebuffer::Stats stats;
+        Stats stats;
 
         // Upload to GPU.
         glBindTexture(GL_TEXTURE_2D, fbTexId);
@@ -209,25 +209,27 @@ namespace openvkl {
                      ImVec2(0, 0));
 
         drawStats(stats, vec2i(imgOrigin.x + 10, imgOrigin.y + 10));
+        if (renderer->getScene().printStats) {
+          stats.printToStdout();
+        }
       }
     }
 
     // -------------------------------------------------------------------------
 
-    inline double toSeconds(const Framebuffer::Stats::Clock::duration &d)
+    inline double toSeconds(const Stats::Clock::duration &d)
     {
       using MuS = std::chrono::microseconds;
       return std::chrono::duration_cast<MuS>(d).count() / 1000000.0;
     }
 
-    inline double toMilliseconds(const Framebuffer::Stats::Clock::duration &d)
+    inline double toMilliseconds(const Stats::Clock::duration &d)
     {
       using MuS = std::chrono::microseconds;
       return std::chrono::duration_cast<MuS>(d).count() / 1000.0;
     }
 
-    void RenderView::drawStats(const Framebuffer::Stats &stats,
-                               const vec2i &origin) const
+    void RenderView::drawStats(const Stats &stats, const vec2i &origin) const
     {
       ImDrawList *drawList = ImGui::GetWindowDrawList();
       std::ostringstream os;

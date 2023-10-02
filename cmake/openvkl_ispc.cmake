@@ -199,11 +199,20 @@ macro (OPENVKL_ISPC_COMPILE)
 
   string(CONCAT ISPC_TARGETS_STR ${ISPC_TARGETS})
 
-  set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR}/ispc_${ISPC_TARGETS_STR})
+  set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR}/ispc_${ISPC_TARGET_NAME}_${ISPC_TARGETS_STR})
 
   if (ISPC_INCLUDE_DIR)
-    string(REPLACE ";" ";-I;" ISPC_INCLUDE_DIR_PARMS "${ISPC_INCLUDE_DIR}")
-    set(ISPC_INCLUDE_DIR_PARMS "-I" ${ISPC_INCLUDE_DIR_PARMS})
+    set(ISPC_INCLUDE_DIR_PARMS "")
+    foreach(inc IN LISTS ISPC_INCLUDE_DIR)
+      if (inc MATCHES "_INTERFACE:")
+        # modify generator expressions directly, so we don't get dangling -I's
+        # if a generator expression evaluates to empty
+        string(REPLACE "_INTERFACE:" "_INTERFACE:-I" inc_r ${inc})
+        set(ISPC_INCLUDE_DIR_PARMS "${inc_r}" ${ISPC_INCLUDE_DIR_PARMS})
+      else()
+        set(ISPC_INCLUDE_DIR_PARMS "-I${inc}" ${ISPC_INCLUDE_DIR_PARMS})
+      endif()
+    endforeach()
   endif()
 
   #CAUTION: -O0/1 -g with ispc seg faults
@@ -302,3 +311,8 @@ macro (OPENVKL_ISPC_COMPILE)
     set(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
   endforeach()
 endmacro()
+
+if (NOT ISPCRT_FOUND)
+  set(ISPCRT_VERSION_REQUIRED "1.19.0")
+  find_package(ispcrt ${ISPCRT_VERSION_REQUIRED} REQUIRED)
+endif()

@@ -51,6 +51,12 @@ typedef varying range1f (*uniform ComputeVoxelRangeFunc)(
 
 #endif  // __cplusplus
 
+  enum SharedStructuredVolumeGridType
+  {
+    structured_regular,
+    structured_spherical
+  };
+
   struct SharedStructuredVolume
   {
     VolumeShared super;
@@ -69,6 +75,9 @@ typedef varying range1f (*uniform ComputeVoxelRangeFunc)(
     VKL_INTEROP_UNIFORM vec3f gridSpacing;
 
     VKL_INTEROP_UNIFORM box3f boundingBox;
+
+    // value range for first attribute only, to support interval iterators
+    VKL_INTEROP_UNIFORM box1f valueRange0;
 
     VKL_INTEROP_UNIFORM vec3f localCoordinatesUpperBound;
 

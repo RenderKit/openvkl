@@ -10,8 +10,6 @@
 #include "rkcommon/memory/RefCount.h"
 #include "rkcommon/utility/ParameterizedObject.h"
 
-using namespace rkcommon::memory;
-
 namespace openvkl {
 
   struct Data;
@@ -25,7 +23,7 @@ namespace openvkl {
   {
     using VKL_PTR = ManagedObject *;
 
-    ManagedObject() = default;
+    ManagedObject(Device *device) : device(device){};
 
     virtual ~ManagedObject() override;
 
@@ -50,13 +48,13 @@ namespace openvkl {
     // gets a data array of elements of the given type; uses the provided
     // default value if the parameter is not set
     template <typename T>
-    const Ref<const DataT<T>> getParamDataT(const char *name,
-                                            DataT<T> *valIfNotFound);
+    const rkcommon::memory::Ref<const DataT<T>> getParamDataT(
+        const char *name, DataT<T> *valIfNotFound);
 
     // gets a data array of elements of the given type; throws an error if the
     // requested parameter is not set
     template <typename T>
-    const Ref<const DataT<T>> getParamDataT(const char *name);
+    const rkcommon::memory::Ref<const DataT<T>> getParamDataT(const char *name);
 
     // gets a data array of the given size and type.
     // uses the provided default value if the parameter is not set.
@@ -64,9 +62,8 @@ namespace openvkl {
     // throws an error if the array has more than one element but a different
     // size than expectedSize.
     template <typename T>
-    const Ref<const DataT<T>> getParamDataT(const char *name,
-                                            size_t expectedSize,
-                                            T valIfNotFound);
+    const rkcommon::memory::Ref<const DataT<T>> getParamDataT(
+        const char *name, size_t expectedSize, T valIfNotFound);
 
     // throws an error if the named Data parameter is present and not compact
     void requireParamDataIsCompact(const char *name);
@@ -83,6 +80,12 @@ namespace openvkl {
 
     // device this ManagedObject belongs to
     rkcommon::memory::IntrusivePtr<Device> device;
+
+    // convenience for the accessing the above controllably
+    Device *getDevice() const
+    {
+      return device.ptr;
+    }
   };
 
   template <typename OPENVKL_CLASS, VKLDataType VKL_TYPE>

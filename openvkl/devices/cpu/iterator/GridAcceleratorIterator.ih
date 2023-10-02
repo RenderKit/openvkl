@@ -3,8 +3,7 @@
 
 #pragma once
 
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
+#include "IteratorShared.h"
 
 struct IntervalIteratorContext;
 
@@ -23,7 +22,8 @@ struct GridAcceleratorIteratorHitState
 
 struct GridAcceleratorIterator
 {
-  const IntervalIteratorContext *uniform context;
+  uniform IntervalIteratorShared super;
+
   vec3f origin;
   vec3f direction;
   box1f tRange;

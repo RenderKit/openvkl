@@ -1,9 +1,15 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "VdbIterator.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../../common/export_util.h"
 #include "../../iterator/Iterator.h"
+#include "VdbIterator.h"
 #include "VdbIterator_ispc.h"
 #include "VdbVolume.h"
 
@@ -41,8 +47,9 @@ namespace openvkl {
 
     template class VdbIntervalIterator<VKL_TARGET_WIDTH>;
 
-    __vkl_verify_max_interval_iterator_size(VdbIntervalIterator<VKL_TARGET_WIDTH>)
-    __vkl_verify_max_hit_iterator_size(VdbHitIterator<VKL_TARGET_WIDTH>)
+    __vkl_verify_max_interval_iterator_size(
+        VdbIntervalIterator<VKL_TARGET_WIDTH>)
+        __vkl_verify_max_hit_iterator_size(VdbHitIterator<VKL_TARGET_WIDTH>)
 
   }  // namespace cpu_device
 }  // namespace openvkl

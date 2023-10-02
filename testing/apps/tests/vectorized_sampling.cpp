@@ -56,18 +56,18 @@ void test_vectorized_sampling()
 
         if (callingWidth == 4) {
           vklComputeSample4(valid.data(),
-                            vklSampler,
+                            &vklSampler,
                             (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                             samples);
         } else if (callingWidth == 8) {
           vklComputeSample8(valid.data(),
-                            vklSampler,
+                            &vklSampler,
                             (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                             samples);
 
         } else if (callingWidth == 16) {
           vklComputeSample16(valid.data(),
-                             vklSampler,
+                             &vklSampler,
                              (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                              samples);
         } else {
@@ -76,7 +76,7 @@ void test_vectorized_sampling()
 
         for (int i = 0; i < width; i++) {
           float sampleTruth = vklComputeSample(
-              vklSampler, (const vkl_vec3f *)&objectCoordinates[i]);
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates[i]);
 
           INFO("sample = " << i + 1 << " / " << width
                            << ", calling width = " << callingWidth);

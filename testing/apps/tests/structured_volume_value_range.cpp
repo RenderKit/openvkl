@@ -39,12 +39,12 @@ void computed_vs_api_value_range(vec3i dimensions = vec3i(128))
 }
 
 #if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || \
-    OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
+    OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Structured volume value range", "[volume_value_range]")
 {
   initializeOpenVKL();
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
   SECTION("structuredRegular")
   {
     SECTION("unsigned char")
@@ -62,24 +62,28 @@ TEST_CASE("Structured volume value range", "[volume_value_range]")
       computed_vs_api_value_range<WaveletStructuredRegularVolumeUShort>();
     }
 
+#if HALF_FLOAT_SUPPORT
     SECTION("half")
     {
       computed_vs_api_value_range<WaveletStructuredRegularVolumeHalf>();
     }
+#endif
 
     SECTION("float")
     {
       computed_vs_api_value_range<WaveletStructuredRegularVolumeFloat>();
     }
 
+#if DOUBLE_SUPPORT
     SECTION("double")
     {
       computed_vs_api_value_range<WaveletStructuredRegularVolumeDouble>();
     }
+#endif
   }
 #endif
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
+#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL || defined(OPENVKL_TESTING_GPU)
   SECTION("structuredSpherical")
   {
     SECTION("unsigned char")
@@ -97,20 +101,24 @@ TEST_CASE("Structured volume value range", "[volume_value_range]")
       computed_vs_api_value_range<WaveletStructuredSphericalVolumeUShort>();
     }
 
+#if HALF_FLOAT_SUPPORT
     SECTION("half")
     {
       computed_vs_api_value_range<WaveletStructuredSphericalVolumeHalf>();
     }
+#endif
 
     SECTION("float")
     {
       computed_vs_api_value_range<WaveletStructuredSphericalVolumeFloat>();
     }
 
+#if DOUBLE_SUPPORT
     SECTION("double")
     {
       computed_vs_api_value_range<WaveletStructuredSphericalVolumeDouble>();
     }
+#endif
   }
 #endif
 

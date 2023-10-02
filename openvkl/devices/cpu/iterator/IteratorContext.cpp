@@ -1,13 +1,20 @@
 // Copyright 2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "IteratorContext.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../common/Data.h"
 #include "../common/export_util.h"
 #include "../sampler/Sampler.h"
 #include "../volume/Volume.h"
+#include "IteratorContext.h"
 #include "IteratorContext_ispc.h"
 #include "rkcommon/math/range.h"
+using namespace rkcommon::memory;
 
 #if OPENVKL_DEVICE_CPU_VDB
 #include "../volume/vdb/VdbVolume.h"
@@ -213,8 +220,20 @@ namespace openvkl {
           mapToMaxIteratorDepth(*this, intervalResolutionHint);
       const bool elementaryCellIteration = (intervalResolutionHint == 1.f);
 
+      auto mySharedStruct              = this->getSh();
+      ispc::ValueRanges &ssValueRanges = mySharedStruct->super.valueRanges;
+
       if (this->SharedStructInitialized) {
-        CALL_ISPC(IntervalIteratorContext_Destructor, this->getSh());
+        CALL_ISPC(IntervalIteratorContext_Destructor, mySharedStruct);
+      }
+
+      ssValueRanges.numRanges = valueRanges.size();
+      if (valueRanges.size() > 0) {
+        this->rangesView =
+            make_buffer_shared_unique<range1f>(this->getDevice(), valueRanges);
+        ssValueRanges.ranges = (box1f *)this->rangesView->sharedPtr();
+      } else {
+        ssValueRanges.ranges = nullptr;
       }
 
       CALL_ISPC(IntervalIteratorContext_Constructor,
@@ -289,9 +308,21 @@ namespace openvkl {
       maxIteratorDepth = mapToMaxIteratorDepth(*this, 0.5f);
 #endif
 
+      auto mySharedStruct = this->getSh();
+      ispc::ValueRanges &ssValueRanges =
+          mySharedStruct->super.super.valueRanges;
+
       if (this->SharedStructInitialized) {
-        CALL_ISPC(HitIteratorContext_Destructor, this->getSh());
+        CALL_ISPC(HitIteratorContext_Destructor, mySharedStruct);
       }
+
+      this->rangesView =
+          make_buffer_shared_unique<range1f>(this->getDevice(), values.size());
+      ssValueRanges.ranges = (box1f *)this->rangesView->sharedPtr();
+
+      this->valuesView =
+          make_buffer_shared_unique<float>(this->getDevice(), values);
+      mySharedStruct->values = this->valuesView->sharedPtr();
 
       CALL_ISPC(HitIteratorContext_Constructor,
                 this->getSampler().getSh(),

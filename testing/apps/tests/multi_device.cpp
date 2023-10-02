@@ -104,16 +104,17 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
 
   for (size_t i = 0; i < objectCoordinates.size(); i++) {
     const float scalarSampledValue =
-        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates[i]);
+        vklComputeSample(&vklSampler, (const vkl_vec3f *)&objectCoordinates[i]);
 
     success =
         success && (fabs(proceduralValues[i] - scalarSampledValue) <= tol);
   }
 
+#if !defined(OPENVKL_TESTING_GPU)
   // and finally test stream sampling
   std::vector<float> streamSamples(objectCoordinates.size());
 
-  vklComputeSampleN(vklSampler,
+  vklComputeSampleN(&vklSampler,
                     objectCoordinates.size(),
                     (const vkl_vec3f *)objectCoordinates.data(),
                     streamSamples.data());
@@ -121,24 +122,57 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
   for (size_t i = 0; i < objectCoordinates.size(); i++) {
     success = success && (fabs(proceduralValues[i] - streamSamples[i]) <= tol);
   }
+#endif
 
   vklRelease(vklSampler);
 
   return success;
 }
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Multiple devices", "[multi_device]")
 {
-  vklLoadModule("cpu_device");
+  vklInit();
 
   // create multiple devices and objects on those devices
   std::vector<std::shared_ptr<DeviceContext>> deviceContexts;
 
   const int numDevices = 4;
 
+#if defined(OPENVKL_TESTING_GPU)
+  std::vector<sycl::device> intelGpuDevices;
+  auto devices = sycl::device::get_devices();
+  for (const auto &device : devices) {
+    bool match = device.is_gpu() &&
+                 device.get_info<sycl::info::device::vendor_id>() == 0x8086 &&
+                 device.get_backend() == sycl::backend::ext_oneapi_level_zero;
+    if (match) {
+      intelGpuDevices.push_back(device);
+    }
+  }
+#endif
+
   for (int i = 0; i < numDevices; i++) {
+#if defined(OPENVKL_TESTING_GPU)
+    // Round robin over all available intel gpu devices
+    auto syclDeviceNo = i % intelGpuDevices.size();
+    auto syclDevice   = intelGpuDevices[syclDeviceNo];
+    std::cout << std::endl
+              << "Target SYCL device: "
+              << syclDevice.get_info<sycl::info::device::name>() << " (Device #"
+              << syclDeviceNo << ")" << std::endl
+              << std::endl;
+
+    sycl::queue syclQueue(syclDevice);
+    sycl::context syclContext = syclQueue.get_context();
+
+    VKLDevice device = vklNewDevice("gpu");
+    vklDeviceSetVoidPtr(
+        device, "syclContext", static_cast<void *>(&syclContext));
+#else
     VKLDevice device = vklNewDevice("cpu");
+#endif
+
     vklCommitDevice(device);
 
     const vec3i dimensions(128);

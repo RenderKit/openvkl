@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "openvkl/ispc_cpp_interop.h"
+
 #ifdef __cplusplus
 namespace ispc {
 #endif  // __cplusplus
@@ -12,11 +14,11 @@ namespace ispc {
   struct GridAccelerator
   {
     VKL_INTEROP_UNIFORM vec3i bricksPerDimension;
+    VKL_INTEROP_UNIFORM int spacer;  // enforce alignment between cpp and ispc
     VKL_INTEROP_UNIFORM size_t cellCount;
     box1f *VKL_INTEROP_UNIFORM cellValueRanges;
     SharedStructuredVolume *VKL_INTEROP_UNIFORM volume;
   };
-
 #ifdef __cplusplus
 }
 #endif  // __cplusplus

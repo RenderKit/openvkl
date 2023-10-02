@@ -3,7 +3,8 @@
 
 #include "InteractiveApplication.h"
 #include "RenderView.h"
-#include "renderer/DensityPathTracer.h"
+
+#include "renderer/Renderer.h"
 #include "renderer/Scene.h"
 
 #include <rkcommon/common.h>
@@ -99,10 +100,16 @@ namespace openvkl {
       views.clear();
       activeViews.clear();
       inactiveViews.clear();
+
+      // updateVKLObject() will create vklSampler which is needed in renderers
+      // contructor.
+      auto &volume = scene.volume;
+      volume.updateVKLObjects();
+
       scheduler = &scene.scheduler;
 
       if (scene.rendererTypes.empty()) {
-        scene.rendererTypes = {"density_pathtracer_ispc"};
+        scene.rendererTypes = {scene.supportedRendererTypes()[0]};
       }
 
       for (const auto &type : scene.supportedRendererTypes()) {
@@ -133,7 +140,7 @@ namespace openvkl {
       //       threads.
       bool volumeNeedsUpdate = true;
 
-      auto sceneParamsGui = ParameterGui::makeSceneParamsGui(&scene);
+      auto sceneParamsGui    = ParameterGui::makeSceneParamsGui(&scene);
       auto rendererParamsGui = ParameterGui::makeRendererParamsGui(&scene);
 
       while (!glfwWindowShouldClose(window)) {
@@ -147,7 +154,7 @@ namespace openvkl {
             scheduler->stop(v->getRenderer());
           }
 
-          auto &volume = scene.volume;
+          auto &volume             = scene.volume;
           const bool volumeIsDirty = volume.volumeIsDirty();
           volume.updateVKLObjects();
           if (volumeIsDirty) {
@@ -335,4 +342,3 @@ namespace openvkl {
 
   }  // namespace examples
 }  // namespace openvkl
-

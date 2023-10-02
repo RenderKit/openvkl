@@ -1,6 +1,12 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "benchmark/benchmark.h"
 #include "benchmark_suite/volume.h"
 #include "openvkl_testing.h"
@@ -50,8 +56,8 @@ struct Particle
   }
 
   std::unique_ptr<ProceduralParticleVolume> volume;
-  VKLVolume vklVolume{nullptr};
-  VKLSampler vklSampler{nullptr};
+  VKLVolume vklVolume;
+  VKLSampler vklSampler;
 };
 
 // based on BENCHMARK_MAIN() macro from benchmark.h

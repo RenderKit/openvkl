@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 ## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
@@ -17,5 +17,10 @@ cmake \
 
 cmake --build .
 
-./vklTutorial
-./vklTutorialLinkCPUDevice
+if [ -f "./vklTutorialCPU" ]; then
+  ./vklTutorialCPU
+fi
+
+if [ -f "./vklTutorialGPU" ]; then
+  ./vklTutorialGPU
+fi

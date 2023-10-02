@@ -24,6 +24,7 @@ namespace openvkl {
 
     inline VKLDataType stringToVoxelType(const std::string &type)
     {
+#ifdef OPENVKL_TESTING_CPU
       static const std::map<std::string, VKLDataType> map = {
           {"uchar", VKL_UCHAR},
           {"short", VKL_SHORT},
@@ -31,7 +32,15 @@ namespace openvkl {
           {"half", VKL_HALF},
           {"float", VKL_FLOAT},
           {"double", VKL_DOUBLE}};
+#endif
 
+#ifdef OPENVKL_TESTING_GPU
+      static const std::map<std::string, VKLDataType> map = {
+          {"uchar", VKL_UCHAR},
+          {"short", VKL_SHORT},
+          {"ushort", VKL_USHORT},
+          {"float", VKL_FLOAT}};
+#endif
       const auto it = map.find(type);
       if (it == map.end()) {
         return VKL_UNKNOWN;
@@ -42,6 +51,7 @@ namespace openvkl {
 
     inline const std::string &voxelTypeToString(VKLDataType type)
     {
+#ifdef OPENVKL_TESTING_CPU
       static const std::map<VKLDataType, std::string> map = {
           {VKL_UCHAR, "uchar"},
           {VKL_SHORT, "short"},
@@ -49,6 +59,14 @@ namespace openvkl {
           {VKL_HALF, "half"},
           {VKL_FLOAT, "float"},
           {VKL_DOUBLE, "double"}};
+#endif
+#ifdef OPENVKL_TESTING_GPU
+      static const std::map<VKLDataType, std::string> map = {
+          {VKL_UCHAR, "uchar"},
+          {VKL_SHORT, "short"},
+          {VKL_USHORT, "ushort"},
+          {VKL_FLOAT, "float"}};
+#endif
 
       const auto it = map.find(type);
       if (it == map.end()) {
@@ -82,7 +100,13 @@ namespace openvkl {
           0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f};
       uint8_t motionBlurStructuredNumTimesteps{6};
 
-      bool vdbRepackNodes{false};
+      bool vdbRepackNodes{true};
+
+#ifdef OPENVKL_TESTING_GPU
+      // if enabled, enables shared data buffers with USM device-only
+      // allocations
+      bool deviceOnlySharedBuffers{false};
+#endif
 
       void parseCommandLine(std::list<std::string> &args);
       static void usage();

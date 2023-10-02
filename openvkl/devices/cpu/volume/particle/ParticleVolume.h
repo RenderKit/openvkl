@@ -10,7 +10,7 @@
 #include "../common/math.h"
 #include "ParticleVolumeShared.h"
 #include "ParticleVolume_ispc.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 #define MAX_PRIMS_PER_LEAF VKL_TARGET_WIDTH
 
@@ -45,15 +45,23 @@ namespace openvkl {
       {
         assert(numPrims > 0 && numPrims <= MAX_PRIMS_PER_LEAF);
 
-        uint64_t *ids = static_cast<uint64_t *>(
-            rtcThreadLocalAlloc(alloc, numPrims * sizeof(uint64_t), 16));
         float minRadius = inf;
         box3fa bounds   = empty;
+
+        userPtrStruct *uPS = static_cast<userPtrStruct *>(userPtr);
+
+        uint64_t *ids = uPS->allocator->newBuffer<uint64_t>(numPrims);
+
+        assert(is_aligned_for_type<AlignedVector<float> *>(uPS->payload));
+        AlignedVector<float> *aud =
+            static_cast<AlignedVector<float> *>(uPS->payload);
+
+        float *radii = aud->data();
 
         for (size_t i = 0; i < numPrims; i++) {
           const uint64_t id =
               (uint64_t(prims[i].geomID) << 32) | prims[i].primID;
-          const float radius = ((float *)userPtr)[id];
+          const float radius = radii[id];
           const box3fa bound = *(const box3fa *)(&prims[i]);
 
           ids[i]    = id;
@@ -61,9 +69,8 @@ namespace openvkl {
           bounds.extend(bound);
         }
 
-        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(ParticleLeafNode), 16);
-        return (void *)new (ptr)
-            ParticleLeafNode(numPrims, ids, bounds, minRadius);
+        return uPS->allocator->newObject<ParticleLeafNode>(
+            numPrims, ids, bounds, minRadius);
       }
     };
 
@@ -71,6 +78,9 @@ namespace openvkl {
     struct ParticleVolume : public AddStructShared<UnstructuredVolumeBase<W>,
                                                    ispc::VKLParticleVolume>
     {
+      ParticleVolume(Device *device)
+          : AddStructShared<UnstructuredVolumeBase<W>, ispc::VKLParticleVolume>(
+                device){};
       ~ParticleVolume();
 
       void commit() override;
@@ -94,14 +104,14 @@ namespace openvkl {
       box3f bounds{empty};
       range1f valueRange{empty};
 
-      Ref<const DataT<vec3f>> positions;
-      Ref<const DataT<float>> radii;
-      Ref<const DataT<float>> weights;
+      rkcommon::memory::Ref<const DataT<vec3f>> positions;
+      rkcommon::memory::Ref<const DataT<float>> radii;
+      rkcommon::memory::Ref<const DataT<float>> weights;
       float radiusSupportFactor;
       float clampMaxCumulativeValue;
       bool estimateValueRanges;
 
-      Ref<const DataT<float>> background;
+      rkcommon::memory::Ref<const DataT<float>> background;
 
       // number of particles included in the BVH, which will not include any
       // zero-radius particles
@@ -111,6 +121,7 @@ namespace openvkl {
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
       int bvhDepth{0};
+      std::unique_ptr<BvhBuildAllocator> bvhBuildAllocator;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

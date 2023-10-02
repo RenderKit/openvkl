@@ -6,11 +6,11 @@
 #include <type_traits>
 #include "../common/IteratorBase.h"
 #include "../common/align.h"
-#include "../common/simd.h"
-#include "IteratorContext.h"
+#include "../common/device_simd.h"
 #include "openvkl/openvkl.h"
 
-using namespace rkcommon;
+#include "../common/ValueRangesShared.h"
+#include "IteratorContext.h"
 
 #define __varying_ispc_type(TypeName) \
   ispc::__vkl_concat(__vkl_concat(v, VKL_TARGET_WIDTH), _varying_##TypeName)
@@ -30,10 +30,10 @@ namespace openvkl {
       /*
        * Disallow all kinds of copying to be on the safe side.
        */
-      Iterator(const Iterator &) = delete;
+      Iterator(const Iterator &)            = delete;
       Iterator &operator=(const Iterator &) = delete;
       Iterator(Iterator &&)                 = delete;
-      Iterator &operator=(Iterator &&) = delete;
+      Iterator &operator=(Iterator &&)      = delete;
 
       // WORKAROUND ICC 15: This destructor must be public!
       virtual ~Iterator() = default;
@@ -321,7 +321,7 @@ namespace openvkl {
 
       ContextT<W> *newContext(const Sampler<W> &sampler) const override final
       {
-        return new ContextT<W>(sampler);
+        return new ContextT<W>(sampler.getDevice(), sampler);
       }
 
       IteratorBaseT<W> *constructV(const ContextBaseT<W> &context,

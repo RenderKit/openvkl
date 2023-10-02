@@ -28,7 +28,7 @@ namespace api {
       std::ostringstream os;
       os << "scalar" << CoordinateGenerator::name() << "Gradient";
       if (!VolumeWrapper::name().empty())
-         os << "<" << VolumeWrapper::name() << ">";
+        os << "<" << VolumeWrapper::name() << ">";
       return os.str();
     }
 
@@ -42,7 +42,7 @@ namespace api {
       BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<1>(&objectCoordinates);
         benchmark::DoNotOptimize(
-            vklComputeGradient(sampler, &objectCoordinates));
+            vklComputeGradient(&sampler, &objectCoordinates));
       }));
 
       // enables rates in report output
@@ -64,7 +64,7 @@ namespace api {
                               vvec3fn<4> &samples)
       {
         vklComputeGradient4(reinterpret_cast<const int *>(&valid),
-                            sampler,
+                            &sampler,
                             reinterpret_cast<const vkl_vvec3f4 *>(&coord),
                             reinterpret_cast<vkl_vvec3f4 *>(&samples));
       }
@@ -79,7 +79,7 @@ namespace api {
                               vvec3fn<8> &samples)
       {
         vklComputeGradient8(reinterpret_cast<const int *>(&valid),
-                            sampler,
+                            &sampler,
                             reinterpret_cast<const vkl_vvec3f8 *>(&coord),
                             reinterpret_cast<vkl_vvec3f8 *>(&samples));
       }
@@ -94,7 +94,7 @@ namespace api {
                               vvec3fn<16> &samples)
       {
         vklComputeGradient16(reinterpret_cast<const int *>(&valid),
-                             sampler,
+                             &sampler,
                              reinterpret_cast<const vkl_vvec3f16 *>(&coord),
                              reinterpret_cast<vkl_vvec3f16 *>(&samples));
       }
@@ -113,7 +113,7 @@ namespace api {
       os << "vector" << CoordinateGenerator::name() << "Gradient"
          << "<" << W;
       if (!VolumeWrapper::name().empty())
-         os << ", " << VolumeWrapper::name();
+        os << ", " << VolumeWrapper::name();
       os << ">";
       return os.str();
     }
@@ -154,7 +154,7 @@ namespace api {
       os << "stream" << CoordinateGenerator::name() << "Gradient"
          << "<" << N;
       if (!VolumeWrapper::name().empty())
-         os << ", " << VolumeWrapper::name();
+        os << ", " << VolumeWrapper::name();
       os << ">";
       return os.str();
     }
@@ -171,7 +171,7 @@ namespace api {
       BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<N>(objectCoordinates.data());
         vklComputeGradientN(
-            sampler, N, objectCoordinates.data(), samples.data());
+            &sampler, N, objectCoordinates.data(), samples.data());
       }));
 
       // enables rates in report output
@@ -224,4 +224,3 @@ inline void registerComputeGradient()
                                             VolumeWrapper,
                                             CoordinateGenerator>>();
 }
-

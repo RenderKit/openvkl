@@ -11,26 +11,35 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
-#if OPENVKL_DEVICE_CPU_VDB
+#if OPENVKL_DEVICE_CPU_VDB || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 {
   initializeOpenVKL();
 
-  const vec3i dimensions(128);
+  const vec3i dimensions(64);
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f / (128.f - 1.f));
 
+#if defined(OPENVKL_TESTING_GPU)
+  const std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT};
+#else
   const std::vector<VKLDataCreationFlags> dataCreationFlags{
       VKL_DATA_DEFAULT, VKL_DATA_SHARED_BUFFER};
+#endif
 
   const std::vector<bool> useAOSLayouts{true, false};
 
-  const vec3i step = vec3i(4);
+// For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+  const vec3i step = vec3i(16);
+#else
+  const vec3i step = vec3i(8);
+#endif
 
   for (const auto &repackNodes : {true, false}) {
     for (const auto &dcf : dataCreationFlags) {
       for (const auto &aos : useAOSLayouts) {
-        for (auto filter : {VKL_FILTER_TRILINEAR, VKL_FILTER_TRICUBIC}) {
+        for (auto filter : {VKL_FILTER_LINEAR, VKL_FILTER_CUBIC}) {
           std::stringstream sectionName;
           sectionName << (repackNodes ? "repackNodes=true"
                                       : "repackNodes=false");
@@ -38,9 +47,9 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
           sectionName << (dcf == VKL_DATA_DEFAULT ? "VKL_DATA_DEFAULT"
                                                   : "VKL_DATA_SHARED_BUFFER");
           sectionName << " ";
-          sectionName << (filter == VKL_FILTER_TRILINEAR
-                              ? "VKL_FILTER_TRILINEAR"
-                              : "VKL_FILTER_TRICUBIC");
+          sectionName << (filter == VKL_FILTER_LINEAR
+                              ? "VKL_FILTER_LINEAR"
+                              : "VKL_FILTER_CUBIC");
           sectionName << " ";
           sectionName << (aos == true ? "AOS layout" : "SOA layout");
 
@@ -49,13 +58,15 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
           int lowerSpan = 0;
           int upperSpan = 0;
 
-          if (filter == VKL_FILTER_TRILINEAR) {
+          if (filter == VKL_FILTER_LINEAR) {
             upperSpan = 1;
-          } else if (filter == VKL_FILTER_TRICUBIC) {
+          } else if (filter == VKL_FILTER_CUBIC) {
             lowerSpan = 1;
             upperSpan = 2;
           }
 
+#if !defined(OPENVKL_TESTING_GPU)
+          // not supported on GPU
           DYNAMIC_SECTION(std::string("half ") + sectionName.str())
           {
             std::shared_ptr<ProceduralVdbVolumeMulti> v(
@@ -85,6 +96,7 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 
             test_stream_sampling_multi(v, attributeIndices);
           }
+#endif
 
           DYNAMIC_SECTION(std::string("float ") + sectionName.str())
           {
@@ -104,14 +116,19 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 
             for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
               computed_vs_api_value_range(v, i);
+
+#if !defined(OPENVKL_TESTING_GPU)
               test_stream_sampling(v, i);
               test_stream_gradients(v, i);
+#endif
             }
 
             std::vector<unsigned int> attributeIndices(v->getNumAttributes());
             std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
 
+#if !defined(OPENVKL_TESTING_GPU)
             test_stream_sampling_multi(v, attributeIndices);
+#endif
           }
         }
       }

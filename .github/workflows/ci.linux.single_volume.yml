@@ -105,7 +105,7 @@ jobs:
       artifact-in: build-amr
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-particle:
     needs: build-particle
@@ -115,7 +115,7 @@ jobs:
       artifact-in: build-particle
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-structuredRegular:
     needs: build-structuredRegular
@@ -125,7 +125,7 @@ jobs:
       artifact-in: build-structuredRegular
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-structuredRegularLegacy:
     needs: build-structuredRegularLegacy
@@ -135,7 +135,7 @@ jobs:
       artifact-in: build-structuredRegularLegacy
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-structuredSpherical:
     needs: build-structuredSpherical
@@ -145,7 +145,7 @@ jobs:
       artifact-in: build-structuredSpherical
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-unstructured:
     needs: build-unstructured
@@ -155,7 +155,7 @@ jobs:
       artifact-in: build-unstructured
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-vdb:
     needs: build-vdb
@@ -165,4 +165,4 @@ jobs:
       artifact-in: build-vdb
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes

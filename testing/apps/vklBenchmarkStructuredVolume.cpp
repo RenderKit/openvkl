@@ -1,6 +1,12 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "benchmark/benchmark.h"
 #include "benchmark_env.h"
 #include "benchmark_suite/volume.h"
@@ -57,8 +63,8 @@ struct Structured
   }
 
   std::unique_ptr<WaveletStructuredRegularVolume<float>> volume;
-  VKLVolume vklVolume{nullptr};
-  VKLSampler vklSampler{nullptr};
+  VKLVolume vklVolume;
+  VKLSampler vklSampler;
 };
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
@@ -67,7 +73,7 @@ int main(int argc, char **argv)
   initializeOpenVKL();
 
   registerVolumeBenchmarks<Structured<VKL_FILTER_NEAREST>>();
-  registerVolumeBenchmarks<Structured<VKL_FILTER_TRILINEAR>>();
+  registerVolumeBenchmarks<Structured<VKL_FILTER_LINEAR>>();
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))

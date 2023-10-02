@@ -15,14 +15,12 @@
 #include "device.h"
 
 #ifdef __cplusplus
-struct Volume : public ManagedObject
+struct VKLVolume : public VKLObject
 {
 };
 #else
-typedef ManagedObject Volume;
+typedef VKLObject VKLVolume;
 #endif
-
-typedef Volume *VKLVolume;
 
 // cell types definition for unstructured volumes, values are set to match VTK
 typedef enum
@@ -38,8 +36,8 @@ typedef enum
 
 // AMR volume interpolation methods
 typedef enum
-# if __cplusplus >= 201103L
-: uint8_t
+#if __cplusplus >= 201103L
+    : uint32_t
 #endif
 {
   VKL_AMR_CURRENT,
@@ -51,8 +49,10 @@ typedef enum
 extern "C" {
 #endif
 
+NOWARN_C_LINKAGE_PUSH
 OPENVKL_INTERFACE
 VKLVolume vklNewVolume(VKLDevice device, const char *type);
+NOWARN_C_LINKAGE_POP
 
 OPENVKL_INTERFACE
 vkl_box3f vklGetBoundingBox(VKLVolume volume);
@@ -65,10 +65,12 @@ OPENVKL_INTERFACE vkl_range1f vklGetValueRange(
 // The below are primarily used to enable ISPC bindings, which cannot handle
 // returning structs by value.
 
-OPENVKL_INTERFACE void vklGetBoundingBoxRef(VKLVolume volume,
+OPENVKL_INTERFACE void vklGetBoundingBoxRef(const VKLVolume *volume,
                                             vkl_box3f *boundingBox);
 
-OPENVKL_INTERFACE void vklGetValueRangeRef(VKLVolume volume,
+OPENVKL_INTERFACE unsigned int vklGetNumAttributesRef(const VKLVolume *volume);
+
+OPENVKL_INTERFACE void vklGetValueRangeRef(const VKLVolume *volume,
                                            unsigned int attributeIndex,
                                            vkl_range1f *valueRange);
 

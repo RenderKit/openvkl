@@ -1,10 +1,16 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "DefaultIterator.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../common/export_util.h"
 #include "../common/math.h"
 #include "../volume/Volume.h"
+#include "DefaultIterator.h"
 #include "DefaultIterator_ispc.h"
 
 namespace openvkl {
@@ -21,8 +27,8 @@ namespace openvkl {
         const vfloatn<W> &_times)
     {
       const Volume<W> &volume = context->getSampler().getVolume();
-      box3f boundingBox  = volume.getBoundingBox();
-      range1f valueRange = volume.getValueRange(0);
+      box3f boundingBox       = volume.getBoundingBox();
+      range1f valueRange      = volume.getValueRange(0);
 
       CALL_ISPC(DefaultIntervalIterator_Initialize,
                 static_cast<const int *>(valid),
@@ -48,7 +54,8 @@ namespace openvkl {
 
     template class DefaultIntervalIterator<VKL_TARGET_WIDTH>;
 
-    __vkl_verify_max_interval_iterator_size(DefaultIntervalIterator<VKL_TARGET_WIDTH>)
+    __vkl_verify_max_interval_iterator_size(
+        DefaultIntervalIterator<VKL_TARGET_WIDTH>)
 
   }  // namespace cpu_device
 }  // namespace openvkl

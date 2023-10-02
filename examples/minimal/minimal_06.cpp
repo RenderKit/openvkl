@@ -5,6 +5,7 @@
 #include "framebuffer.h"
 
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 
 #if defined(_MSC_VER)
 #include <malloc.h>
@@ -14,7 +15,7 @@
 
 int main(int argc, char **argv)
 {
-  vklLoadModule("cpu_device");
+  vklInit();
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
 
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
 
   // We will create iterators below, and we will need to know how much memory
   // to allocate.
-  const size_t iteratorSize = vklGetHitIteratorSize(context);
+  const size_t iteratorSize = vklGetHitIteratorSize(&context);
 
   fb.generate([&](float fx, float fy) {
     // Set up the ray, as iterators work on rays.
@@ -61,7 +62,7 @@ int main(int argc, char **argv)
 #endif
     // Initialize iterator into the buffer we just created.
     VKLHitIterator hitIterator = vklInitHitIterator(
-        context, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer);
+        &context, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer);
 
     // Loop over all ray-isosurface intersections along our ray.
     // vklIterateHit will return false when there

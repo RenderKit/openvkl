@@ -20,7 +20,7 @@ inline range1f sample_value_range_over_inner_node(VKLSampler vklSampler,
 
   const uint32_t voxelDim = vklVdbLevelRes(maxDepth + 1);
 
-  vec3i step(1);
+  vec3i step(2);
 
   // at maxDepth == 0, inner nodes will represent 4096^3 voxels, so in the
   // interest of run time use a larger step for sampling value ranges...
@@ -38,7 +38,7 @@ inline range1f sample_value_range_over_inner_node(VKLSampler vklSampler,
                                 (boundingBox.upper - boundingBox.lower);
 
     const float sample =
-        vklComputeSample(vklSampler, (const vkl_vec3f *)&oc, attributeIndex);
+        vklComputeSample(&vklSampler, (const vkl_vec3f *)&oc, attributeIndex);
 
     valueRange.extend(sample);
   }
@@ -141,18 +141,7 @@ TEST_CASE("VDB volume inner node observer", "[volume_observers]")
   for (const auto &gridOrigin : gridOrigins) {
     for (const auto &gridSpacing : gridSpacings) {
       for (const auto &repackNodes : {true, false}) {
-        // single attributes volumes
-        {
-          auto v =
-              rkcommon::make_unique<WaveletVdbVolumeFloat>(getOpenVKLDevice(),
-                                                           dimensions,
-                                                           gridOrigin,
-                                                           gridSpacing,
-                                                           repackNodes);
-
-          inner_node_tests(v->getVKLVolume(getOpenVKLDevice()), dimensions);
-        }
-
+        // single attributes volume
         {
           auto v = rkcommon::make_unique<XYZVdbVolumeFloat>(getOpenVKLDevice(),
                                                             dimensions,

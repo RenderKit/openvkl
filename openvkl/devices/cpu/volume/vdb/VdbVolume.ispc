@@ -1,8 +1,12 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
+#include "VdbGridShared.h"
 #include "VdbVolumeShared.h"
-#include "common/export_util.h"
+#include "../../common/export_util.h"
 
 /*
  * This is a dummy export to make sure ISPC generates code
@@ -26,9 +30,7 @@ export void EXPORT_UNIQUE(VdbVolume_Constructor, void *uniform _self)
 /*
  * Destructor for ISPC versions of the volume.
  */
-export void EXPORT_UNIQUE(VdbVolume_destroy, void *uniform _self)
-{
-}
+export void EXPORT_UNIQUE(VdbVolume_destroy, void *uniform _self) {}
 
 /*
  * Initialize the volume data structure.

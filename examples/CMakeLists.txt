@@ -3,9 +3,15 @@
 
 ## "Hello world" VKL tutorials ##
 
-add_executable(vklTutorial vklTutorial.c ${VKL_RESOURCE})
-target_link_libraries(vklTutorial PRIVATE openvkl)
-install(TARGETS vklTutorial RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+add_executable(vklTutorialCPU vklTutorialCPU.c ${VKL_RESOURCE})
+target_link_libraries(vklTutorialCPU PRIVATE openvkl openvkl_module_cpu_device)
+install(TARGETS vklTutorialCPU RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+if (${OPENVKL_ENABLE_DEVICE_GPU})
+  add_executable(vklTutorialGPU vklTutorialGPU.cpp ${VKL_RESOURCE})
+  target_link_libraries(vklTutorialGPU PRIVATE openvkl openvkl_module_gpu_device)
+  install(TARGETS vklTutorialGPU RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 ## ISPC tutorial ##
 

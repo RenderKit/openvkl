@@ -1,6 +1,12 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include <random>
 #include "../common/simd.h"
 #include "benchmark/benchmark.h"
@@ -54,7 +60,7 @@ static void scalarRandomSample(benchmark::State &state)
     vkl_vec3f objectCoordinates{distX(), distY(), distZ()};
 
     benchmark::DoNotOptimize(
-        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates));
+        vklComputeSample(&vklSampler, (const vkl_vec3f *)&objectCoordinates));
   }));
 
   // enables rates in report output
@@ -109,13 +115,15 @@ void vectorRandomSample(benchmark::State &state)
 
     if (W == 4) {
       vklComputeSample4(
-          valid, vklSampler, (const vkl_vvec3f4 *)&objectCoordinates, samples);
+          valid, &vklSampler, (const vkl_vvec3f4 *)&objectCoordinates, samples);
     } else if (W == 8) {
       vklComputeSample8(
-          valid, vklSampler, (const vkl_vvec3f8 *)&objectCoordinates, samples);
+          valid, &vklSampler, (const vkl_vvec3f8 *)&objectCoordinates, samples);
     } else if (W == 16) {
-      vklComputeSample16(
-          valid, vklSampler, (const vkl_vvec3f16 *)&objectCoordinates, samples);
+      vklComputeSample16(valid,
+                         &vklSampler,
+                         (const vkl_vvec3f16 *)&objectCoordinates,
+                         samples);
     } else {
       throw std::runtime_error(
           "vectorRandomSample benchmark called with unimplemented calling "
@@ -158,7 +166,7 @@ static void scalarFixedSample(benchmark::State &state)
 
   BENCHMARK_WARMUP_AND_RUN(({
     benchmark::DoNotOptimize(
-        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates));
+        vklComputeSample(&vklSampler, (const vkl_vec3f *)&objectCoordinates));
   }));
 
   // enables rates in report output
@@ -210,13 +218,15 @@ void vectorFixedSample(benchmark::State &state)
   BENCHMARK_WARMUP_AND_RUN(({
     if (W == 4) {
       vklComputeSample4(
-          valid, vklSampler, (const vkl_vvec3f4 *)&objectCoordinates, samples);
+          valid, &vklSampler, (const vkl_vvec3f4 *)&objectCoordinates, samples);
     } else if (W == 8) {
       vklComputeSample8(
-          valid, vklSampler, (const vkl_vvec3f8 *)&objectCoordinates, samples);
+          valid, &vklSampler, (const vkl_vvec3f8 *)&objectCoordinates, samples);
     } else if (W == 16) {
-      vklComputeSample16(
-          valid, vklSampler, (const vkl_vvec3f16 *)&objectCoordinates, samples);
+      vklComputeSample16(valid,
+                         &vklSampler,
+                         (const vkl_vvec3f16 *)&objectCoordinates,
+                         samples);
     } else {
       throw std::runtime_error(
           "vectorFixedSample benchmark called with unimplemented calling "

@@ -1,7 +1,12 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "VdbVolume.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include <algorithm>
 #include <atomic>
 #include <cstring>
@@ -11,11 +16,14 @@
 #include "../../common/temporal_data_verification.h"
 #include "../common/logging.h"
 #include "VdbInnerNodeObserver.h"
+#include "VdbVolume.h"
 #include "openvkl/vdb.h"
 #include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/memory/malloc.h"
 #include "rkcommon/tasking/AsyncTask.h"
 #include "rkcommon/tasking/parallel_for.h"
+
+using namespace rkcommon::memory;
 
 #include "VdbSampler.h"
 #include "VdbSampler_ispc.h"
@@ -434,7 +442,9 @@ namespace openvkl {
           "node.temporalFormat", nullptr);
       if (!leafTemporalFormat) {
         leafTemporalFormat = new DataT<uint32_t>(
-            numLeaves, static_cast<uint32_t>(VKL_TEMPORAL_FORMAT_CONSTANT));
+            this->getDevice(),
+            numLeaves,
+            static_cast<uint32_t>(VKL_TEMPORAL_FORMAT_CONSTANT));
         leafTemporalFormat->refDec();
       }
 
@@ -1006,6 +1016,27 @@ namespace openvkl {
                      nodeToDenseNodeIndex,
                      nodeToTileNodeIndex);
 
+        // Compute feature flags for the temporal formats.
+        std::set<uint32_t> temporalFormatSet((*leafTemporalFormat).begin(),
+                                             (*leafTemporalFormat).end());
+
+        temporalFeatureFlags = VKL_FEATURE_FLAG_NONE;
+
+        for (const auto &t : temporalFormatSet) {
+          if (t == VKL_TEMPORAL_FORMAT_CONSTANT) {
+            temporalFeatureFlags |=
+                VKL_FEATURE_FLAG_HAS_TEMPORAL_FORMAT_CONSTANT;
+          } else if (t == VKL_TEMPORAL_FORMAT_STRUCTURED) {
+            temporalFeatureFlags |=
+                VKL_FEATURE_FLAG_HAS_TEMPORAL_FORMAT_STRUCTURED;
+          } else if (t == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) {
+            temporalFeatureFlags |=
+                VKL_FEATURE_FLAG_HAS_TEMPORAL_FORMAT_UNSTRUCTURED;
+          } else {
+            throw std::runtime_error("encountered unknown temporal format");
+          }
+        }
+
         CALL_ISPC(VdbVolume_setGrid,
                   this->getSh(),
                   reinterpret_cast<const ispc::VdbGrid *>(grid));
@@ -1051,7 +1082,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *VdbVolume<W>::newSampler()
     {
-      return new VdbSampler<W>(*this);
+      return new VdbSampler<W>(this->getDevice(), *this);
     }
 
     VKL_REGISTER_VOLUME(VdbVolume<VKL_TARGET_WIDTH>,

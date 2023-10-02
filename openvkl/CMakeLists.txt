@@ -1,8 +1,6 @@
 ## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-include(openvkl_ispc)
-
 if(WIN32)
   set(DEF_FILE common/ispc_defs.def)
 endif()
@@ -34,7 +32,9 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
-    $<BUILD_INTERFACE:rkcommon::rkcommon>)
+    $<BUILD_INTERFACE:rkcommon::rkcommon>
+  PRIVATE
+    ispcrt::ispcrt)
 
 set(VKL_VDB_LOG_RESOLUTION_0 "6" CACHE STRING
   "Base 2 logarithm of the root level resolution in vdb volumes.")
@@ -91,8 +91,12 @@ add_subdirectory(devices)
 
 ## Utilities
 
-add_executable(vklGenerateIteratorSizeHeader
-  util/vklGenerateIteratorSizeHeader.cpp
-  ${VKL_RESOURCE})
+option(BUILD_UTIL_ITERATOR_SIZE_HEADER "Build vklGenerateIteratorSizeHeader utility." OFF)
 
-target_link_libraries(vklGenerateIteratorSizeHeader PRIVATE openvkl)
+if (BUILD_UTIL_ITERATOR_SIZE_HEADER)
+  add_executable(vklGenerateIteratorSizeHeader
+    util/vklGenerateIteratorSizeHeader.cpp
+    ${VKL_RESOURCE})
+
+  target_link_libraries(vklGenerateIteratorSizeHeader PRIVATE openvkl openvkl_module_cpu_device)
+endif()

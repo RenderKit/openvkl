@@ -6,7 +6,6 @@
 
 namespace openvkl {
   namespace examples {
-
     void Scheduler::Synchronous::renderFrame(Renderer &renderer) const
     {
       renderer.renderFrame();

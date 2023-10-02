@@ -1,29 +1,16 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "../common/export_util.h"
 #include "SharedStructuredVolume.ih"
+
 #include "../iterator/GridAcceleratorIterator.ih"
+#include "../math/box_utility.ih"
+#include "GridAccelerator.h"
 #include "GridAccelerator.ih"
-#include "math/box_utility.ih"
-
-// bit count used to represent the brick width in macrocells
-#define BRICK_WIDTH_BITCOUNT (4)
-
-// brick width in macrocells
-#define BRICK_WIDTH (1 << BRICK_WIDTH_BITCOUNT)
-
-// brick count in macrocells
-#define BRICK_CELL_COUNT (BRICK_WIDTH * BRICK_WIDTH * BRICK_WIDTH)
-
-// bit count used to represent the macrocell width in volume cells
-#define CELL_WIDTH_BITCOUNT (4)
-
-// macrocell width in volume cells
-#define CELL_WIDTH (1 << CELL_WIDTH_BITCOUNT)
-
-// reciprocal of macrocell width in volume cells
-#define RCP_CELL_WIDTH 1.f / CELL_WIDTH
 
 #define template_GridAccelerator_getters(univary)                              \
   inline univary uint32 GridAccelerator_getCellIndex1D(                        \
@@ -101,20 +88,20 @@ inline void GridAccelerator_computeCellValueRange(
            j = 0 ... CELL_WIDTH + 1,
            i = 0 ... CELL_WIDTH + 1) {
     const vec3i localCoordinates = make_vec3i(cellIndex.x * CELL_WIDTH + i,
-                                        cellIndex.y * CELL_WIDTH + j,
-                                        cellIndex.z * CELL_WIDTH + k);
+                                              cellIndex.y * CELL_WIDTH + j,
+                                              cellIndex.z * CELL_WIDTH + k);
 
     const range1f voxelRange = volume->computeVoxelRange[attributeIndex](
         volume, min(volume->dimensions - 1, localCoordinates), attributeIndex);
 
     if (!isnan(voxelRange.lower)) {
       extend(valueRange, voxelRange.lower);
-      cellEmpty        = false;
+      cellEmpty = false;
     }
 
     if (!isnan(voxelRange.upper)) {
       extend(valueRange, voxelRange.upper);
-      cellEmpty        = false;
+      cellEmpty = false;
     }
   }
 
@@ -157,46 +144,6 @@ inline void GridAccelerator_encodeBrick(GridAccelerator *uniform accelerator,
           accelerator, cellIndex1D, a, valueRange);
     }
   }
-}
-
-GridAccelerator *uniform GridAccelerator_Constructor(void *uniform _volume)
-{
-  SharedStructuredVolume *uniform volume =
-      (SharedStructuredVolume * uniform) _volume;
-
-  GridAccelerator *uniform accelerator = uniform new uniform GridAccelerator;
-
-  // cells per dimension after padding out the volume dimensions to the nearest
-  // cell
-  uniform vec3i cellsPerDimension =
-      (volume->dimensions + CELL_WIDTH - 1) / CELL_WIDTH;
-
-  // bricks per dimension after padding out the cell dimensions to the nearest
-  // brick
-  accelerator->bricksPerDimension =
-      (cellsPerDimension + BRICK_WIDTH - 1) / BRICK_WIDTH;
-
-  accelerator->cellCount = accelerator->bricksPerDimension.x *
-                           accelerator->bricksPerDimension.y *
-                           accelerator->bricksPerDimension.z * BRICK_CELL_COUNT;
-
-  accelerator->cellValueRanges =
-      (accelerator->cellCount > 0)
-          ? uniform new uniform box1f[accelerator->cellCount *
-                                      volume->numAttributes]
-          : NULL;
-
-  accelerator->volume = volume;
-
-  return accelerator;
-}
-
-void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
-{
-  if (accelerator->cellValueRanges)
-    delete[] accelerator->cellValueRanges;
-
-  delete accelerator;
 }
 
 #define cif_uniform if

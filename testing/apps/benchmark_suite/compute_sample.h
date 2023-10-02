@@ -29,7 +29,7 @@ namespace api {
       std::ostringstream os;
       os << "scalar" << CoordinateGenerator::name() << "Sample";
       if (!VolumeWrapper::name().empty())
-         os << "<" << VolumeWrapper::name() << ">";
+        os << "<" << VolumeWrapper::name() << ">";
       return os.str();
     }
 
@@ -43,7 +43,8 @@ namespace api {
 
       BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<1>(&objectCoordinates);
-        benchmark::DoNotOptimize(vklComputeSample(sampler, &objectCoordinates));
+        benchmark::DoNotOptimize(
+            vklComputeSample(&sampler, &objectCoordinates));
       }));
 
       // enables rates in report output
@@ -64,7 +65,7 @@ namespace api {
                               vfloatn<4> &samples)
       {
         vklComputeSample4(reinterpret_cast<const int *>(&valid),
-                          sampler,
+                          &sampler,
                           reinterpret_cast<const vkl_vvec3f4 *>(&coord),
                           reinterpret_cast<float *>(&samples));
       }
@@ -79,7 +80,7 @@ namespace api {
                               vfloatn<8> &samples)
       {
         vklComputeSample8(reinterpret_cast<const int *>(&valid),
-                          sampler,
+                          &sampler,
                           reinterpret_cast<const vkl_vvec3f8 *>(&coord),
                           reinterpret_cast<float *>(&samples));
       }
@@ -94,7 +95,7 @@ namespace api {
                               vfloatn<16> &samples)
       {
         vklComputeSample16(reinterpret_cast<const int *>(&valid),
-                           sampler,
+                           &sampler,
                            reinterpret_cast<const vkl_vvec3f16 *>(&coord),
                            reinterpret_cast<float *>(&samples));
       }
@@ -112,7 +113,7 @@ namespace api {
       os << "vector" << CoordinateGenerator::name() << "Sample"
          << "<" << W;
       if (!VolumeWrapper::name().empty())
-         os << ", " << VolumeWrapper::name();
+        os << ", " << VolumeWrapper::name();
       os << ">";
       return os.str();
     }
@@ -153,7 +154,7 @@ namespace api {
       os << "stream" << CoordinateGenerator::name() << "Sample"
          << "<" << N;
       if (!VolumeWrapper::name().empty())
-         os << ", " << VolumeWrapper::name();
+        os << ", " << VolumeWrapper::name();
       os << ">";
       return os.str();
     }
@@ -169,7 +170,8 @@ namespace api {
 
       BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<N>(objectCoordinates.data());
-        vklComputeSampleN(sampler, N, objectCoordinates.data(), samples.data());
+        vklComputeSampleN(
+            &sampler, N, objectCoordinates.data(), samples.data());
       }));
 
       // enables rates in report output
@@ -216,4 +218,3 @@ inline void registerComputeSample()
   registerBenchmark<
       api::VklComputeSample<Stream<256>, VolumeWrapper, CoordinateGenerator>>();
 }
-

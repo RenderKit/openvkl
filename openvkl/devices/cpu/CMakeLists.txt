@@ -1,7 +1,6 @@
 ## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-include(openvkl_ispc)
 include(openvkl_macros)
 
 include_directories_ispc(
@@ -224,12 +223,14 @@ foreach(TARGET_WIDTH 4 8 16)
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
       $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>
+      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
   )
 
   target_link_libraries(${TARGET_NAME}
     PUBLIC
       openvkl
       $<BUILD_INTERFACE:rkcommon::rkcommon>
+      $<BUILD_INTERFACE:ispcrt::ispcrt>
     PRIVATE
       embree
       $<INSTALL_INTERFACE:rkcommon::rkcommon>
@@ -244,10 +245,19 @@ endforeach(TARGET_WIDTH)
 
 
 # shared library linking to all width-specific targets
-add_library(openvkl_module_cpu_device SHARED exports.cpp ${VKL_RESOURCE})
+add_library(openvkl_module_cpu_device SHARED
+  api/DeviceAPI.cpp
+  exports.cpp
+  ${VKL_RESOURCE}
+)
 
 target_compile_definitions(openvkl_module_cpu_device PUBLIC
   ${OPTIONAL_VOLUME_DEFINITIONS}
+)
+
+target_include_directories(openvkl_module_cpu_device INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/openvkl/devices/cpu>
 )
 
 foreach(TARGET_WIDTH 4 8 16)
@@ -263,6 +273,16 @@ target_include_directories(openvkl_module_cpu_device
 target_link_libraries(openvkl_module_cpu_device
   PUBLIC
     openvkl
+  PRIVATE
+    ${ACTIVE_WIDTH_TARGETS}
 )
 
 openvkl_install_library(openvkl_module_cpu_device)
+
+install(DIRECTORY
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/openvkl
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/openvkl/devices/cpu
+  FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN "*.isph"
+)

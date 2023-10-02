@@ -3,8 +3,16 @@
 
 #pragma once
 
-#include "openvkl/openvkl.h"
+#include <openvkl/openvkl.h>
+
+#include <openvkl/device/openvkl.h>
 
 void initializeOpenVKL();
 void shutdownOpenVKL();
 VKLDevice getOpenVKLDevice();
+#ifdef OPENVKL_TESTING_GPU
+sycl::queue &getSyclQueue();
+
+void setUseDeviceOnlySharedBuffers(bool enabled);
+bool getUseDeviceOnlySharedBuffers();
+#endif

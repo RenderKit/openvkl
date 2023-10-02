@@ -180,7 +180,7 @@ namespace openvkl {
      protected:
       virtual void generateVKLVolume(VKLDevice device) = 0;
 
-      VKLVolume volume{nullptr};
+      VKLVolume volume;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -194,7 +194,7 @@ namespace openvkl {
     {
       if (volume) {
         vklRelease(volume);
-        volume = nullptr;
+        volume = VKLVolume();
       }
     }
 

@@ -32,9 +32,10 @@ jobs:
       artifact-in: build-macOS
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-macOS-TBB2020:
     secrets: inherit
@@ -57,9 +58,10 @@ jobs:
       artifact-in: build-macOS-TBB2020
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-macOS-arm-neon:
     secrets: inherit
@@ -84,9 +86,10 @@ jobs:
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
         export OPENVKL_LOG_LEVEL=debug # gives prints of current ISA and SIMD width
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-macOS-arm-neon2x:
     secrets: inherit
@@ -111,6 +114,7 @@ jobs:
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
         export OPENVKL_LOG_LEVEL=debug # gives prints of current ISA and SIMD width
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes

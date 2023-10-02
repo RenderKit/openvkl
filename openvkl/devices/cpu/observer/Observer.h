@@ -26,7 +26,7 @@ namespace openvkl {
       virtual size_t getNumElements() const      = 0;
 
      protected:
-      Ref<ManagedObject> target;
+      rkcommon::memory::Ref<ManagedObject> target;
     };
 
   }  // namespace cpu_device

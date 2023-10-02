@@ -4,8 +4,6 @@
 #pragma once
 
 #include "../common/Data.ih"
-#include "rkcommon/math/vec.ih"
-#include "rkcommon/math/box.ih"
 #include "UnstructuredVolumeShared.h"
 
 inline uniform Node *uniform sibling(uniform Node *uniform node)

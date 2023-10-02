@@ -5,6 +5,7 @@
 #include "iterator_utility.h"
 #include "openvkl_testing.h"
 #include "rkcommon/math/box.h"
+#include "wrappers.h"
 
 using namespace rkcommon;
 using namespace openvkl::testing;
@@ -58,13 +59,44 @@ void scalar_interval_continuity_with_no_value_ranges(
 
   vklCommit(intervalContext);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
-  VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, time, buffer.data());
+  VKLInterval *intervalsBuffer = allocate<VKLInterval>(maxNumIntervals);
 
-  VKLInterval intervalPrevious, intervalCurrent;
+  int *intervalCount = allocate<int>(1);
 
-  for (int i = 0; vklIterateInterval(iterator, &intervalCurrent); i++) {
+  // interval iteration
+  char *iteratorBuffer =
+      allocate<char>(vklGetIntervalIteratorSize(&intervalContext));
+
+  auto testIteratorFunc = [=]() {
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIterator(&intervalContext,
+                                &origin,
+                                &direction,
+                                &tRange,
+                                time,
+                                (void *)iteratorBuffer);
+    VKLInterval intervalCurrent;
+    while (vklIterateInterval(intervalIterator, &intervalCurrent)) {
+      intervalsBuffer[*intervalCount] = intervalCurrent;
+      *intervalCount += 1;
+      if (*intervalCount >= maxNumIntervals) {
+        break;
+      }
+    }
+  };
+
+  executeTestFunction(testIteratorFunc);
+
+  if (*intervalCount >= maxNumIntervals) {
+    WARN("Interval iterations reached max number of intervals: " << maxNumIntervals);
+  }
+
+  deallocate(iteratorBuffer);
+
+  VKLInterval intervalPrevious;
+  for (int i = 0; i < *intervalCount; i++) {
+    VKLInterval intervalCurrent = intervalsBuffer[i];
+
     INFO("interval tRange = " << intervalCurrent.tRange.lower << ", "
                               << intervalCurrent.tRange.upper);
 
@@ -85,6 +117,9 @@ void scalar_interval_continuity_with_no_value_ranges(
 
   // last interval at expected ending
   REQUIRE(intervalPrevious.tRange.upper == Approx(expectedTRange.upper));
+
+  deallocate(intervalsBuffer);
+  deallocate(intervalCount);
 
   vklRelease(intervalContext);
   vklRelease(sampler);
@@ -110,21 +145,53 @@ void scalar_interval_value_ranges_with_no_value_ranges(
 
   vklCommit(intervalContext);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
-  VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, time, buffer.data());
-  VKLInterval interval;
+  VKLInterval *intervalsBuffer         = allocate<VKLInterval>(maxNumIntervals);
+  vkl_range1f *sampledValueRangeBuffer = allocate<vkl_range1f>(maxNumIntervals);
 
-  int intervalCount = 0;
+  int *intervalCount = allocate<int>(1);
 
-  while (vklIterateInterval(iterator, &interval)) {
+  // interval iteration
+  char *iteratorBuffer =
+      allocate<char>(vklGetIntervalIteratorSize(&intervalContext));
+
+  auto testIteratorFunc = [=]() {
+    VKLIntervalIterator iterator =
+        vklInitIntervalIterator(&intervalContext,
+                                &origin,
+                                &direction,
+                                &tRange,
+                                time,
+                                (void *)iteratorBuffer);
+    VKLInterval interval;
+    while (vklIterateInterval(iterator, &interval)) {
+      vkl_range1f sampledValueRange = computeIntervalValueRange(
+          sampler, attributeIndex, origin, direction, interval.tRange);
+      intervalsBuffer[*intervalCount]         = interval;
+      sampledValueRangeBuffer[*intervalCount] = sampledValueRange;
+      *intervalCount += 1;
+      if (*intervalCount >= maxNumIntervals) {
+        break;
+      }
+    }
+  };
+
+  executeTestFunction(testIteratorFunc);
+
+  if (*intervalCount >= maxNumIntervals) {
+    WARN("Interval iterations reached max number of intervals: " << maxNumIntervals);
+  }
+
+  deallocate(iteratorBuffer);
+
+  for (int i = 0; i < *intervalCount; i++) {
+    VKLInterval interval = intervalsBuffer[i];
+
     INFO("interval tRange = " << interval.tRange.lower << ", "
                               << interval.tRange.upper
                               << " valueRange = " << interval.valueRange.lower
                               << ", " << interval.valueRange.upper);
 
-    vkl_range1f sampledValueRange = computeIntervalValueRange(
-        sampler, attributeIndex, origin, direction, interval.tRange);
+    vkl_range1f sampledValueRange = sampledValueRangeBuffer[i];
 
     INFO("sampled value range = " << sampledValueRange.lower << ", "
                                   << sampledValueRange.upper);
@@ -135,15 +202,18 @@ void scalar_interval_value_ranges_with_no_value_ranges(
     REQUIRE(Approx(sampledValueRange.upper) <= interval.valueRange.upper);
 
     checkAndWarnValueRangeOverlap(sampledValueRange, interval);
-
-    intervalCount++;
   }
+
+  deallocate(intervalsBuffer);
+  deallocate(sampledValueRangeBuffer);
 
   vklRelease(intervalContext);
   vklRelease(sampler);
 
   // make sure we had at least one interval...
-  REQUIRE(intervalCount > 0);
+  REQUIRE(*intervalCount > 0);
+
+  deallocate(intervalCount);
 }
 
 // each provided valueRange should occur on a different interval
@@ -174,22 +244,52 @@ void scalar_interval_value_ranges_with_value_ranges(
 
   vklCommit(intervalContext);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
-  VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, time, buffer.data());
+  VKLInterval *intervalsBuffer         = allocate<VKLInterval>(maxNumIntervals);
+  vkl_range1f *sampledValueRangeBuffer = allocate<vkl_range1f>(maxNumIntervals);
 
-  VKLInterval interval;
+  int *intervalCount = allocate<int>(1);
 
-  int intervalCount = 0;
+  // interval iteration
+  char *iteratorBuffer =
+      allocate<char>(vklGetIntervalIteratorSize(&intervalContext));
 
-  while (vklIterateInterval(iterator, &interval)) {
+  auto testIteratorFunc = [=]() {
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIterator(&intervalContext,
+                                &origin,
+                                &direction,
+                                &tRange,
+                                time,
+                                (void *)iteratorBuffer);
+    VKLInterval interval;
+    while (vklIterateInterval(intervalIterator, &interval)) {
+      intervalsBuffer[*intervalCount] = interval;
+      vkl_range1f sampledValueRange   = computeIntervalValueRange(
+          sampler, attributeIndex, origin, direction, interval.tRange);
+      sampledValueRangeBuffer[*intervalCount] = sampledValueRange;
+      *intervalCount += 1;
+      if (*intervalCount >= maxNumIntervals) {
+        break;
+      }
+    }
+  };
+
+  executeTestFunction(testIteratorFunc);
+
+  if (*intervalCount >= maxNumIntervals) {
+    WARN("Interval iterations reached max number of intervals: " << maxNumIntervals);
+  }
+
+  deallocate(iteratorBuffer);
+
+  for (int i = 0; i < *intervalCount; i++) {
+    VKLInterval interval = intervalsBuffer[i];
     INFO("interval tRange = " << interval.tRange.lower << ", "
                               << interval.tRange.upper
                               << " valueRange = " << interval.valueRange.lower
                               << ", " << interval.valueRange.upper);
 
-    vkl_range1f sampledValueRange = computeIntervalValueRange(
-        sampler, attributeIndex, origin, direction, interval.tRange);
+    vkl_range1f sampledValueRange = sampledValueRangeBuffer[i];
 
     INFO("sampled value range = " << sampledValueRange.lower << ", "
                                   << sampledValueRange.upper);
@@ -213,12 +313,14 @@ void scalar_interval_value_ranges_with_value_ranges(
     }
 
     REQUIRE(rangeIntersectsContextValueRanges);
-
-    intervalCount++;
   }
 
   // make sure we had appropriate number of intervals
-  REQUIRE(intervalCount >= valueRanges.size());
+  REQUIRE(*intervalCount >= valueRanges.size());
+
+  deallocate(intervalsBuffer);
+  deallocate(sampledValueRangeBuffer);
+  deallocate(intervalCount);
 
   vklRelease(intervalContext);
   vklRelease(sampler);
@@ -246,27 +348,38 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
       vklNewIntervalIteratorContext(sampler);
   vklCommit(intervalContext);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
-  VKLIntervalIterator iterator =
-      vklInitIntervalIterator(intervalContext,
-                              &origin,
-                              &(const vkl_vec3f &)direction,
-                              &tRange,
-                              time,
-                              buffer.data());
+  char *iteratorBuffer =
+      allocate<char>(vklGetIntervalIteratorSize(&intervalContext));
 
-  VKLInterval interval;
-  bool gotInterval = vklIterateInterval(iterator, &interval);
+  bool *gotInterval     = allocate<bool>(1);
+  VKLInterval *interval = allocate<VKLInterval>(1);
 
-  REQUIRE(gotInterval == true);
+  auto testIteratorFunc = [=]() {
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIterator(&intervalContext,
+                                &origin,
+                                &(const vkl_vec3f &)direction,
+                                &tRange,
+                                time,
+                                (void *)iteratorBuffer);
+    *gotInterval = vklIterateInterval(intervalIterator, interval);
+  };
 
-  INFO("interval tRange = " << interval.tRange.lower << ", "
-                            << interval.tRange.upper
-                            << " valueRange = " << interval.valueRange.lower
-                            << ", " << interval.valueRange.upper
-                            << ", nominalDeltaT = " << interval.nominalDeltaT);
+  executeTestFunction(testIteratorFunc);
 
-  REQUIRE(interval.nominalDeltaT == Approx(expectedNominalDeltaT));
+  REQUIRE(*gotInterval == true);
+
+  INFO("interval tRange = " << interval->tRange.lower << ", "
+                            << interval->tRange.upper
+                            << " valueRange = " << interval->valueRange.lower
+                            << ", " << interval->valueRange.upper
+                            << ", nominalDeltaT = " << interval->nominalDeltaT);
+
+  REQUIRE(interval->nominalDeltaT == Approx(expectedNominalDeltaT));
+
+  deallocate(iteratorBuffer);
+  deallocate(gotInterval);
+  deallocate(interval);
 
   vklRelease(intervalContext);
   vklRelease(sampler);
@@ -344,7 +457,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     const vec3f gridOrigin(0.f);
     const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
     SECTION("structured volumes")
     {
       auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
@@ -354,7 +467,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     }
 #endif
 
-#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED || defined(OPENVKL_TESTING_GPU)
     SECTION("unstructured volumes")
     {
       auto v = rkcommon::make_unique<WaveletUnstructuredProceduralVolume>(
@@ -364,7 +477,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     }
 #endif
 
-#if OPENVKL_DEVICE_CPU_VDB
+#if OPENVKL_DEVICE_CPU_VDB || defined(OPENVKL_TESTING_GPU)
     SECTION("VDB volumes")
     {
       for (const auto &repackNodes : {true, false}) {
@@ -390,11 +503,22 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
   SECTION("multi attribute interval iteration")
   {
     // for a unit cube physical grid [(0,0,0), (1,1,1)]
-    const vec3i dimensions(128);
-    const vec3f gridOrigin(0.f);
-    const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#if defined(OPENVKL_TESTING_GPU)
+    // TODO: for multi-attribute VDB volumes with repackedNodes=false, we appear
+    // to exceed a limit in number of SYCL allocations. So reduce dimensions
+    // (and therefore number of allocations) to work around this. See internal
+    // issue #782.
+    const vec3i dimensions(64);
+    const vec3f gridSpacing(1.f / (64.f - 1.f));
+#else
+    const vec3i dimensions(128);
+    const vec3f gridSpacing(1.f / (128.f - 1.f));
+#endif
+
+    const vec3f gridOrigin(0.f);
+
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
     SECTION("structured volumes")
     {
       std::shared_ptr<TestingStructuredVolumeMulti> v(
@@ -409,7 +533,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     }
 #endif
 
-#if OPENVKL_DEVICE_CPU_VDB
+#if OPENVKL_DEVICE_CPU_VDB || defined(OPENVKL_TESTING_GPU)
     SECTION("VDB volumes")
     {
       for (const auto &repackNodes : {true, false}) {
@@ -435,7 +559,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
 #endif
   }
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
   SECTION("structured volumes: interval nominalDeltaT")
   {
     // use a different volume to facilitate nominalDeltaT tests

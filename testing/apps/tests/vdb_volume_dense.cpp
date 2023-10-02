@@ -69,16 +69,16 @@ static VKLVolume vdbToStructuredRegular(openvdb::FloatGrid::Ptr grid)
   vklSetFloat(vklVolumeStructured, "background", 0.f);
 
   vklSetVec3i(vklVolumeStructured,
-              "dimensions",
-              dimensions.x,
-              dimensions.y,
-              dimensions.z);
+               "dimensions",
+               dimensions.x,
+               dimensions.y,
+               dimensions.z);
 
   vklSetVec3i(vklVolumeStructured,
-              "indexOrigin",
-              indexOrigin.x,
-              indexOrigin.y,
-              indexOrigin.z);
+               "indexOrigin",
+               indexOrigin.x,
+               indexOrigin.y,
+               indexOrigin.z);
 
   const auto &indexToObject = grid->transform().baseMap();
   if (!indexToObject->isLinear())
@@ -94,9 +94,9 @@ static VKLVolume vdbToStructuredRegular(openvdb::FloatGrid::Ptr grid)
   openvdbIndexToObject.p = vec3f(i2o[12], i2o[13], i2o[14]);
 
   vklSetParam(vklVolumeStructured,
-              "indexToObject",
-              VKL_AFFINE3F,
-              &openvdbIndexToObject);
+               "indexToObject",
+               VKL_AFFINE3F,
+               &openvdbIndexToObject);
 
   VKLData data =
       vklNewData(getOpenVKLDevice(), voxels.size(), VKL_FLOAT, voxels.data());
@@ -128,7 +128,7 @@ static void sampling_gradient_equivalence(VKLVolume vklVolume1,
 {
   // we'll test under different filter modes
   const std::vector<VKLFilter> filters = {
-      VKL_FILTER_NEAREST, VKL_FILTER_TRILINEAR, VKL_FILTER_TRICUBIC};
+      VKL_FILTER_NEAREST, VKL_FILTER_LINEAR, VKL_FILTER_CUBIC};
 
   for (const auto &filter : filters) {
     VKLSampler sampler1 = vklNewSampler(vklVolume1);
@@ -154,13 +154,13 @@ static void sampling_gradient_equivalence(VKLVolume vklVolume1,
     for (size_t i = 0; i < N; i++) {
       vkl_vec3f oc{distX(eng), distY(eng), distZ(eng)};
 
-      const float s1 = vklComputeSample(sampler1, &oc);
-      const float s2 = vklComputeSample(sampler2, &oc);
+      const float s1 = vklComputeSample(&sampler1, &oc);
+      const float s2 = vklComputeSample(&sampler2, &oc);
 
       requireEqualsHelper(s1, s2);
 
-      const vkl_vec3f g1 = vklComputeGradient(sampler1, &oc);
-      const vkl_vec3f g2 = vklComputeGradient(sampler2, &oc);
+      const vkl_vec3f g1 = vklComputeGradient(&sampler1, &oc);
+      const vkl_vec3f g2 = vklComputeGradient(&sampler2, &oc);
 
       requireEqualsHelper(g1.x, g2.x);
       requireEqualsHelper(g1.y, g2.y);
@@ -219,23 +219,23 @@ static void iterator_equivalence(VKLVolume vklVolume1,
   // MSVC does not support variable length arrays, but provides a
   // safer version of alloca.
   char *buffer1 =
-      static_cast<char *>(_malloca(vklGetIntervalIteratorSize(context1)));
+      static_cast<char *>(_malloca(vklGetIntervalIteratorSize(&context1)));
   char *buffer2 =
-      static_cast<char *>(_malloca(vklGetIntervalIteratorSize(context2)));
+      static_cast<char *>(_malloca(vklGetIntervalIteratorSize(&context2)));
 #else
   char *buffer1 =
-      static_cast<char *>(alloca(vklGetIntervalIteratorSize(context1)));
+      static_cast<char *>(alloca(vklGetIntervalIteratorSize(&context1)));
   char *buffer2 =
-      static_cast<char *>(alloca(vklGetIntervalIteratorSize(context2)));
+      static_cast<char *>(alloca(vklGetIntervalIteratorSize(&context2)));
 #endif
 
   size_t numIterations = 0;
 
   VKLIntervalIterator iterator1 = vklInitIntervalIterator(
-      context1, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer1);
+      &context1, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer1);
 
   VKLIntervalIterator iterator2 = vklInitIntervalIterator(
-      context2, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer2);
+      &context2, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer2);
 
   while (true) {
     VKLInterval interval1, interval2;

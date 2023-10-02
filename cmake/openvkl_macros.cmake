@@ -12,7 +12,9 @@ macro(openvkl_add_library_ispc name type)
       set(OTHER_SOURCES ${OTHER_SOURCES} ${src})
     endif ()
   endforeach()
+  set(ISPC_TARGET_NAME ${name})
   openvkl_ispc_compile(${ISPC_SOURCES})
+  unset(ISPC_TARGET_NAME)
   add_library(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES} ${VKL_RESOURCE})
 endmacro()
 
@@ -27,8 +29,13 @@ macro(openvkl_add_executable_ispc name)
       set(OTHER_SOURCES ${OTHER_SOURCES} ${src})
     endif ()
   endforeach()
+  set(ISPC_TARGET_NAME ${name})
   openvkl_ispc_compile(${ISPC_SOURCES})
+  unset(ISPC_TARGET_NAME)
   add_executable(${name} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES} ${VKL_RESOURCE})
+  target_link_libraries(${name} PRIVATE ispcrt::ispcrt)
+  target_include_directories(${name} PRIVATE "${COMMON_PATH}" "${LEVEL_ZERO_INCLUDE_DIR}" "${ISPC_INCLUDE_DIR}" )
+  target_link_libraries(${name} PRIVATE ${LEVEL_ZERO_LIB_LOADER})
 endmacro()
 
 macro(openvkl_configure_build_type)
@@ -251,6 +258,11 @@ function(openvkl_vdb_generate_topology)
       include/${PROJECT_NAME}_vdb/VdbSamplerDispatchInner${VKL_VDB_POSTFIX}.ih
     )
 
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/gpu/compute/vdb/VdbSamplerDispatchInner.h.in
+      include/${PROJECT_NAME}_vdb/VdbSamplerDispatchInner${VKL_VDB_POSTFIX}.h
+    )
+
     # Generate uniform, varying, and univary traversal.
     # a) We know all queries are in the same leaf node. Fully uniform traversal.
     set(VKL_VDB_UNIVARY_IN "uniform")
@@ -258,6 +270,11 @@ function(openvkl_vdb_generate_topology)
     configure_file(
       ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/cpu/volume/vdb/VdbSampleInner.ih.in
       include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
+    )
+
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/gpu/compute/vdb/VdbSampleInner.h.in
+      include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.h
     )
     # b) All lanes are not in the same subtree.
     set(VKL_VDB_UNIVARY_IN "varying")

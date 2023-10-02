@@ -80,6 +80,9 @@ INSTALL_LIB_DIR=$OPENVKL_INSTALL_DIR/lib
 cp -P $DEP_INSTALL_DIR/lib/lib*.so* $INSTALL_LIB_DIR
 cp -P $DEP_INSTALL_DIR/lib/lib*.a* $INSTALL_LIB_DIR
 
+# OpenVDB static library is large and not needed
+rm $INSTALL_LIB_DIR/libopenvdb*.a
+
 # copy SYCL runtime dependencies
 SYCL_BIN_FILE=`which clang`
 SYCL_BIN_DIR=`dirname ${SYCL_BIN_FILE}`

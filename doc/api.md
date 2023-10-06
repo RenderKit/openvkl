@@ -35,11 +35,11 @@ To use the API, one of the implemented backends must be linked at compile time.
 Currently both a CPU and GPU device are available. To link one of these devices
 within CMake, use for example:
 
-    target_link_libraries(myApp PRIVATE openvkl openvkl_module_cpu_device)
+    target_link_libraries(myApp PRIVATE openvkl::openvkl openvkl::openvkl_module_cpu_device)
 
 or
 
-    target_link_libraries(myApp PRIVATE openvkl openvkl_module_gpu_device)
+    target_link_libraries(myApp PRIVATE openvkl::openvkl openvkl::openvkl_module_gpu_device)
 
 The application code must then first initialize Open VKL:
 

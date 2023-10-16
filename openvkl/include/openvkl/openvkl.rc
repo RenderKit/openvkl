@@ -24,7 +24,7 @@ BEGIN
             VALUE "FileDescription", "Open Volume Kernel Library"
             VALUE "FileVersion", OPENVKL_VERSION
             VALUE "ProductVersion", OPENVKL_VERSION
-            VALUE "LegalCopyright", "© 2019-2022 Intel Corporation"
+            VALUE "LegalCopyright", "© 2019 Intel Corporation"
             VALUE "InternalName", "Open VKL"
             VALUE "ProductName", "Intel® Open VKL"
         END

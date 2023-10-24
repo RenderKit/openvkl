@@ -51,12 +51,6 @@ if (TARGET openvkl::openvkl_module_gpu_device)
     file(GLOB_RECURSE RKCOMMON_LIBRARY ${LIBRARY_PATH_PREFIX}rkcommon*.${LIB_SUFFIX})
   endif()
 
-  if (TARGET ispcrt::ispcrt)
-    set(ISPCRT_LIBRARY ispcrt::ispcrt)
-  else()
-    file(GLOB_RECURSE ISPCRT_LIBRARY ${LIBRARY_PATH_PREFIX}ispcrt.${LIB_SUFFIX})
-  endif()
-
   if (TARGET embree)
     set(EMBREE_LIBRARY embree)
   else()

@@ -20,13 +20,10 @@ jobs:
       image: ubuntu:22.04
       artifact-out: build-gpu
       artifact-path: ./build/install ./build/openvkl/build
-      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
-        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON \
+        gitlab/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON"
@@ -37,13 +34,10 @@ jobs:
     with:
       submodules: true
       image: ubuntu:22.04
-      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
-        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON \
+        gitlab/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON \
@@ -55,13 +49,10 @@ jobs:
     with:
       submodules: true
       image: ubuntu:22.04
-      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
-        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON \
+        gitlab/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON \
@@ -79,8 +70,6 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         module load cmake/3.25.3
-        export CC=clang
-        export CXX=clang++
         export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
         export PATH=`pwd`/build/install/bin:`pwd`/build/install:$PATH
         gitlab/build-from-install.sh

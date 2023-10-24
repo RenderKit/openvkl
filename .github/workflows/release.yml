@@ -33,7 +33,6 @@ jobs:
         DEP_INSTALL_DIR=`pwd`/../install &&
         export rkcommon_DIR=$DEP_INSTALL_DIR &&
         export embree_DIR=$DEP_INSTALL_DIR &&
-        export ispcrt_DIR=$DEP_INSTALL_DIR &&
         cmake -DISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc -DBUILD_EXAMPLES=OFF -DRKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR ../.. &&
         cd ../..
       build: cmake --build ./build/openvkl_build
@@ -67,7 +66,6 @@ jobs:
       image: rockylinux:8.7
       artifact-out: linux_sycl
       artifact-path: ./*.gz
-      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
@@ -96,7 +94,6 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       runs-on: '[ "Windows", "build" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
       artifact-out: windows_sycl
@@ -140,7 +137,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
-      image: ubuntu:22.04 
+      image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: linux_sycl
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
@@ -155,7 +152,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
-      image: ubuntu:22.04 
+      image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: linux_sycl
       env-from-files: .github/deps/gfx-linux-public.env
@@ -184,7 +181,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      runs-on: '[ "Windows", "dg2" ]' 
+      runs-on: '[ "Windows", "dg2" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
       artifact-in: windows_sycl
       cmd: |

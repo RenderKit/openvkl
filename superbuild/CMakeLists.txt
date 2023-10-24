@@ -110,10 +110,7 @@ if (BUILD_ISPC)
   set(ISPC_URL "${_ISPC_URL}" CACHE STRING "URL of the ISPC archive.")
   set(ISPC_HASH "${_ISPC_HASH}" CACHE STRING "SHA256 hash of the ISPC archive.")
   include(dep_ispc)
-  include(dep_ispcrt)
 endif()
-
-option(BUILD_ISPCRT_GPU "Build the ISPC Runtime with GPU support?" OFF)
 
 option(BUILD_TBB "Build Intel Threading Building Blocks or search in environment?" ON)
 option(BUILD_TBB_FROM_SOURCE "Build Intel Threading Building Blocks from source or use pre-built version?" OFF)
@@ -312,7 +309,6 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
   ExternalProject_Add_StepDependencies(openvkl
   configure
     $<$<BOOL:${BUILD_ISPC}>:ispc>
-    $<$<BOOL:${BUILD_ISPC}>:ispcrt>
     $<$<BOOL:${BUILD_TBB}>:tbb>
     $<$<BOOL:${BUILD_RKCOMMON}>:rkcommon>
     $<$<BOOL:${BUILD_GLFW}>:glfw>

@@ -18,7 +18,6 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      level-zero-version: public/1.12.0  # It's needed to build ISPCRT
       runs-on: '[ "Windows", "build" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
       artifact-out: build-windows-gpu
@@ -32,7 +31,7 @@ jobs:
         mkdir build
         cd build
 
-        cmake -L -G Ninja -D CMAKE_INSTALL_LIBDIR=lib -D BUILD_OPENVKL_BENCHMARKS=OFF -D BUILD_OPENVKL_TESTING=ON -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON -D CMAKE_CXX_COMPILER=clang-cl -D CMAKE_C_COMPILER=clang-cl -D OPENVKL_EXTRA_OPTIONS="-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DOPENVKL_ENABLE_DEVICE_GPU=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON" ../superbuild
+        cmake -L -G Ninja -D CMAKE_INSTALL_LIBDIR=lib -D BUILD_OPENVKL_BENCHMARKS=OFF -D BUILD_OPENVKL_TESTING=ON -D BUILD_OPENVDB=OFF -D CMAKE_CXX_COMPILER=clang-cl -D CMAKE_C_COMPILER=clang-cl -D OPENVKL_EXTRA_OPTIONS="-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DOPENVKL_ENABLE_DEVICE_GPU=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON" ../superbuild
 
         cmake --build . --config Release -j1 --verbose
 

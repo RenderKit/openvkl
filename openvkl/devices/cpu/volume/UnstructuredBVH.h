@@ -47,7 +47,7 @@ namespace openvkl {
           memGuard.lock();
 
           if (chunkBytesRemaining < sizeof(T)) {
-            allocateNewChunk();
+            allocateNewChunk(alignof(T));
           }
 
           ptr = chunkPtr;
@@ -56,10 +56,9 @@ namespace openvkl {
 
           memGuard.unlock();
         } else {
-          auto mv = BufferSharedCreate(device.ptr, sizeof(T));
-          ptr     = ispcrtSharedPtr(mv);
+          ptr = BufferSharedCreate(device.ptr, sizeof(T), alignof(T));
           memGuard.lock();
-          memRefs.push_back(mv);
+          memRefs.push_back(ptr);
           memGuard.unlock();
         }
 
@@ -81,7 +80,7 @@ namespace openvkl {
           memGuard.lock();
 
           if (chunkBytesRemaining < num * sizeof(T)) {
-            allocateNewChunk();
+            allocateNewChunk(alignof(T));
           }
 
           ptr = chunkPtr;
@@ -90,10 +89,9 @@ namespace openvkl {
 
           memGuard.unlock();
         } else {
-          auto mv = BufferSharedCreate(device.ptr, num * sizeof(T));
-          ptr     = ispcrtSharedPtr(mv);
+          ptr = BufferSharedCreate(device.ptr, num * sizeof(T), alignof(T));
           memGuard.lock();
-          memRefs.push_back(mv);
+          memRefs.push_back(ptr);
           memGuard.unlock();
         }
 
@@ -106,8 +104,8 @@ namespace openvkl {
 
       virtual ~BvhBuildAllocator()
       {
-        for (auto mv : memRefs) {
-          BufferSharedDelete(mv);
+        for (auto ptr : memRefs) {
+          BufferSharedDelete(device.ptr, ptr);
         }
       }
 
@@ -119,7 +117,7 @@ namespace openvkl {
       std::mutex memGuard;
 
       // data to free eventually
-      std::vector<ISPCRTMemoryView> memRefs;
+      std::vector<void *> memRefs;
 
       // how many bytes to allocate per "chunk", if 0 then no chunking
       // allocation is used
@@ -129,15 +127,14 @@ namespace openvkl {
       char *chunkPtr                = nullptr;
       long long chunkBytesRemaining = 0;
 
-      void allocateNewChunk()
+      void allocateNewChunk(size_t alignment)
       {
         // memGuard should already be locked!
+        void *ptr =
+            BufferSharedCreate(device.ptr, chunkAllocationBytes, alignment);
+        memRefs.push_back(ptr);
 
-        ISPCRTMemoryView mv =
-            BufferSharedCreate(device.ptr, chunkAllocationBytes);
-        memRefs.push_back(mv);
-
-        chunkPtr            = static_cast<char *>(ispcrtSharedPtr(mv));
+        chunkPtr            = static_cast<char *>(ptr);
         chunkBytesRemaining = chunkAllocationBytes;
       }
     };

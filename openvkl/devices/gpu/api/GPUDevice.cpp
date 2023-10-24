@@ -26,12 +26,6 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
 
     template <int W>
-    GPUDevice<W>::~GPUDevice()
-    {
-      delete (ispcrt::Context *)context;
-    }
-
-    template <int W>
     AllocType GPUDevice<W>::getAllocationType(const void *ptr) const
     {
       sycl::usm::alloc allocType = sycl::get_pointer_type(ptr, syclContext);
@@ -52,22 +46,17 @@ namespace openvkl {
     }
 
     template <int W>
-    api::memstate *GPUDevice<W>::allocateBytes(size_t numBytes) const
+    void *GPUDevice<W>::allocateSharedMemory(size_t numBytes,
+                                             size_t alignment) const
     {
-      api::memstate *container = new api::memstate;
-      container->privateManagement =
-          (void *)BufferSharedCreate((Device *)this, numBytes + 16);
-      void *buffer =
-          ispcrtSharedPtr((ISPCRTMemoryView)container->privateManagement);
-      container->allocatedBuffer = buffer;
-      return container;
+      return (void *)sycl::aligned_alloc_shared<char>(
+          alignment, numBytes, syclDevice, syclContext);
     }
 
     template <int W>
-    void GPUDevice<W>::freeMemState(api::memstate *container) const
+    void GPUDevice<W>::freeSharedMemory(void *ptr) const
     {
-      BufferSharedDelete((ISPCRTMemoryView)container->privateManagement);
-      delete container;
+      sycl::free(ptr, syclContext);
     }
 
     template <int W>
@@ -126,44 +115,29 @@ namespace openvkl {
     {
       Device::commit();
 
-      // the env var OPENVKL_GPU_DEVICE_DEBUG_USE_CPU is intended for debug
-      // purposes only, and forces the Open VKL GPU device to use the CPU
-      // instead.
-      const bool useCpu =
-          rkcommon::utility::getEnvVar<int>("OPENVKL_GPU_DEVICE_DEBUG_USE_CPU")
-              .value_or(0);
+      sycl::context *c =
+          (sycl::context *)getParam<const void *>("syclContext", nullptr);
 
-      if (context) {
-        delete (ispcrt::Context *)context;
-        context = nullptr;
+      if (c == nullptr) {
+        throw std::runtime_error(
+            "SYCL device type can't be used without 'syclContext' parameter");
       }
 
-      if (useCpu) {
-        postLogMessage(this, VKL_LOG_INFO)
-            << "GPU device: using CPU backend (enabled via env var: "
-               "OPENVKL_GPU_DEVICE_DEBUG_USE_CPU=1)";
+      // SYCL contexts are normally stored in the application by-value, so
+      // save a copy here in case it disappears from the application's stack
+      syclContext = *c;
 
-        context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
+      sycl::device *device =
+          (sycl::device *)getParam<const void *>("syclDevice", nullptr);
 
+      if (device == nullptr) {
+        // take first device as default device
+        auto devices = syclContext.get_devices();
+        if (devices.size() == 0)
+          throw std::runtime_error("SYCL context contains no device");
+        syclDevice = devices[0];
       } else {
-        sycl::context *c =
-            (sycl::context *)getParam<const void *>("syclContext", nullptr);
-
-        if (c == nullptr) {
-          throw std::runtime_error(
-              "GPU device type can't be used without 'syclContext' parameter");
-        }
-
-        // SYCL contexts are normally stored in the application by-value, so
-        // save a copy here in case it disappears from the application's stack
-        syclContext = *c;
-
-        // nativeContext is a pointer - it's owned by syclContext so no need to
-        // care about life cycle for this variable here.
-        ze_context_handle_t nativeContext =
-            sycl::get_native<sycl::backend::ext_oneapi_level_zero>(syclContext);
-
-        context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU, nativeContext);
+        syclDevice = *device;
       }
     }
 

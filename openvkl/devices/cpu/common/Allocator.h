@@ -30,10 +30,6 @@ namespace openvkl {
 
       template <class T>
       void deallocate(T *&ptr);
-
-     private:
-      std::atomic<size_t> bytesAllocated{0};
-      std::map<void *, api::memstate *> ptrToMemState;
     };
 
     // -------------------------------------------------------------------------
@@ -41,33 +37,14 @@ namespace openvkl {
     template <class T>
     inline T *Allocator::allocate(size_t size)
     {
-      //  matches default for rkcommon::memory::alignedMalloc(), which was used
-      //  before
-      const size_t alignment = 64;
+      const size_t numBytes = size * sizeof(T);
 
-      const size_t numBytes = size * sizeof(T) + alignment;
-      bytesAllocated += numBytes;
-
-      api::memstate *m = this->device->allocateBytes(numBytes);
-      if (!m->allocatedBuffer) {
+      void *memory = this->device->allocateSharedMemory(numBytes, alignof(T));
+      if (!memory) {
         throw std::bad_alloc();
       }
-
-      // std::align() may modify ptr and space, so use temporaries here
-      void *ptr    = m->allocatedBuffer;
-      size_t space = numBytes;
-
-      void *alignedBuffer = std::align(alignment, size * sizeof(T), ptr, space);
-      if (!alignedBuffer) {
-        throw std::bad_alloc();
-      }
-
-      T *buf = reinterpret_cast<T *>(alignedBuffer);
-      std::memset(buf, 0, size * sizeof(T));
-
-      ptrToMemState[buf] = m;
-
-      return buf;
+      std::memset(memory, 0, numBytes);
+      return reinterpret_cast<T *>(memory);
     }
 
     template <class T>
@@ -76,15 +53,7 @@ namespace openvkl {
       if (!ptr) {
         return;
       }
-
-      if (ptrToMemState.count(ptr)) {
-        this->device->freeMemState(ptrToMemState[ptr]);
-        ptrToMemState.erase(ptr);
-      } else {
-        throw std::runtime_error(
-            "Allocator::deallocate(): cannot find memstate for ptr");
-      }
-
+      this->device->freeSharedMemory(ptr);
       ptr = nullptr;
     }
 
@@ -100,7 +69,7 @@ namespace openvkl {
     {
       typedef T value_type;
 
-      AllocatorStl(Device *device) noexcept : device(device){};
+      AllocatorStl(Device *device) noexcept : m_device(device){};
 
       ~AllocatorStl();
 
@@ -125,9 +94,11 @@ namespace openvkl {
       void deallocate(T *const p, size_t);
 
      private:
-      Device *device{nullptr};
+      Device *m_device{nullptr};
 
-      std::map<void *, api::memstate *> ptrToMemState;
+      // We need to track all allocation so we can free them
+      // when object will be destroyed.
+      std::vector<void *> m_allocations;
     };
 
     // -------------------------------------------------------------------------
@@ -135,8 +106,8 @@ namespace openvkl {
     template <class T>
     AllocatorStl<T>::~AllocatorStl()
     {
-      for (auto const &m : ptrToMemState) {
-        this->device->freeMemState(m.second);
+      for (auto const &allocation : m_allocations) {
+        m_device->freeSharedMemory(allocation);
       }
     }
 
@@ -151,30 +122,18 @@ namespace openvkl {
         throw std::bad_array_new_length();
       }
 
-      const size_t alignment = alignof(T);
+      const size_t numBytes = size * sizeof(T);
 
-      const size_t numBytes = size * sizeof(T) + alignment;
-
-      api::memstate *m = this->device->allocateBytes(numBytes);
-      if (!m->allocatedBuffer) {
+      void *memory = m_device->allocateSharedMemory(numBytes, alignof(T));
+      if (!memory) {
         throw std::bad_alloc();
       }
 
-      // std::align() may modify ptr and space, so use temporaries here
-      void *ptr    = m->allocatedBuffer;
-      size_t space = numBytes;
+      std::memset(memory, 0, numBytes);
 
-      void *alignedBuffer = std::align(alignment, size * sizeof(T), ptr, space);
-      if (!alignedBuffer) {
-        throw std::bad_alloc();
-      }
+      m_allocations.push_back(memory);
 
-      T *buf = reinterpret_cast<T *>(alignedBuffer);
-      std::memset(buf, 0, size * sizeof(T));
-
-      ptrToMemState[buf] = m;
-
-      return buf;
+      return reinterpret_cast<T *>(memory);
     }
 
     template <class T>
@@ -184,15 +143,13 @@ namespace openvkl {
         return;
       }
 
-      void *voidPtr = static_cast<void *>(ptr);
-
-      if (ptrToMemState.count(voidPtr)) {
-        this->device->freeMemState(ptrToMemState[voidPtr]);
-        ptrToMemState.erase(voidPtr);
-      } else {
+      auto it = std::find(m_allocations.begin(), m_allocations.end(), ptr);
+      if (it == m_allocations.end()) {
         throw std::runtime_error(
-            "Allocator::deallocate(): cannot find memstate for ptr");
+            "AllocatorStl::deallocate(): cannot find allocation for ptr");
       }
+      m_device->freeSharedMemory(ptr);
+      m_allocations.erase(it);
     }
 
   }  // namespace cpu_device

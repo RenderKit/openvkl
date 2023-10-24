@@ -5,74 +5,63 @@
 
 #include <string.h>
 #include "../api/Device.h"
-#include "ispcrt.hpp"
 
 namespace openvkl {
 
   // C version ////////////////////////////////////////////
 
-  inline ISPCRTMemoryView BufferSharedCreate(Device *device, size_t size)
+  inline void *BufferSharedCreate(Device *device, size_t size, size_t alignment)
   {
-    ispcrt::Context *context = (ispcrt::Context *)device->getContext();
-    ISPCRTNewMemoryViewFlags flags;
-    flags.allocType = ISPCRT_ALLOC_TYPE_SHARED;
-    flags.smHint    = ISPCRT_SM_HOST_WRITE_DEVICE_READ;
-    auto view =
-        ispcrtNewMemoryViewForContext(context->handle(), nullptr, size, &flags);
-    return view;
+    return device->allocateSharedMemory(size, alignment);
   }
 
-  inline void BufferSharedDelete(ISPCRTMemoryView view)
+  inline void BufferSharedDelete(Device *device, void *ptr)
   {
-    ispcrtRelease(view);
+    device->freeSharedMemory(ptr);
   }
 
   // C++ version ////////////////////////////////////////////
 
   template <typename T>
-  struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
+  struct BufferShared
   {
-    using ispcrt::Array<T, ispcrt::AllocType::Shared>::sharedPtr;
-    BufferShared(Device *device);
+   private:
+    void *m_ptr;
+    size_t m_size;
+    Device *m_device;
+
+   public:
     BufferShared(Device *, size_t size);
     BufferShared(Device *, const std::vector<T> &v);
-    BufferShared(Device *, const T *data, size_t size);
+    T *sharedPtr()
+    {
+      return (T *)m_ptr;
+    }
+    size_t size()
+    {
+      return m_size;
+    }
+    ~BufferShared()
+    {
+      BufferSharedDelete(m_device, m_ptr);
+    }
   };
 
   template <typename T>
-  BufferShared<T>::BufferShared(Device *device)
-      : ispcrt::Array<T, ispcrt::AllocType::Shared>(
-            *(ispcrt::Context *)device->getContext())
-  {
-    // ISPCRT lazily allocates on first access of pointer; force allocation on
-    // construction to maintain thread safety
-    sharedPtr();
-  }
-
-  template <typename T>
   BufferShared<T>::BufferShared(Device *device, size_t size)
-      : ispcrt::Array<T, ispcrt::AllocType::Shared>(
-            *(ispcrt::Context *)device->getContext(), size)
+      : m_size(size),
+        m_device(device),
+        m_ptr(BufferSharedCreate(device, sizeof(T) * size, alignof(T)))
   {
-    // ISPCRT lazily allocates on first access of pointer; force allocation on
-    // construction to maintain thread safety
-    sharedPtr();
   }
 
   template <typename T>
   BufferShared<T>::BufferShared(Device *device, const std::vector<T> &v)
-      : ispcrt::Array<T, ispcrt::AllocType::Shared>(
-            *(ispcrt::Context *)device->getContext(), v.size())
+      : m_size(v.size()),
+        m_device(device),
+        m_ptr(BufferSharedCreate(device, sizeof(T) * v.size(), alignof(T)))
   {
-    memcpy(sharedPtr(), v.data(), sizeof(T) * v.size());
-  }
-
-  template <typename T>
-  BufferShared<T>::BufferShared(Device *device, const T *data, size_t size)
-      : ispcrt::Array<T, ispcrt::AllocType::Shared>(
-            *(ispcrt::Context *)device->getContext(), size)
-  {
-    memcpy(sharedPtr(), data, sizeof(T) * size);
+    memcpy(sharedPtr(), v.data(), sizeof(T) * m_size);
   }
 
   template <typename T, typename... Args>

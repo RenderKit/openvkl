@@ -39,12 +39,6 @@ namespace openvkl {
 
   namespace api {
 
-    typedef struct
-    {
-      void *allocatedBuffer;
-      void *privateManagement;
-    } memstate;
-
     struct OPENVKL_CORE_INTERFACE Device
         : public rkcommon::memory::RefCountedObject,
           public rkcommon::utility::ParameterizedObject
@@ -174,10 +168,9 @@ namespace openvkl {
 
       virtual AllocType getAllocationType(const void *ptr) const = 0;
 
-      virtual void *getContext() const = 0;
-
-      virtual memstate *allocateBytes(size_t numBytes) const = 0;
-      virtual void freeMemState(memstate *) const            = 0;
+      virtual void *allocateSharedMemory(size_t numBytes,
+                                         size_t alignment) const = 0;
+      virtual void freeSharedMemory(void *) const               = 0;
 
       virtual char *copyDeviceBufferToHost(size_t numItems,
                                            VKLDataType dataType,

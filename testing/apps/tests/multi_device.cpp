@@ -169,6 +169,7 @@ TEST_CASE("Multiple devices", "[multi_device]")
     VKLDevice device = vklNewDevice("gpu");
     vklDeviceSetVoidPtr(
         device, "syclContext", static_cast<void *>(&syclContext));
+    vklDeviceSetVoidPtr(device, "syclDevice", static_cast<void *>(&syclDevice));
 #else
     VKLDevice device = vklNewDevice("cpu");
 #endif

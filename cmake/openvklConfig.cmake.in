@@ -71,7 +71,7 @@ if (TARGET openvkl::openvkl_module_gpu_device)
 
   # Add missing targets to libraries
   set_target_properties(openvkl::openvkl_module_gpu_device PROPERTIES
-    INTERFACE_LINK_LIBRARIES "${RKCOMMON_LIBRARY};${ISPCRT_LIBRARY};${EMBREE_LIBRARY};${TBB_LIBRARY}"
+    INTERFACE_LINK_LIBRARIES "${RKCOMMON_LIBRARY};${EMBREE_LIBRARY};${TBB_LIBRARY}"
   )
 
 endif()

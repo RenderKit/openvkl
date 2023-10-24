@@ -54,7 +54,7 @@ namespace openvkl {
     static ispc::Data1D emptyData1D;  // dummy, zero-initialized
 
    protected:
-    api::memstate *memstate;
+    void *sharedPtr;
     char *addr;
 
     // transfer ownership of the shared buffer? if so, we will free the memory

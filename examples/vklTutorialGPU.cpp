@@ -318,7 +318,7 @@ int main()
   sycl::queue syclQueue(IntelGPUDeviceSelector);
 
   sycl::context syclContext = syclQueue.get_context();
-
+  sycl::device syclDevice   = syclQueue.get_device();
   std::cout << "Target SYCL device: "
             << syclQueue.get_device().get_info<sycl::info::device::name>()
             << std::endl
@@ -328,6 +328,9 @@ int main()
 
   VKLDevice device = vklNewDevice("gpu");
   vklDeviceSetVoidPtr(device, "syclContext", static_cast<void *>(&syclContext));
+  // "syclDevice" is optional.
+  // By default first available SYCL device will be used.
+  vklDeviceSetVoidPtr(device, "syclDevice", static_cast<void *>(&syclDevice));
   vklCommitDevice(device);
 
   const int dimensions[] = {128, 128, 128};

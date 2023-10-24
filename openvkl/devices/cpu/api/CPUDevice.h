@@ -21,7 +21,6 @@ namespace openvkl {
     struct CPUDevice : public AddDeviceAPIs
     {
       CPUDevice() = default;
-      ~CPUDevice() override;
 
       bool supportsWidth(int width) override;
 
@@ -490,16 +489,9 @@ namespace openvkl {
         return OPENVKL_ALLOC_TYPE_HOST;
       }
 
-      void *getContext() const override
-      {
-        return context;
-      };
-
-      api::memstate *allocateBytes(size_t numBytes) const override;
-      void freeMemState(api::memstate *) const override;
-
-     private:
-      void *context{nullptr};
+      void *allocateSharedMemory(size_t numBytes,
+                                 size_t alignment) const override;
+      void freeSharedMemory(void *) const override;
     };
 
     ////////////////////////////////////////////////////////////////////////////

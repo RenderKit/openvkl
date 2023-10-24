@@ -39,14 +39,15 @@ void initializeOpenVKL()
          sycl::property::queue::in_order()});  // By default sycl queues are out
                                                // of order
     sycl::context syclContext = syclQueuePtr->get_context();
+    sycl::device syclDevice   = syclQueuePtr->get_device();
     std::cout << std::endl
               << "Target SYCL device: "
-              << syclQueuePtr->get_device().get_info<sycl::info::device::name>()
-              << std::endl
+              << syclDevice.get_info<sycl::info::device::name>() << std::endl
               << std::endl;
     device = vklNewDevice("gpu");
     vklDeviceSetVoidPtr(
         device, "syclContext", static_cast<void *>(&syclContext));
+    vklDeviceSetVoidPtr(device, "syclDevice", static_cast<void *>(&syclDevice));
 #endif
 #ifdef OPENVKL_TESTING_CPU
     device = vklNewDevice("cpu");

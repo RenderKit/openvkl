@@ -143,8 +143,7 @@ superbuild. On Linux:
     export CC=clang
     export CXX=clang++
 
-    cmake -D BUILD_ISPCRT_GPU=ON \
-      -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON" \
+    cmake -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON" \
       [<VKL_ROOT>/superbuild]
     ```
 
@@ -152,7 +151,6 @@ And on Windows:
 
     ```
     cmake -L -G Ninja \
-      -D BUILD_ISPCRT_GPU=ON \
       -D CMAKE_CXX_COMPILER=clang-cl -D CMAKE_C_COMPILER=clang-cl \
       -D OPENVKL_EXTRA_OPTIONS="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++  -DOPENVKL_ENABLE_DEVICE_GPU=ON" \
        [<VKL_ROOT>/superbuild]

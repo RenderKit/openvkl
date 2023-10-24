@@ -1,9 +1,11 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+#include <algorithm>
 
 #include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/math/box.h"
 #include "rkcommon/math/vec.h"
+#include "rkcommon/memory/malloc.h"
 using namespace rkcommon;
 using namespace rkcommon::math;
 
@@ -27,26 +29,20 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
 
     template <int W>
-    CPUDevice<W>::~CPUDevice()
+    void *CPUDevice<W>::allocateSharedMemory(size_t numBytes,
+                                             size_t alignment) const
     {
-      delete (ispcrt::Context *)context;
+      // Allocate memory aligned to 64 bytes (512 bits)
+      // which is optimal for AVX512 instructions.
+      // If larger alignment requested then use it instead.
+      return rkcommon::memory::alignedMalloc(numBytes,
+                                             std::max((size_t)64, alignment));
     }
 
     template <int W>
-    api::memstate *CPUDevice<W>::allocateBytes(size_t numBytes) const
+    void CPUDevice<W>::freeSharedMemory(void *ptr) const
     {
-      api::memstate *container     = new api::memstate;
-      void *buffer                 = (char *)new char[numBytes];
-      container->privateManagement = nullptr;
-      container->allocatedBuffer   = buffer;
-      return container;
-    }
-
-    template <int W>
-    void CPUDevice<W>::freeMemState(api::memstate *container) const
-    {
-      delete[](char *) container->allocatedBuffer;
-      delete container;
+      rkcommon::memory::alignedFree(ptr);
     }
 
     template <int W>
@@ -65,11 +61,6 @@ namespace openvkl {
     void CPUDevice<W>::commit()
     {
       Device::commit();
-
-      if (!context) {
-        auto _context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
-        context       = (void *)_context;
-      }
 
       VKLISPCTarget target =
           static_cast<VKLISPCTarget>(CALL_ISPC(ISPC_getTarget));

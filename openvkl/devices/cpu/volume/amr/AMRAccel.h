@@ -103,9 +103,6 @@ namespace openvkl {
         AllocatorStl<Leaf> leafAllocator;
         std::vector<Leaf, AllocatorStl<Leaf>> leaf;
 
-        //! for brick lists inside leaf nodes
-        AllocatorStl<const AMRData::Brick *> brickListAllocator;
-
         //! world bounds of domain
         box3f worldBounds;
 
@@ -117,6 +114,9 @@ namespace openvkl {
         void buildRec(int nodeID,
                       const box3f &bounds,
                       std::vector<const AMRData::Brick *> &brick);
+
+        std::vector<std::shared_ptr<BufferShared<const AMRData::Brick *>>>
+            m_brickListContainer;
       };
 
       std::ostream &operator<<(std::ostream &os, const AMRAccel &a);

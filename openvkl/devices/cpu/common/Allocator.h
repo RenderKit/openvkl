@@ -69,47 +69,38 @@ namespace openvkl {
     {
       typedef T value_type;
 
-      AllocatorStl(Device *device) noexcept : m_device(device){};
+      AllocatorStl(Device *device) : m_device(device)
+      {
+        assert(m_device);
+      };
 
-      ~AllocatorStl();
+      ~AllocatorStl()                               = default;
 
       template <class U>
-      AllocatorStl(const AllocatorStl<U> &) noexcept
-      {
-      }
+      bool operator==(const AllocatorStl<U> &) const = delete;
 
       template <class U>
-      bool operator==(const AllocatorStl<U> &) const noexcept
-      {
-        return true;
-      }
+      bool operator!=(const AllocatorStl<U> &) const = delete;
 
       template <class U>
-      bool operator!=(const AllocatorStl<U> &) const noexcept
+      AllocatorStl(const AllocatorStl<U> &o)
       {
-        return false;
+        m_device = o.getDevice();
+        assert(m_device);
       }
 
       T *allocate(const size_t n);
       void deallocate(T *const p, size_t);
+      Device *getDevice() const
+      {
+        return m_device;
+      };
 
      private:
       Device *m_device{nullptr};
-
-      // We need to track all allocation so we can free them
-      // when object will be destroyed.
-      std::vector<void *> m_allocations;
     };
 
     // -------------------------------------------------------------------------
-
-    template <class T>
-    AllocatorStl<T>::~AllocatorStl()
-    {
-      for (auto const &allocation : m_allocations) {
-        m_device->freeSharedMemory(allocation);
-      }
-    }
 
     template <class T>
     T *AllocatorStl<T>::allocate(const size_t size)
@@ -131,8 +122,6 @@ namespace openvkl {
 
       std::memset(memory, 0, numBytes);
 
-      m_allocations.push_back(memory);
-
       return reinterpret_cast<T *>(memory);
     }
 
@@ -142,14 +131,7 @@ namespace openvkl {
       if (!ptr) {
         return;
       }
-
-      auto it = std::find(m_allocations.begin(), m_allocations.end(), ptr);
-      if (it == m_allocations.end()) {
-        throw std::runtime_error(
-            "AllocatorStl::deallocate(): cannot find allocation for ptr");
-      }
       m_device->freeSharedMemory(ptr);
-      m_allocations.erase(it);
     }
 
   }  // namespace cpu_device

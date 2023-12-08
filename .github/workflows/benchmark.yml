@@ -35,7 +35,6 @@ jobs:
       setup-benny: true
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   benchmark-x8380-1:
@@ -47,7 +46,6 @@ jobs:
       setup-benny: true
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   benchmark-i9-12900k-1:
@@ -59,7 +57,6 @@ jobs:
       setup-benny: true
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   benchmark-a3970x-1:
@@ -71,7 +68,6 @@ jobs:
       setup-benny: true
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   build-gpu:
@@ -103,7 +99,6 @@ jobs:
       setup-benny: true
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh GPU
 
   perf-pvc:
@@ -119,5 +114,4 @@ jobs:
       setup-benny: true
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh GPU

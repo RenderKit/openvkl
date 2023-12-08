@@ -70,7 +70,6 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         module load cmake/3.25.3
-        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
         export PATH=`pwd`/build/install/bin:`pwd`/build/install:$PATH
         gitlab/build-from-install.sh
 
@@ -86,7 +85,6 @@ jobs:
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
         cd ./build/install/bin
         ./vklTutorialGPU
         ./vklTestsGPU --durations yes
@@ -106,7 +104,6 @@ jobs:
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
         cd ./build/install/bin
         python3 $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.py $STORAGE_PATH/tools/img-diff/dist_linux/img_diff
 
@@ -122,7 +119,6 @@ jobs:
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
         cd ./build/install/bin
         ./vklTutorialGPU
         ./vklTestsGPU --durations yes
@@ -142,7 +138,6 @@ jobs:
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
         cd ./build/install/bin
         python3 $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.py $STORAGE_PATH/tools/img-diff/dist_linux/img_diff
 
@@ -162,5 +157,4 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         $GITHUB_WORKSPACE/.github/scripts/run-examples-big-volume-tests.sh

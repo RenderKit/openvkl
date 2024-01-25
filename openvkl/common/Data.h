@@ -99,12 +99,18 @@ namespace openvkl {
   // DataT ////////////////////////////////////////////////////////////////////
 
   template <typename T>
-  class Iter1D : public std::iterator<std::forward_iterator_tag, T>
+  class Iter1D
   {
     char *addr{nullptr};
     size_t byteStride{0};
 
    public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type        = T;
+    using difference_type   = std::ptrdiff_t;
+    using pointer           = T *;
+    using reference         = T &;
+
     Iter1D(char *addr, size_t byteStride) : addr(addr), byteStride(byteStride)
     {
     }

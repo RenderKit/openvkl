@@ -72,19 +72,6 @@ Windows, you need the following additional prerequisites:
 
 -   [CMake](http://www.cmake.org) version 3.25.3 or higher
 
--   Download or build from sources [oneAPI Level Zero Loader
-    v1.12.0](https://github.com/oneapi-src/level-zero/releases/tag/v1.12.0)
-    development packages.
-
-    -   On Linux Ubuntu 22.04 there are prebuilt packages available for this:
-`level-zero-devel` and `level-zero`
-
-    -   Other Linux distributions require building these packages from source.
-
-    -   On Windows, you can use the single package
-        `level-zero_<version>_win-sdk`; note you will need to set the
-        environment variable `LEVEL_ZERO_ROOT` to the location of the SDK.
-
 -   Download the [oneAPI DPC++ Compiler
     2023-09-22](https://github.com/intel/llvm/releases/tag/nightly-2023-09-22);
     please note this specific version has been validated and used in our

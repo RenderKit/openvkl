@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v2.0.0 of Intel® Open VKL. For changes and new features
+This is release v2.0.1 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -42,6 +42,13 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 2.0.1
+
+- Removed ISPC runtime dependency and level zero loader requirement
+- Add DEPENDENTLOADFLAG linker parameter for Windows binaries,
+  restricting DLL loading behavior
+- Superbuild updates to latest versions of dependencies
 
 ### Open VKL 2.0.0
 
@@ -2752,22 +2759,8 @@ Linux or Windows, you need the following additional prerequisites:
 
 - [CMake](http://www.cmake.org) version 3.25.3 or higher
 
-- Download or build from sources [oneAPI Level Zero Loader
-  v1.12.0](https://github.com/oneapi-src/level-zero/releases/tag/v1.12.0)
-  development packages.
-
-  - On Linux Ubuntu 22.04 there are prebuilt packages available for
-    this: `level-zero-devel` and `level-zero`
-
-  - Other Linux distributions require building these packages from
-    source.
-
-  - On Windows, you can use the single package
-    `level-zero_<version>_win-sdk`; note you will need to set the
-    environment variable `LEVEL_ZERO_ROOT` to the location of the SDK.
-
 - Download the [oneAPI DPC++ Compiler
-  2023-09-22](https://github.com/intel/llvm/releases/tag/nightly-2023-09-22);
+  2023-10-26](https://github.com/intel/llvm/releases/tag/nightly-2023-10-26);
   please note this specific version has been validated and used in our
   releases.
 
@@ -2819,8 +2812,7 @@ the superbuild. On Linux:
     export CC=clang
     export CXX=clang++
 
-    cmake -D BUILD_ISPCRT_GPU=ON \
-      -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON" \
+    cmake -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON" \
       [<VKL_ROOT>/superbuild]
     ```
 
@@ -2828,7 +2820,6 @@ And on Windows:
 
     ```
     cmake -L -G Ninja \
-      -D BUILD_ISPCRT_GPU=ON \
       -D CMAKE_CXX_COMPILER=clang-cl -D CMAKE_C_COMPILER=clang-cl \
       -D OPENVKL_EXTRA_OPTIONS="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++  -DOPENVKL_ENABLE_DEVICE_GPU=ON" \
        [<VKL_ROOT>/superbuild]

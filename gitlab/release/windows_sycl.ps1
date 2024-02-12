@@ -25,7 +25,6 @@ cmake -L `
   -D CMAKE_INSTALL_PREFIX=$DEP_INSTALL_DIR `
   -D CMAKE_INSTALL_LIBDIR=lib `
   -D CMAKE_CXX_COMPILER=clang-cl -D CMAKE_C_COMPILER=clang-cl `
-  -D BUILD_ISPCRT_GPU=ON `
   -D BUILD_OPENVDB=OFF `
   ../superbuild
 
@@ -42,7 +41,6 @@ cd $OPENVKL_BUILD_DIR
 $env:rkcommon_DIR = $DEP_INSTALL_DIR
 $env:embree_DIR = $DEP_INSTALL_DIR
 $env:glfw3_DIR = $DEP_INSTALL_DIR
-$env:ispcrt_DIR = $DEP_INSTALL_DIR
 
 # set release settings
 cmake -L `
@@ -65,7 +63,7 @@ cmake -L `
 cmake --build . --config Release --verbose
 
 # install
-cmake --build . --config Release --target install 
+cmake --build . --config Release --target install
 
 # copy dependent libs into the install
 $INSTALL_BIN_DIR = "$OPENVKL_INSTALL_DIR/bin"
@@ -74,7 +72,6 @@ $INSTALL_LIB_DIR = "$OPENVKL_INSTALL_DIR/lib"
 cp $DEP_INSTALL_DIR/bin/*.dll $INSTALL_BIN_DIR
 
 cp $DEP_INSTALL_DIR/lib/rkcommon*.lib $INSTALL_LIB_DIR
-cp $DEP_INSTALL_DIR/lib/ispcrt*.lib $INSTALL_LIB_DIR
 cp $DEP_INSTALL_DIR/lib/embree*.lib $INSTALL_LIB_DIR
 cp $DEP_INSTALL_DIR/lib/tbb*.lib $INSTALL_LIB_DIR
 

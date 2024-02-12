@@ -95,7 +95,7 @@ namespace openvkl {
       rkcommon::memory::Ref<const DataT<float>> background;
 
      private:
-      ISPCRTMemoryView m_accelerator = nullptr;
+      void *m_accelerator = nullptr;
       std::unique_ptr<BufferShared<range1f>> valueRanges;
       std::unique_ptr<BufferShared<box1f>> cellValueRanges;
     };
@@ -110,7 +110,7 @@ namespace openvkl {
         SharedStructuredVolume_Destructor(this->getSh());
       }
       if (m_accelerator)
-        BufferSharedDelete(m_accelerator);
+        BufferSharedDelete(this->getDevice(), m_accelerator);
     }
 
     template <int W>
@@ -239,11 +239,11 @@ namespace openvkl {
       preHostBuild();
 
       if (m_accelerator)
-        BufferSharedDelete(m_accelerator);
-      m_accelerator =
-          BufferSharedCreate(this->getDevice(), sizeof(ispc::GridAccelerator));
-      auto ga =
-          static_cast<ispc::GridAccelerator *>(ispcrtHostPtr(m_accelerator));
+        BufferSharedDelete(this->getDevice(), m_accelerator);
+      m_accelerator = BufferSharedCreate(this->getDevice(),
+                                         sizeof(ispc::GridAccelerator),
+                                         alignof(ispc::GridAccelerator));
+      auto ga = static_cast<ispc::GridAccelerator *>(m_accelerator);
 
       // cells per dimension after padding out the volume dimensions to the
       // nearest cell

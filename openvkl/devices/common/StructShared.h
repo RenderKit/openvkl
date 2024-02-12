@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <new>
 #include <type_traits>
-#include "ispcrt.hpp"
 
 #include "BufferShared.h"
 
@@ -34,14 +33,6 @@ namespace openvkl {
      the same).
   */
 
-  template <typename T>
-  inline ISPCRTMemoryView StructSharedCreate(Device *device)
-  {
-    ISPCRTMemoryView view = BufferSharedCreate(device, sizeof(T));
-    new (ispcrtSharedPtr(view)) T;
-    return view;
-  }
-
   struct StructSharedView
   {
     ~StructSharedView();
@@ -53,7 +44,7 @@ namespace openvkl {
     friend struct AddStructShared;
 
    private:
-    ISPCRTMemoryView structSharedView{nullptr};
+    void *structSharedView{nullptr};
 
     // we must keep the underlying device, which contains the ispcrt::Context,
     // active as long as this view is active
@@ -63,7 +54,7 @@ namespace openvkl {
   template <typename T, typename>
   struct StructSharedGet
   {
-    StructSharedGet(Device *, ISPCRTMemoryView *);
+    StructSharedGet(Device *, void **);
     T *getSh() const;
   };
 
@@ -132,22 +123,22 @@ namespace openvkl {
 
   inline StructSharedView::~StructSharedView()
   {
-    BufferSharedDelete(structSharedView);
+    BufferSharedDelete(structSharedDevice.ptr, structSharedView);
   }
 
   template <typename T, typename B>
-  StructSharedGet<T, B>::StructSharedGet(Device *device, ISPCRTMemoryView *view)
+  StructSharedGet<T, B>::StructSharedGet(Device *device, void **view)
   {
     if (!*view) {
-      *view = StructSharedCreate<T>(device);
+      *view = BufferSharedCreate(device, sizeof(T), alignof(T));
+      new (*view) T;
     }
   }
 
   template <typename T, typename B>
   T *StructSharedGet<T, B>::getSh() const
   {
-    return static_cast<T *>(
-        ispcrtHostPtr(static_cast<const B *>(this)->structSharedView));
+    return static_cast<T *>(static_cast<const B *>(this)->structSharedView);
   }
 
   // Testing ////////////////////////////////////////////////////

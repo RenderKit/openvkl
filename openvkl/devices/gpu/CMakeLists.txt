@@ -150,15 +150,13 @@ target_include_directories(openvkl_module_gpu_device
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
     $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>
-    $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
 )
 
 target_link_libraries(openvkl_module_gpu_device
   PUBLIC
-    openvkl
-    $<BUILD_INTERFACE:rkcommon::rkcommon>
-    $<BUILD_INTERFACE:ispcrt::ispcrt>
-    $<BUILD_INTERFACE:embree>
+  openvkl
+  $<BUILD_INTERFACE:rkcommon::rkcommon>
+  $<BUILD_INTERFACE:embree>
 )
 
 target_compile_definitions(openvkl_module_gpu_device PUBLIC

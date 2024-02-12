@@ -1,6 +1,13 @@
 Version History
 ---------------
 
+### Open VKL 2.0.1
+
+-   Removed ISPC runtime dependency and level zero loader requirement
+-   Add DEPENDENTLOADFLAG linker parameter for Windows binaries, restricting DLL
+    loading behavior
+-   Superbuild updates to latest versions of dependencies
+
 ### Open VKL 2.0.0
 
 -   This Open VKL release adds support for Intel® Arc™ GPUs, Intel® Data Center

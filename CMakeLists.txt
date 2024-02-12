@@ -24,7 +24,7 @@ cmake_policy(SET CMP0074 NEW)
 
 ## Establish project ##
 
-project(openvkl VERSION 2.0.0 LANGUAGES C CXX)
+project(openvkl VERSION 2.0.1 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 
@@ -47,6 +47,14 @@ include(GNUInstallDirs)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}/version.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
 )
+
+set(CMAKE_SKIP_INSTALL_RPATH OFF)
+if (APPLE)
+  set(CMAKE_MACOSX_RPATH ON)
+  set(CMAKE_INSTALL_RPATH "@loader_path/" "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+else()
+  set(CMAKE_INSTALL_RPATH "\$ORIGIN:\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
 
 ## openvkl specific configuration ##
 

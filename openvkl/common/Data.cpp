@@ -59,12 +59,12 @@ namespace openvkl {
       const size_t naturalByteStride = sizeOf(dataType);
       const size_t numBytes          = numItems * naturalByteStride;
 
-      openvkl::api::memstate *m = this->device->allocateBytes(numBytes + 16);
-      if (m->allocatedBuffer == nullptr) {
+      sharedPtr =
+          this->device->allocateSharedMemory(numBytes, alignOf(dataType));
+      if (sharedPtr == nullptr) {
         throw std::bad_alloc();
       }
-      memstate     = m;
-      void *buffer = m->allocatedBuffer;
+      void *buffer = sharedPtr;
 
       if (isManagedObject(dataType)) {
         // the user provided an array of VKLObjects, but we'll only populate
@@ -89,8 +89,8 @@ namespace openvkl {
       addr       = (char *)buffer;
       byteStride = naturalByteStride;
     } else if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
-      // memstate is not needed for shared buffers
-      memstate = nullptr;
+      // sharedPtr is not needed for shared buffers
+      sharedPtr = nullptr;
       addr     = (char *)source;
 
       // we must validate that shared buffers for GPU devices were allocated
@@ -175,12 +175,11 @@ namespace openvkl {
 
     const size_t numBytes = numItems * byteStride;
 
-    openvkl::api::memstate *m = this->device->allocateBytes(numBytes + 16);
-    if (m->allocatedBuffer == nullptr) {
+    sharedPtr = this->device->allocateSharedMemory(numBytes, alignOf(dataType));
+    if (sharedPtr == nullptr) {
       throw std::bad_alloc();
     }
-    memstate = m;
-    addr     = (char *)m->allocatedBuffer;
+    addr = (char *)sharedPtr;
 
     managedObjectType = VKL_DATA;
 
@@ -203,7 +202,8 @@ namespace openvkl {
     }
 
     if (!(dataCreationFlags & VKL_DATA_SHARED_BUFFER)) {
-      this->device->freeMemState(memstate);
+      this->device->freeSharedMemory(sharedPtr);
+      sharedPtr = nullptr;
     } else if ((dataCreationFlags & VKL_DATA_SHARED_BUFFER) &&
                ownSharedBuffer) {
       LogMessageStream(this->device.ptr, VKL_LOG_DEBUG)

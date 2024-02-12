@@ -1,7 +1,7 @@
-## Copyright 2022 Intel Corporation
+## Copyright 2023 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: CI GPU Linux Workflow
+name: CI GPU ICX Linux Workflow
 on:
   push:
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
       image: ubuntu:22.04
       artifact-out: build-gpu
       artifact-path: ./build/install ./build/openvkl/build
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      env-from-files: .github/deps/dpcpp-icx.env
       cmd: |
         module load cmake/3.25.3
         gitlab/build.sh -D BUILD_OPENVDB=OFF \
@@ -34,7 +34,7 @@ jobs:
     with:
       submodules: true
       image: ubuntu:22.04
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      env-from-files: .github/deps/dpcpp-icx.env
       cmd: |
         module load cmake/3.25.3
         gitlab/build.sh -D BUILD_OPENVDB=OFF \
@@ -49,7 +49,7 @@ jobs:
     with:
       submodules: true
       image: ubuntu:22.04
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      env-from-files: .github/deps/dpcpp-icx.env
       cmd: |
         module load cmake/3.25.3
         gitlab/build.sh -D BUILD_OPENVDB=OFF \
@@ -66,7 +66,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
+      env-from-files: .github/deps/dpcpp-icx.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         module load cmake/3.25.3
@@ -82,7 +82,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-icx.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install/bin
@@ -101,11 +101,26 @@ jobs:
       artifact-out: test-examples-pvc
       artifact-path: ./build/install/bin/*.pfm
       artifact-on-failure: true
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-icx.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install/bin
         python3 $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.py $STORAGE_PATH/tools/img-diff/dist_linux/img_diff
+
+  test-cpu:
+    secrets: inherit
+    needs: [ build-gpu ]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      submodules: true
+      image: ubuntu:22.04
+      runs-on: '[ "Linux", "docker", "build" ]'
+      artifact-in: build-gpu
+      env-from-files: .github/deps/dpcpp-icx.env
+      cmd: |
+        cd ./build/install/bin
+        ./vklTutorialCPU
+        ./vklTestsCPU --durations yes
 
   test-dg2:
     secrets: inherit
@@ -116,7 +131,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
+      env-from-files: .github/deps/dpcpp-icx.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install/bin
@@ -135,7 +150,7 @@ jobs:
       artifact-out: test-examples-dg2
       artifact-path: ./build/install/bin/*.pfm
       artifact-on-failure: true
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
+      env-from-files: .github/deps/dpcpp-icx.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install/bin
@@ -153,7 +168,7 @@ jobs:
       artifact-out: test-examples-big-volume-pvc
       artifact-path: ./build/install/*.pfm
       artifact-on-failure: true
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env  .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-icx.env .github/deps/gfx-linux-public.env  .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install

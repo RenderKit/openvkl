@@ -8,6 +8,7 @@ using namespace rkcommon;
 using namespace rkcommon::math;
 
 #include <set>
+#include "../devices/common/BufferShared.h"
 #include "AMRAccel.h"
 
 namespace openvkl {
@@ -21,8 +22,7 @@ namespace openvkl {
             nodeAllocator(device),
             node(nodeAllocator),
             leafAllocator(device),
-            leaf(leafAllocator),
-            brickListAllocator(device)
+            leaf(leafAllocator)
       {
         box3f bounds = empty;
         std::vector<const AMRData::Brick *> brickVec;
@@ -62,8 +62,12 @@ namespace openvkl {
 
         AMRAccel::Leaf newLeaf;
         newLeaf.bounds    = bounds;
+        auto brickListBuffer =
+            std::make_shared<BufferShared<const AMRData::Brick *>>(
+                levelAllocator.getDevice(), brick.size() + 1);
 
-        newLeaf.brickList = brickListAllocator.allocate(brick.size() + 1);
+        newLeaf.brickList = brickListBuffer->sharedPtr();
+        m_brickListContainer.push_back(brickListBuffer);
 
         // create leaf list, and sort it
         std::copy(brick.begin(), brick.end(), newLeaf.brickList);

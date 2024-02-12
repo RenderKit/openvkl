@@ -31,7 +31,6 @@ jobs:
       runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-in: build-macOS
       cmd: |
-        export DYLD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
@@ -57,7 +56,6 @@ jobs:
       runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-in: build-macOS-TBB2020
       cmd: |
-        export DYLD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
@@ -84,7 +82,6 @@ jobs:
       runs-on: '[ "macOS", "build", "arm" ]'
       artifact-in: build-macOS-arm-neon
       cmd: |
-        export DYLD_LIBRARY_PATH=./build/install/lib
         export OPENVKL_LOG_LEVEL=debug # gives prints of current ISA and SIMD width
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
@@ -112,7 +109,6 @@ jobs:
       runs-on: '[ "macOS", "build", "arm" ]'
       artifact-in: build-macOS-arm-neon2x
       cmd: |
-        export DYLD_LIBRARY_PATH=./build/install/lib
         export OPENVKL_LOG_LEVEL=debug # gives prints of current ISA and SIMD width
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC

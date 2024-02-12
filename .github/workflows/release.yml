@@ -25,7 +25,6 @@ jobs:
       prebuild: >
         mkdir build &&
         cd build &&
-        export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH} &&
         cmake -DBUILD_JOBS=`nproc` -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_GLFW=OFF "$@" ../superbuild &&
         cmake --build . &&
         mkdir openvkl_build &&
@@ -33,7 +32,6 @@ jobs:
         DEP_INSTALL_DIR=`pwd`/../install &&
         export rkcommon_DIR=$DEP_INSTALL_DIR &&
         export embree_DIR=$DEP_INSTALL_DIR &&
-        export ispcrt_DIR=$DEP_INSTALL_DIR &&
         cmake -DISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc -DBUILD_EXAMPLES=OFF -DRKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR ../.. &&
         cd ../..
       build: cmake --build ./build/openvkl_build
@@ -49,7 +47,7 @@ jobs:
       artifact-out: linux
       artifact-path: ./*.gz
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         module load cmake
         module load intel/2022.1
         export CC=icx
@@ -67,10 +65,9 @@ jobs:
       image: rockylinux:8.7
       artifact-out: linux_sycl
       artifact-path: ./*.gz
-      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         module load cmake/3.25.3
         export CC=clang
         export CXX=clang++
@@ -86,8 +83,8 @@ jobs:
       artifact-out: windows
       artifact-path: ./*.zip
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   windows_sycl:
@@ -96,7 +93,6 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       runs-on: '[ "Windows", "build" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
       artifact-out: windows_sycl
@@ -106,8 +102,8 @@ jobs:
         $env:CXXFLAGS = '-w'
         $env:CFLAGS = '-w'
 
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         gitlab/release/windows_sycl.ps1
 
   macos:
@@ -120,7 +116,7 @@ jobs:
       artifact-out: macos
       artifact-path: ./*.zip
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         gitlab/release/macos.sh
 
   linux-test:
@@ -132,7 +128,7 @@ jobs:
       image: rockylinux:8.7
       artifact-in: linux
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         gitlab/release/linux-test.sh
 
   linux_sycl-test:
@@ -140,13 +136,13 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
-      image: ubuntu:22.04 
+      image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: linux_sycl
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         module load cmake/3.25.3
         gitlab/release/linux_sycl-test.sh
 
@@ -155,13 +151,13 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
-      image: ubuntu:22.04 
+      image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: linux_sycl
       env-from-files: .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         module load cmake/3.25.3
         gitlab/release/linux_sycl-test_run_only.sh
 
@@ -173,8 +169,8 @@ jobs:
       runs-on: '[ "Windows" ]'
       artifact-in: windows
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         gitlab/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   windows_sycl-test:
@@ -184,12 +180,12 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      runs-on: '[ "Windows", "dg2" ]' 
+      runs-on: '[ "Windows", "dg2" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
       artifact-in: windows_sycl
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         gitlab/release/windows_sycl-test.ps1
 
   windows_sycl-test_run_only:
@@ -203,8 +199,8 @@ jobs:
       env-from-files: ./.github/deps/gfx-windows-public.env
       artifact-in: windows_sycl
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         gitlab/release/windows_sycl-test_run_only.ps1
 
   macos-test:
@@ -215,7 +211,7 @@ jobs:
       runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-in: macos
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         gitlab/release/macos-test.sh
 
   binary-analysis:

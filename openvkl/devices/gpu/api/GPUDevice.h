@@ -22,7 +22,6 @@ namespace openvkl {
     struct GPUDevice : public AddDeviceAPIs
     {
       GPUDevice() = default;
-      ~GPUDevice() override;
 
       bool supportsWidth(int width) override;
 
@@ -122,13 +121,9 @@ namespace openvkl {
 
       AllocType getAllocationType(const void *ptr) const override;
 
-      void *getContext() const override
-      {
-        return context;
-      };
-
-      openvkl::api::memstate *allocateBytes(size_t numByte) const override;
-      void freeMemState(openvkl::api::memstate *) const override;
+      void *allocateSharedMemory(size_t numBytes,
+                                 size_t alignment) const override;
+      void freeSharedMemory(void *) const override;
 
       char *copyDeviceBufferToHost(size_t numItems,
                                    VKLDataType dataType,
@@ -145,8 +140,8 @@ namespace openvkl {
           unsigned int attributeIndex,
           const float *times);
 
-      void *context{nullptr};
       sycl::context syclContext;
+      sycl::device syclDevice;
     };
 
   }  // namespace gpu_device

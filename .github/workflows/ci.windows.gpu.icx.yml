@@ -1,7 +1,7 @@
 ## Copyright 2023 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: CI GPU Windows Workflow
+name: CI GPU ICX Windows Workflow
 on:
   push:
   workflow_dispatch:
@@ -19,7 +19,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "build" ]'
-      env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
+      env-from-files: ./.github/deps/dpcpp-icx.env
       artifact-out: build-windows-gpu
       artifact-path: ./build
       artifact-on-failure: true
@@ -31,9 +31,26 @@ jobs:
         mkdir build
         cd build
 
-        cmake -L -G Ninja -D CMAKE_INSTALL_LIBDIR=lib -D BUILD_OPENVKL_BENCHMARKS=OFF -D BUILD_OPENVKL_TESTING=ON -D BUILD_OPENVDB=OFF -D CMAKE_CXX_COMPILER=clang-cl -D CMAKE_C_COMPILER=clang-cl -D OPENVKL_EXTRA_OPTIONS="-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DOPENVKL_ENABLE_DEVICE_GPU=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON" ../superbuild
+        cmake -L -G Ninja -D CMAKE_INSTALL_LIBDIR=lib -D BUILD_OPENVKL_BENCHMARKS=OFF -D BUILD_OPENVKL_TESTING=ON -D BUILD_OPENVDB=OFF -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON" ../superbuild
 
         cmake --build . --config Release -j1 --verbose
+
+
+  test-windows-cpu:
+    secrets: inherit
+    needs: [ build-windows-gpu ]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      submodules: true
+      runs-on: '[ "Windows", "build" ]'
+      env-from-files: ./.github/deps/dpcpp-icx.env
+      artifact-in: build-windows-gpu
+      cmd: |
+        cd ./build/install/bin
+
+        ./vklTutorialCPU
+        ./vklTestsCPU
 
   test-windows-dg2:
     secrets: inherit
@@ -43,7 +60,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "dg2" ]'
-      env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
+      env-from-files: ./.github/deps/dpcpp-icx.env ./.github/deps/gfx-windows-public.env
       artifact-in: build-windows-gpu
       cmd: |
         cd ./build/install/bin
@@ -59,7 +76,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "dg2" ]'
-      env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
+      env-from-files: ./.github/deps/dpcpp-icx.env ./.github/deps/gfx-windows-public.env
       artifact-in: build-windows-gpu
       artifact-out: test-examples-dg2
       artifact-path: ./build/install/bin/*.pfm

@@ -73,7 +73,7 @@ Windows, you need the following additional prerequisites:
 -   [CMake](http://www.cmake.org) version 3.25.3 or higher
 
 -   Download the [oneAPI DPC++ Compiler
-    2023-09-22](https://github.com/intel/llvm/releases/tag/nightly-2023-09-22);
+    2023-10-26](https://github.com/intel/llvm/releases/tag/nightly-2023-10-26);
     please note this specific version has been validated and used in our
     releases.
 

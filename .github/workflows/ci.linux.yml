@@ -183,18 +183,6 @@ jobs:
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
-  build-ubuntu18_04:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
-      image: ubuntu:18.04
-      artifact-out: build-ubuntu18_04
-      artifact-path: ./build/install ./build/openvkl/build
-      cmd: |
-        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
-
   build-ubuntu20_04:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -218,20 +206,6 @@ jobs:
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
-
-  test-ubuntu18_04:
-    needs: build-ubuntu18_04
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      artifact-in: build-ubuntu18_04
-      image: ubuntu:18.04
-      cmd: |
-        export LD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorialCPU
-        ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
-        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-ubuntu20_04:
     needs: build-ubuntu20_04

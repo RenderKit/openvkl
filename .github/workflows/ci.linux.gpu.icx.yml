@@ -14,7 +14,7 @@ jobs:
 
   build-gpu:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -30,7 +30,7 @@ jobs:
 
   build-gpu-rel-with-dbg-info:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -45,7 +45,7 @@ jobs:
 
   build-gpu-debug:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -61,7 +61,7 @@ jobs:
   test-build-from-install-dg2:
     needs: [ build-gpu ]
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
@@ -76,7 +76,7 @@ jobs:
   test-pvc:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -92,7 +92,7 @@ jobs:
   test-examples-pvc:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -110,7 +110,7 @@ jobs:
   test-cpu:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -125,7 +125,7 @@ jobs:
   test-dg2:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -141,7 +141,7 @@ jobs:
   test-examples-dg2:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -159,7 +159,7 @@ jobs:
   test-examples-big-volume-pvc:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04

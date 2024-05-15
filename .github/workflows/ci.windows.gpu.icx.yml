@@ -14,7 +14,7 @@ jobs:
 
   build-windows-gpu:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
@@ -39,7 +39,7 @@ jobs:
   test-windows-cpu:
     secrets: inherit
     needs: [ build-windows-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
@@ -55,7 +55,7 @@ jobs:
   test-windows-dg2:
     secrets: inherit
     needs: [ build-windows-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
@@ -71,7 +71,7 @@ jobs:
   test-examples-windows-dg2:
     secrets: inherit
     needs: [ build-windows-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true

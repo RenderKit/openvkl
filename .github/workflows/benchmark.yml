@@ -72,7 +72,7 @@ jobs:
 
   build-gpu:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -89,7 +89,7 @@ jobs:
   perf-dg2:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "vis-perf-dg2-01" ]'
@@ -104,7 +104,7 @@ jobs:
   perf-pvc:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "vis-perf-spr-pvc-01" ]'

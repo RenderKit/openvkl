@@ -58,7 +58,7 @@ jobs:
 
   linux_sycl:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
@@ -89,7 +89,7 @@ jobs:
 
   windows_sycl:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
@@ -134,7 +134,7 @@ jobs:
   linux_sycl-test:
     needs: linux_sycl
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
@@ -149,7 +149,7 @@ jobs:
   linux_sycl-test_run_only:
     needs: linux_sycl
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
@@ -176,7 +176,7 @@ jobs:
   windows_sycl-test:
     needs: windows_sycl
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
@@ -191,7 +191,7 @@ jobs:
   windows_sycl-test_run_only:
     needs: windows_sycl
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true

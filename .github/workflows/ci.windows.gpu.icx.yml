@@ -19,7 +19,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "build" ]'
-      env-from-files: ./.github/deps/dpcpp-icx.env
+      env-from-files: .github/deps/dpcpp-windows-icx.env
       artifact-out: build-windows-gpu
       artifact-path: ./build
       artifact-on-failure: true
@@ -44,7 +44,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "build" ]'
-      env-from-files: ./.github/deps/dpcpp-icx.env
+      env-from-files: .github/deps/dpcpp-windows-icx.env
       artifact-in: build-windows-gpu
       cmd: |
         cd ./build/install/bin
@@ -60,7 +60,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "dg2" ]'
-      env-from-files: ./.github/deps/dpcpp-icx.env ./.github/deps/gfx-windows-public.env
+      env-from-files: .github/deps/dpcpp-windows-icx.env .github/deps/gfx-windows-public.env
       artifact-in: build-windows-gpu
       cmd: |
         cd ./build/install/bin
@@ -76,7 +76,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "dg2" ]'
-      env-from-files: ./.github/deps/dpcpp-icx.env ./.github/deps/gfx-windows-public.env
+      env-from-files: .github/deps/dpcpp-windows-icx.env .github/deps/gfx-windows-public.env
       artifact-in: build-windows-gpu
       artifact-out: test-examples-dg2
       artifact-path: ./build/install/bin/*.pfm

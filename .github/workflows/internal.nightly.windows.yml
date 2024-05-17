@@ -1,7 +1,7 @@
 ## Copyright 2023 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: Nightly Windows Workflow
+name: (Internal) Nightly Windows
 on:
   schedule:
     - cron:  '0 0 * * *'

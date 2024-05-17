@@ -1,7 +1,7 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: Benchmarks
+name: (Internal) Benchmarks
 on:
   schedule:
     - cron: '30 1 * * *'

@@ -1,7 +1,7 @@
 ## Copyright 2023 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: CI GPU Windows Workflow
+name: (Internal) GPU Windows
 on:
   push:
   workflow_dispatch:

@@ -1,7 +1,7 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: CI Mac Workflow
+name: (Internal) Mac
 on:
   push:
   workflow_dispatch:

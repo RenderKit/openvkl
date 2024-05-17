@@ -7,6 +7,12 @@ on:
     - cron: '30 1 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
 jobs:
   build-rocky87-icx:
     secrets: inherit

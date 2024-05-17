@@ -1,0 +1,129 @@
+## Copyright 2024 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: Linux
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  build-rocky-8:
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:8
+
+    steps:
+    - name: Install packages
+      run: |
+        echo "Installing build dependencies..."
+        dnf install git cmake mesa-libGL-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel -y
+        dnf group install "Development Tools" -y
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Build OpenVKL
+      run: gitlab/build.sh
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-rocky-8
+        path: build/install
+
+  test-rocky-8:
+    needs: build-rocky-8
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:8
+
+    steps:
+    - name: Install packages
+      run: |
+        echo "Installing runtime dependencies..."
+        dnf install libglvnd-glx libglvnd-opengl -y
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: build-rocky-8
+
+    - name: Test OpenVKL
+      run: |
+        # Adding execution bit to binaries is needed since upload/download GHA is using zip compression
+        # and it can't preserve files permissions - https://github.com/actions/upload-artifact/issues/38
+        chmod +x ./bin/*
+
+        ./bin/vklTutorialCPU
+        ./bin/vklTutorialISPC
+        ./bin/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./bin/vklTestsCPU --durations yes
+
+
+  build-ubuntu-2204:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+
+    steps:
+    - name: Install packages
+      run: |
+        echo "Installing build dependencies..."
+        apt-get update
+        apt-get install build-essential cmake ninja-build libglfw3-dev libgl1-mesa-dev git -y
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Build OpenVKL
+      run: gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-ubuntu-2204
+        path: build/install
+
+
+  test-ubuntu-2204:
+    needs: build-ubuntu-2204
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+
+    steps:
+    - name: Install packages
+      run: |
+        echo "Installing runtime dependencies..."
+        apt-get update
+        apt-get install libglfw3 libopengl0 -y
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: build-ubuntu-2204
+
+    - name: Test OpenVKL
+      run: |
+        # Adding execution bit to binaries is needed since upload/download GHA is using zip compression
+        # and it can't preserve files permissions - https://github.com/actions/upload-artifact/issues/38
+        chmod +x ./bin/*
+
+        # LD_LIBRARY_PATH must be set only because of libboost_iostreams.so.1.84.0
+        export LD_LIBRARY_PATH=./lib
+
+        ./bin/vklTutorialCPU
+        ./bin/vklTutorialISPC
+        ./bin/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./bin/vklTestsCPU --durations yes

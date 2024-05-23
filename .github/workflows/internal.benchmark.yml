@@ -14,14 +14,14 @@ concurrency:
 permissions: read-all
 
 jobs:
-  build-rocky87-icx:
+  build-rocky8-icx:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: rockylinux:8.7
-      artifact-out: build-rocky87-icx
+      image: rockylinux:8
+      artifact-out: build-rocky8-icx
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         module load cmake
@@ -33,44 +33,44 @@ jobs:
         gitlab/build.sh
 
   benchmark-x8280-1:
-    needs: build-rocky87-icx
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
       runs-on: '["vis-perf-x8280-1"]'
-      artifact-in: build-rocky87-icx
+      artifact-in: build-rocky8-icx
       setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   benchmark-x8380-1:
-    needs: build-rocky87-icx
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
       runs-on: '["vis-perf-x8380-1"]'
-      artifact-in: build-rocky87-icx
+      artifact-in: build-rocky8-icx
       setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   benchmark-i9-12900k-1:
-    needs: build-rocky87-icx
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
       runs-on: '["vis-perf-i9-12900k-1"]'
-      artifact-in: build-rocky87-icx
+      artifact-in: build-rocky8-icx
       setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   benchmark-a3970x-1:
-    needs: build-rocky87-icx
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
       runs-on: '["vis-perf-a3970x-1"]'
-      artifact-in: build-rocky87-icx
+      artifact-in: build-rocky8-icx
       setup-benny: true
       cmd: |
         cd ./build/install

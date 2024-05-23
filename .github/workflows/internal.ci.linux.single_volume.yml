@@ -19,7 +19,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-amr
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -31,7 +31,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-particle
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -43,7 +43,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-structuredRegular
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -55,7 +55,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-structuredRegularLegacy
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -67,7 +67,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-structuredSpherical
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -79,7 +79,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-unstructured
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -91,7 +91,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-vdb
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -105,7 +105,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-amr
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -115,7 +115,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-particle
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -125,7 +125,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-structuredRegular
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -135,7 +135,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-structuredRegularLegacy
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -145,7 +145,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-structuredSpherical
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -155,7 +155,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-unstructured
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -165,6 +165,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-vdb
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes

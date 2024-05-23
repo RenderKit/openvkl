@@ -13,41 +13,39 @@ concurrency:
 permissions: read-all
 
 jobs:
-  build-rocky87:
+  build-rocky8:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: rockylinux:8.7
-      artifact-out: build-rocky87
+      image: rockylinux:8
+      artifact-out: build-rocky8
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         gitlab/build.sh
 
-  test-rocky87:
-    needs: build-rocky87
+  test-rocky8:
+    needs: build-rocky8
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-rocky87
-      image: rockylinux:8.7
+      artifact-in: build-rocky8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
-
-
-  build-rocky87-icx:
+  build-rocky8-icx:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: rockylinux:8.7
-      artifact-out: build-rocky87-icx
+      image: rockylinux:8
+      artifact-out: build-rocky8-icx
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         module load cmake
@@ -58,27 +56,27 @@ jobs:
         export LDFLAGS="-static-intel"
         gitlab/build.sh
 
-  test-rocky87-icx:
-    needs: build-rocky87-icx
+  test-rocky8-icx:
+    needs: build-rocky8-icx
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-rocky87-icx
-      image: rockylinux:8.7
+      artifact-in: build-rocky8-icx
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
-  build-rocky87-icx-tbb2020:
+  build-rocky8-icx-tbb2020:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: rockylinux:8.7
-      artifact-out: build-rocky87-icx-tbb2020
+      image: rockylinux:8
+      artifact-out: build-rocky8-icx-tbb2020
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         module load cmake
@@ -89,27 +87,27 @@ jobs:
         export LDFLAGS="-static-intel"
         gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
 
-  test-rocky87-icx-tbb2020:
-    needs: build-rocky87-icx-tbb2020
+  test-rocky8-icx-tbb2020:
+    needs: build-rocky8-icx-tbb2020
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-rocky87-icx-tbb2020
-      image: rockylinux:8.7
+      artifact-in: build-rocky8-icx-tbb2020
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
-  build-rocky87-icx-tbb2020-avx512_8:
+  build-rocky8-icx-tbb2020-avx512_8:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: rockylinux:8.7
-      artifact-out: build-rocky87-icx-tbb2020-avx512_8
+      image: rockylinux:8
+      artifact-out: build-rocky8-icx-tbb2020-avx512_8
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         module load cmake
@@ -120,38 +118,38 @@ jobs:
         export LDFLAGS="-static-intel"
         gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH="" -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_AVX512SKX_8_WIDE=ON -DOPENVKL_ISA_AVX512SKX=OFF"
 
-  test-rocky87-icx-tbb2020-avx512_8:
-    needs: build-rocky87-icx-tbb2020-avx512_8
+  test-rocky8-icx-tbb2020-avx512_8:
+    needs: build-rocky8-icx-tbb2020-avx512_8
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-rocky87-icx-tbb2020-avx512_8
-      image: rockylinux:8.7
+      artifact-in: build-rocky8-icx-tbb2020-avx512_8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
-  build-centos8:
+  build-rocky9:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
-      artifact-out: build-centos8
+      image: rockylinux:9
+      artifact-out: build-rocky9
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -G Ninja
+        gitlab/build.sh
 
-  test-centos8:
-    needs: build-centos8
+  test-rocky9:
+    needs: build-rocky9
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-centos8
-      image: centos:8
+      artifact-in: build-rocky9
+      image: rockylinux:9
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
@@ -159,26 +157,26 @@ jobs:
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   # uses a newer CMake which allows OpenVDB to build
-  build-centos8-module-cmake:
+  build-rocky9-module-cmake:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
-      artifact-out: build-centos8-module-cmake
+      image: rockylinux:9
+      artifact-out: build-rocky9-module-cmake
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         module load cmake
-        gitlab/build.sh -G Ninja -D TBB_VERSION=2020.3 -D TBB_HASH=""
+        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
 
-  test-centos8-module-cmake:
-    needs: build-centos8-module-cmake
+  test-rocky9-module-cmake:
+    needs: build-rocky9-module-cmake
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-centos8-module-cmake
-      image: centos:8
+      artifact-in: build-rocky9-module-cmake
+      image: rockylinux:9
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
@@ -205,6 +203,18 @@ jobs:
       submodules: true
       image: ubuntu:22.04
       artifact-out: build-ubuntu22_04
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+  build-ubuntu24_04:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      submodules: true
+      image: ubuntu:24.04
+      artifact-out: build-ubuntu24_04
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
@@ -237,13 +247,27 @@ jobs:
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
+  test-ubuntu24_04:
+    needs: build-ubuntu24_04
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-ubuntu24_04
+      image: ubuntu:24.04
+      cmd: |
+        export LD_LIBRARY_PATH=./build/install/lib
+        ./build/openvkl/build/vklTutorialCPU
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
+
   build-arch:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       artifact-out: build-arch
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -255,7 +279,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-arch
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
@@ -268,13 +292,13 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       artifact-out: build-arch-clang
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         export CC=clang
         export CXX=clang++
-        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+        gitlab/build.sh 
 
   test-arch-clang:
     needs: build-arch-clang
@@ -282,7 +306,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-arch-clang
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
@@ -295,14 +319,16 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       artifact-out: build-arch-address-sanitizer
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
+        export CC=clang
+        export CXX=clang++
         export CFLAGS=-fsanitize=address
         export CXXFLAGS=-fsanitize=address
         export LDFLAGS=-fsanitize=address
-        gitlab/build.sh -D BUILD_GLFW=OFF -D BUILD_OPENVDB=OFF
+        gitlab/build.sh -D BUILD_OPENVDB=OFF
 
   test-arch-address-sanitizer:
     needs: build-arch-address-sanitizer
@@ -310,7 +336,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-arch-address-sanitizer
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
@@ -323,11 +349,11 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       artifact-out: build-arch-debug
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D CMAKE_BUILD_TYPE=Debug -D BUILD_GLFW=OFF
+        gitlab/build.sh -D CMAKE_BUILD_TYPE=Debug
 
   test-arch-debug:
     needs: build-arch-debug
@@ -335,32 +361,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-arch-debug
-      image: ospray/docker-images:arch
-      cmd: |
-        ./build/openvkl/build/vklTutorialCPU
-        ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
-        ./build/openvkl/build/vklTestsCPU --durations yes
-
-  build-arch-TBB2020:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
-      image: ospray/docker-images:arch
-      artifact-out: build-arch-TBB2020
-      artifact-path: ./build/install ./build/openvkl/build
-      cmd: |
-        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
-
-  test-arch-TBB2020:
-    needs: build-arch-TBB2020
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      artifact-in: build-arch-TBB2020
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
@@ -373,7 +374,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       artifact-out: build-arch-devel-rkdeps
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -385,7 +386,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-arch-devel-rkdeps
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
@@ -398,11 +399,11 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       artifact-out: build-linux-arch
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+        gitlab/build.sh -G Ninja
 
   test-linux-arch:
     needs: build-linux-arch
@@ -411,20 +412,20 @@ jobs:
     with:
       runs-on: '[ "Linux", "docker", "avx512" ]'
       artifact-in: build-linux-arch
-      image: ospray/docker-images:arch
+      image: archlinux:latest
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
-  build-from-install-rocky87:
-    needs: build-rocky87
+  build-from-install-rocky8:
+    needs: build-rocky8
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
-      artifact-in: build-rocky87
-      image: rockylinux:8.7
+      artifact-in: build-rocky8
+      image: rockylinux:8
       cmd: |
         gitlab/build-from-install.sh
 

@@ -45,7 +45,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Linux", "docker" ]'
-      image: rockylinux:8.7
+      image: rockylinux:8
       artifact-out: linux
       artifact-path: ./*.gz
       cmd: |
@@ -64,7 +64,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: rockylinux:8.7
+      image: rockylinux:8
       artifact-out: linux_sycl
       artifact-path: ./*.gz
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
@@ -127,7 +127,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       runs-on: '[ "Linux", "docker" ]'
-      image: rockylinux:8.7
+      image: rockylinux:8
       artifact-in: linux
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"

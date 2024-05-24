@@ -68,6 +68,32 @@ jobs:
         ./bin/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./bin/vklTestsCPU --durations yes
 
+  build-rocky-9:
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:9
+
+    steps:
+    - name: Install packages
+      run: |
+        echo "Installing build dependencies..."
+        dnf install git cmake mesa-libGL-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel -y
+        dnf group install "Development Tools" -y
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Build OpenVKL
+      run: gitlab/build.sh
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-rocky-9
+        path: build/install
+
 
   build-ubuntu-2204:
     runs-on: ubuntu-latest

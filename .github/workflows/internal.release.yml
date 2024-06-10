@@ -56,7 +56,7 @@ jobs:
         export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
-        gitlab/release/linux.sh
+        .github/scripts/release/linux.sh
 
   linux_sycl:
     secrets: inherit
@@ -73,7 +73,7 @@ jobs:
         module load cmake/3.25.3
         export CC=clang
         export CXX=clang++
-        gitlab/release/linux_sycl.sh
+        .github/scripts/release/linux_sycl.sh
 
   windows:
     secrets: inherit
@@ -87,7 +87,7 @@ jobs:
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
+        .github/scripts/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   windows_sycl:
     secrets: inherit
@@ -106,7 +106,7 @@ jobs:
 
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows_sycl.ps1
+        .github/scripts/release/windows_sycl.ps1
 
   macos:
     secrets: inherit
@@ -119,7 +119,7 @@ jobs:
       artifact-path: ./*.zip
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/macos.sh
+        .github/scripts/release/macos.sh
 
   linux-test:
     needs: linux
@@ -131,7 +131,7 @@ jobs:
       artifact-in: linux
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/linux-test.sh
+        .github/scripts/release/linux-test.sh
 
   linux_sycl-test:
     needs: linux_sycl
@@ -146,7 +146,7 @@ jobs:
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         module load cmake/3.25.3
-        gitlab/release/linux_sycl-test.sh
+        .github/scripts/release/linux_sycl-test.sh
 
   linux_sycl-test_run_only:
     needs: linux_sycl
@@ -161,7 +161,7 @@ jobs:
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         module load cmake/3.25.3
-        gitlab/release/linux_sycl-test_run_only.sh
+        .github/scripts/release/linux_sycl-test_run_only.sh
 
   windows-test:
     needs: windows
@@ -173,7 +173,7 @@ jobs:
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
+        .github/scripts/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   windows_sycl-test:
     needs: windows_sycl
@@ -188,7 +188,7 @@ jobs:
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows_sycl-test.ps1
+        .github/scripts/release/windows_sycl-test.ps1
 
   windows_sycl-test_run_only:
     needs: windows_sycl
@@ -203,7 +203,7 @@ jobs:
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows_sycl-test_run_only.ps1
+        .github/scripts/release/windows_sycl-test_run_only.ps1
 
   macos-test:
     needs: macos
@@ -214,7 +214,7 @@ jobs:
       artifact-in: macos
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/macos-test.sh
+        .github/scripts/release/macos-test.sh
 
   binary-analysis:
     needs:

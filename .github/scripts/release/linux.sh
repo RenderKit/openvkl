@@ -2,15 +2,6 @@
 ## Copyright 2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-#### Helper functions ####
-
-umask=`umask`
-function onexit {
-  umask $umask
-}
-trap onexit EXIT
-umask 002
-
 #### Set variables for script ####
 
 ROOT_DIR=$PWD
@@ -18,18 +9,11 @@ ROOT_DIR=$PWD
 DEP_BUILD_DIR=$ROOT_DIR/build_deps
 DEP_INSTALL_DIR=$ROOT_DIR/install_deps
 
-OPENVKL_PKG_BASE=openvkl-${OPENVKL_RELEASE_PACKAGE_VERSION}.x86_64.macos
+OPENVKL_PKG_BASE=openvkl-${OPENVKL_RELEASE_PACKAGE_VERSION}.x86_64.linux
 OPENVKL_BUILD_DIR=$ROOT_DIR/build_release
 OPENVKL_INSTALL_DIR=$ROOT_DIR/install_release/$OPENVKL_PKG_BASE
 
-MACOSX_DEPLOYMENT_TARGET="10.13"
-
-THREADS=`sysctl -n hw.logicalcpu`
-
-# to make sure we do not include nor link against wrong TBB
-unset CPATH
-unset LIBRARY_PATH
-unset DYLD_LIBRARY_PATH
+THREADS=`nproc`
 
 #### Cleanup any existing directories ####
 
@@ -42,6 +26,9 @@ rm -rf $OPENVKL_INSTALL_DIR
 
 mkdir $DEP_BUILD_DIR
 cd $DEP_BUILD_DIR
+
+# NOTE(jda) - Some Linux OSs need to have lib/ on LD_LIBRARY_PATH at build time
+export LD_LIBRARY_PATH=$DEP_INSTALL_DIR/lib:${LD_LIBRARY_PATH}
 
 cmake --version
 
@@ -87,13 +74,13 @@ make -j $THREADS install
 # copy dependent libs into the install
 INSTALL_LIB_DIR=$OPENVKL_INSTALL_DIR/lib
 
-cp -P $DEP_INSTALL_DIR/lib/lib*.dylib* $INSTALL_LIB_DIR
+cp -P $DEP_INSTALL_DIR/lib/lib*.so* $INSTALL_LIB_DIR
 
-# zip up the results
+# tar up the results
 cd $OPENVKL_INSTALL_DIR/..
-zip -ry $OPENVKL_PKG_BASE.zip $OPENVKL_PKG_BASE
+tar -czf $OPENVKL_PKG_BASE.tar.gz $OPENVKL_PKG_BASE
 
 # sign
-$ROOT_DIR/gitlab/release/sign.sh $OPENVKL_PKG_BASE.zip
+$ROOT_DIR/.github/scripts/release/sign.sh $OPENVKL_PKG_BASE.tar.gz
 
-mv *.zip $ROOT_DIR
+mv *.tar.gz $ROOT_DIR

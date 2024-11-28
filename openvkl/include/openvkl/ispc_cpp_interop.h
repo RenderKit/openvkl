@@ -80,6 +80,42 @@
 #endif  // defined(__cplusplus)
 
 // -----------------------------------------------------------------------------
+// Standard library functions.
+// -----------------------------------------------------------------------------
+
+#if defined(__cplusplus)
+
+inline float floatbits(vkl_uint32 bits)
+{
+  VKL_INTEROP_STATIC_ASSERT(sizeof(float) == sizeof(vkl_uint32),
+                            "Float is not 4 Bytes.");
+  float fval                         = 0.f;
+  reinterpret_cast<char *>(&fval)[0] = reinterpret_cast<const char *>(&bits)[0];
+  reinterpret_cast<char *>(&fval)[1] = reinterpret_cast<const char *>(&bits)[1];
+  reinterpret_cast<char *>(&fval)[2] = reinterpret_cast<const char *>(&bits)[2];
+  reinterpret_cast<char *>(&fval)[3] = reinterpret_cast<const char *>(&bits)[3];
+  return fval;
+}
+
+inline vkl_uint32 intbits(float value)
+{
+  VKL_INTEROP_STATIC_ASSERT(sizeof(float) == sizeof(vkl_uint32),
+                            "Float is not 4 Bytes.");
+  vkl_uint32 ival = 0;
+  reinterpret_cast<char *>(&ival)[0] =
+      reinterpret_cast<const char *>(&value)[0];
+  reinterpret_cast<char *>(&ival)[1] =
+      reinterpret_cast<const char *>(&value)[1];
+  reinterpret_cast<char *>(&ival)[2] =
+      reinterpret_cast<const char *>(&value)[2];
+  reinterpret_cast<char *>(&ival)[3] =
+      reinterpret_cast<const char *>(&value)[3];
+  return ival;
+}
+
+#endif
+
+// -----------------------------------------------------------------------------
 // Helpers for univary definitions.
 // -----------------------------------------------------------------------------
 

@@ -22,7 +22,7 @@ jobs:
       runs-on: '[ "Windows", "build" ]'
       artifact-out: build-windows-msvc15
       artifact-path: ./build/install
-      cmd: gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" "Release"
+      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "v141" "Release"
 
   build-windows-msvc15-TBB2020:
     secrets: inherit
@@ -33,7 +33,7 @@ jobs:
       runs-on: '[ "Windows", "build" ]'
       artifact-out: build-windows-msvc15-TBB2020
       artifact-path: ./build/install
-      cmd: gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" "Release" '"-DTBB_VERSION=2020.3"' '"-DTBB_HASH="""'
+      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "v141" "Release" '"-DTBB_VERSION=2020.3"' '"-DTBB_HASH="""'
 
   test-windows-msvc15:
     needs: build-windows-msvc15
@@ -43,7 +43,7 @@ jobs:
       runs-on: '[ "Windows", "build" ]'
       artifact-in: build-windows-msvc15
       cmd: |
-        gitlab\run_tests.bat
+        .github\scripts\run_tests.bat
 
   test-windows-msvc15-TBB2020:
     needs: build-windows-msvc15-TBB2020
@@ -53,4 +53,4 @@ jobs:
       runs-on: '[ "Windows", "build" ]'
       artifact-in: build-windows-msvc15-TBB2020
       cmd: |
-        gitlab\run_tests.bat
+        .github\scripts\run_tests.bat

@@ -30,7 +30,7 @@ jobs:
         export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
-        gitlab/build.sh
+        .github/scripts/build.sh
 
   benchmark-x8280-1:
     needs: build-rocky8-icx
@@ -87,7 +87,7 @@ jobs:
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         module load cmake/3.25.3
-        gitlab/build.sh -D BUILD_OPENVDB=OFF \
+        .github/scripts/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON"

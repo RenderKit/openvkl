@@ -23,7 +23,7 @@ jobs:
       artifact-out: build-rocky8
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh
+        .github/scripts/build.sh
 
   test-rocky8:
     needs: build-rocky8
@@ -54,7 +54,7 @@ jobs:
         export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
-        gitlab/build.sh
+        .github/scripts/build.sh
 
   test-rocky8-icx:
     needs: build-rocky8-icx
@@ -85,7 +85,7 @@ jobs:
         export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
-        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
+        .github/scripts/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
 
   test-rocky8-icx-tbb2020:
     needs: build-rocky8-icx-tbb2020
@@ -116,7 +116,7 @@ jobs:
         export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
-        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH="" -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_AVX512SKX_8_WIDE=ON -DOPENVKL_ISA_AVX512SKX=OFF"
+        .github/scripts/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH="" -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_AVX512SKX_8_WIDE=ON -DOPENVKL_ISA_AVX512SKX=OFF"
 
   test-rocky8-icx-tbb2020-avx512_8:
     needs: build-rocky8-icx-tbb2020-avx512_8
@@ -141,7 +141,7 @@ jobs:
       artifact-out: build-rocky9
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh
+        .github/scripts/build.sh
 
   test-rocky9:
     needs: build-rocky9
@@ -168,7 +168,7 @@ jobs:
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         module load cmake
-        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
+        .github/scripts/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
 
   test-rocky9-module-cmake:
     needs: build-rocky9-module-cmake
@@ -193,7 +193,7 @@ jobs:
       artifact-out: build-ubuntu20_04
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF
 
   build-ubuntu22_04:
     secrets: inherit
@@ -205,7 +205,7 @@ jobs:
       artifact-out: build-ubuntu22_04
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF
 
   build-ubuntu24_04:
     secrets: inherit
@@ -217,7 +217,7 @@ jobs:
       artifact-out: build-ubuntu24_04
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF
 
   test-ubuntu20_04:
     needs: build-ubuntu20_04
@@ -271,7 +271,7 @@ jobs:
       artifact-out: build-arch
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh
+        .github/scripts/build.sh
 
   test-arch:
     needs: build-arch
@@ -298,7 +298,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        gitlab/build.sh 
+        .github/scripts/build.sh 
 
   test-arch-clang:
     needs: build-arch-clang
@@ -328,7 +328,7 @@ jobs:
         export CFLAGS=-fsanitize=address
         export CXXFLAGS=-fsanitize=address
         export LDFLAGS=-fsanitize=address
-        gitlab/build.sh -D BUILD_OPENVDB=OFF
+        .github/scripts/build.sh -D BUILD_OPENVDB=OFF
 
   test-arch-address-sanitizer:
     needs: build-arch-address-sanitizer
@@ -353,7 +353,7 @@ jobs:
       artifact-out: build-arch-debug
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D CMAKE_BUILD_TYPE=Debug
+        .github/scripts/build.sh -D CMAKE_BUILD_TYPE=Debug
 
   test-arch-debug:
     needs: build-arch-debug
@@ -378,7 +378,7 @@ jobs:
       artifact-out: build-arch-devel-rkdeps
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D RKCOMMON_VERSION=devel -D RKCOMMON_HASH="" -D EMBREE_VERSION=devel -D EMBREE_HASH=""
+        .github/scripts/build.sh -D RKCOMMON_VERSION=devel -D RKCOMMON_HASH="" -D EMBREE_VERSION=devel -D EMBREE_HASH=""
 
   test-arch-devel-rkdeps:
     needs: build-arch-devel-rkdeps
@@ -403,7 +403,7 @@ jobs:
       artifact-out: build-linux-arch
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -G Ninja
+        .github/scripts/build.sh -G Ninja
 
   test-linux-arch:
     needs: build-linux-arch
@@ -427,7 +427,7 @@ jobs:
       artifact-in: build-rocky8
       image: rockylinux:8
       cmd: |
-        gitlab/build-from-install.sh
+        .github/scripts/build-from-install.sh
 
   static-analysis:
     secrets: inherit

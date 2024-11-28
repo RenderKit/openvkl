@@ -81,7 +81,7 @@ namespace openvkl {
               VKLHit shadowHit;
               vkl_range1f tShadowRange;
               tShadowRange.lower = hit.epsilon;
-              tShadowRange.upper = inf;
+              tShadowRange.upper = ispc::inf;
               VKLHitIterator shadowIterator =
                   vklInitHitIterator(&hitContext,
                                      (vkl_vec3f *)&c,

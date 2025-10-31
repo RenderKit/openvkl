@@ -84,12 +84,13 @@ namespace openvkl {
 
       sycl::queue queue = sycl::queue(syclDevice);
 
-      char *destination = new char[numItems * sizeOf(dataType)];
+      const size_t elementSize = sizeOf(dataType);
+      char *destination = new char[numItems * elementSize];
 
-      const bool isCompact = byteStride == sizeOf(dataType);
+      const bool isCompact = byteStride == elementSize;
 
       if (isCompact) {
-        queue.memcpy(destination, source, numItems * sizeof(dataType));
+        queue.memcpy(destination, source, numItems * elementSize);
         queue.wait();
       } else {
         throw std::runtime_error("not implemented");

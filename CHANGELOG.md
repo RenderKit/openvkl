@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Open VKL 2.0.2
+
+-   Minimum CMake version is now v3.10
+
 ### Open VKL 2.0.1
 
 -   Removed ISPC runtime dependency and level zero loader requirement

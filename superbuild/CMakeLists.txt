@@ -3,7 +3,7 @@
 
 ## Global settings ##
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
@@ -25,6 +25,11 @@ endif()
 ## ======================================================================== ##
 
 project(OpenVKL_superbuild)
+
+if (POLICY CMP0135)
+  # use timestamp of extraction of downloaded archives
+  cmake_policy(SET CMP0135 NEW) # 3.24
+endif ()
 
 include(ExternalProject)
 include(GNUInstallDirs)

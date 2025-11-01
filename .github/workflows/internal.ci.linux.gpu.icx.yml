@@ -23,7 +23,6 @@ jobs:
       artifact-path: ./build/install ./build/openvkl/build
       env-from-files: .github/deps/dpcpp-linux-icx.env
       cmd: |
-        module load cmake/3.25.3
         .github/scripts/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
@@ -37,7 +36,6 @@ jobs:
       image: ubuntu:22.04
       env-from-files: .github/deps/dpcpp-linux-icx.env
       cmd: |
-        module load cmake/3.25.3
         .github/scripts/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
@@ -52,7 +50,6 @@ jobs:
       image: ubuntu:22.04
       env-from-files: .github/deps/dpcpp-linux-icx.env
       cmd: |
-        module load cmake/3.25.3
         .github/scripts/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
@@ -70,7 +67,6 @@ jobs:
       env-from-files: .github/deps/dpcpp-linux-icx.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        module load cmake/3.25.3
         export PATH=`pwd`/build/install/bin:`pwd`/build/install:$PATH
         .github/scripts/build-from-install.sh
 

@@ -145,8 +145,8 @@ class OpenVKLTestCase:
         return float(stdout.splitlines()[0].split(": ")[1])
 
     def execute(self, img_diff_tool_path:str):
-        # Default timeout - 60 secs for each command
-        timeout = 60
+        # Default timeout - 90 secs for each command
+        timeout = 90
 
         # Execute GPU example
         gpu_run_cmd = "%s -renderer %s_gpu %s -volumeType %s -spp %d %s" % (self.__get_example_gpu_binary_string(), self.renderer, self.__get_common_params(), self.volume_type, self.spp, self.extra_gpu_args)

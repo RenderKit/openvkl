@@ -270,7 +270,7 @@ namespace openvkl {
             refinementLevels.push_back(level);
             cellWidths.resize(std::max(cellWidths.size(), (size_t)level + 1));
             cellWidths[level] = dt;
-            brickData.push_back(data);
+            brickData.push_back(std::move(data));
           }
         });  // end parallel for
         currentLevel = nextLevel;

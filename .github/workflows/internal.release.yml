@@ -45,14 +45,11 @@ jobs:
       submodules: true
       runs-on: '[ "Linux", "docker" ]'
       image: rockylinux:8
+      env-from-files: .github/deps/dpcpp-linux-icx.env
       artifact-out: linux
       artifact-path: ./*.gz
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        module load cmake
-        module load intel/2022.1
-        export CC=icx
-        export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
         .github/scripts/release/linux.sh
@@ -69,7 +66,6 @@ jobs:
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        module load cmake/3.25.3
         export CC=clang
         export CXX=clang++
         .github/scripts/release/linux_sycl.sh
@@ -145,7 +141,6 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        module load cmake/3.25.3
         .github/scripts/release/linux_sycl-test.sh
 
   linux_sycl-test_run_only:
@@ -160,7 +155,6 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        module load cmake/3.25.3
         .github/scripts/release/linux_sycl-test_run_only.sh
 
   windows-test:

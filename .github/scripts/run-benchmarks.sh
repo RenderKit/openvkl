@@ -34,30 +34,16 @@ BENCHMARK_FLAGS="--benchmark_repetitions=5 --benchmark_min_time=10"
 #
 ################################# PLEASE READ ###################################
 
-initContext() {
-  if [ -z "$HAVE_CONTEXT" ]; then
-    HAVE_CONTEXT=1
-    benny insert code_context "${PROJECT_NAME}" ${SOURCE_ROOT} --save-json code_context.json
-    benny insert run_context ${BENNY_SYSTEM_TOKEN} ./code_context.json --save-json run_context.json
-  fi
-}
-
-
 SUITE_NAME="ExampleRenderers"
-
-initContext
 
 SUBSUITE_NAME="StructuredVolume"
 SUBSUITE_REGEX="structured_regular"
 ./bin/vklBenchmark${BENCHMARK_DEVICE} ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 SUBSUITE_NAME="VDBVolume"
 SUBSUITE_REGEX="vdb"
 ./bin/vklBenchmark${BENCHMARK_DEVICE} ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
 SUBSUITE_NAME="UnstructuredVolume"
 SUBSUITE_REGEX="unstructured"
 ./bin/vklBenchmark${BENCHMARK_DEVICE} ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json

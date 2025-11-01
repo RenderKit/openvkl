@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v2.0.1 of Intel® Open VKL. For changes and new features
+This is release v2.0.2 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -42,6 +42,14 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 2.0.2
+
+- Fix used element size in copyDeviceBufferToHost
+- Fix corner case when sampling AMR blocks at exactly the upper bound
+- Minimum CMake version is now v3.10
+- Minimum ISPC version is now v1.30.0
+- Superbuild updates to latest versions of dependencies
 
 ### Open VKL 2.0.1
 
@@ -2731,10 +2739,10 @@ the following prerequisites:
 
       git clone https://github.com/openvkl/openvkl.git
 
-- To build Open VKL you need [CMake](http://www.cmake.org), any form of
-  C++11 compiler (we recommend using GCC, but also support Clang and
-  MSVC), and standard Linux development tools. To build the examples,
-  you should also have some version of OpenGL.
+- To build Open VKL you need [CMake](http://www.cmake.org) version 3.10
+  or higher, any form of C++11 compiler (we recommend using GCC, but
+  also support Clang and MSVC), and standard Linux development tools. To
+  build the examples, you should also have some version of OpenGL.
 
 - Additionally you require a copy of the [Intel® Implicit SPMD Program
   Compiler (Intel® ISPC)](http://ispc.github.io), version 1.18.0 or

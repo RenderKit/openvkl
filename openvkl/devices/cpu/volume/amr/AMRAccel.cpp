@@ -67,7 +67,7 @@ namespace openvkl {
                 levelAllocator.getDevice(), brick.size() + 1);
 
         newLeaf.brickList = brickListBuffer->sharedPtr();
-        m_brickListContainer.push_back(brickListBuffer);
+        m_brickListContainer.push_back(std::move(brickListBuffer));
 
         // create leaf list, and sort it
         std::copy(brick.begin(), brick.end(), newLeaf.brickList);

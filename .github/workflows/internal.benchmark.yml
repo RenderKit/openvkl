@@ -21,13 +21,10 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: rockylinux:8
+      env-from-files: .github/deps/dpcpp-linux-icx.env
       artifact-out: build-rocky8-icx
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        module load cmake
-        module load intel/2022.1
-        export CC=icx
-        export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
         .github/scripts/build.sh
@@ -38,7 +35,6 @@ jobs:
     with:
       runs-on: '["vis-perf-x8280-1"]'
       artifact-in: build-rocky8-icx
-      setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
@@ -49,7 +45,6 @@ jobs:
     with:
       runs-on: '["vis-perf-x8380-1"]'
       artifact-in: build-rocky8-icx
-      setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
@@ -60,7 +55,6 @@ jobs:
     with:
       runs-on: '["vis-perf-i9-12900k-1"]'
       artifact-in: build-rocky8-icx
-      setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
@@ -71,7 +65,6 @@ jobs:
     with:
       runs-on: '["vis-perf-a3970x-1"]'
       artifact-in: build-rocky8-icx
-      setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
@@ -86,7 +79,6 @@ jobs:
       artifact-path: ./build/install ./build/openvkl/build
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
-        module load cmake/3.25.3
         .github/scripts/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
@@ -102,7 +94,6 @@ jobs:
       artifact-in: build-gpu
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
-      setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh GPU
@@ -113,11 +104,10 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
-      runs-on: '[ "vis-perf-spr-pvc-01" ]'
+      runs-on: '[ "pvc" ]'
       artifact-in: build-gpu
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
-      setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh GPU

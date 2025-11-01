@@ -5,7 +5,7 @@
 # These tests are to verify if rendered image is correct for big volume size on PVC.
 # `time` command used here is just to see what is total execution time (for roughly estimation).
 
-IMG_DIFF_TOOL=$STORAGE_PATH/tools/img_diff/img_diff
+IMG_DIFF_TOOL=$STORAGE_PATH/tools/img-diff/dist_linux/img_diff
 
 # Enable persistent JIT cache
 export SYCL_CACHE_PERSISTENT=1

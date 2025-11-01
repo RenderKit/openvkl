@@ -23,7 +23,7 @@ jobs:
       artifact-out: build-rocky8
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        sudo dnf install gcc-toolset-11 -y
+        dnf install gcc-toolset-11 -y
         scl enable gcc-toolset-11 .github/scripts/build.sh
 
   test-rocky8:
@@ -46,13 +46,10 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: rockylinux:8
+      env-from-files: .github/deps/dpcpp-linux-icx.env
       artifact-out: build-rocky8-icx
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        module load cmake
-        module load intel/2022.1
-        export CC=icx
-        export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
         .github/scripts/build.sh
@@ -77,13 +74,10 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: rockylinux:8
+      dpcpp-version: intel/2025.2 # icx 2025.3 does not compile TBB 2020.3
       artifact-out: build-rocky8-icx-tbb2020
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        module load cmake
-        module load intel/2022.1
-        export CC=icx
-        export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
         .github/scripts/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
@@ -108,13 +102,10 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: rockylinux:8
+      dpcpp-version: intel/2025.2 # icx 2025.3 does not compile TBB 2020.3
       artifact-out: build-rocky8-icx-tbb2020-avx512_8
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        module load cmake
-        module load intel/2022.1
-        export CC=icx
-        export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
         .github/scripts/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH="" -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_AVX512SKX_8_WIDE=ON -DOPENVKL_ISA_AVX512SKX=OFF"
@@ -157,33 +148,6 @@ jobs:
         ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
-  # uses a newer CMake which allows OpenVDB to build
-  build-rocky9-module-cmake:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
-      image: rockylinux:9
-      artifact-out: build-rocky9-module-cmake
-      artifact-path: ./build/install ./build/openvkl/build
-      cmd: |
-        module load cmake
-        .github/scripts/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
-
-  test-rocky9-module-cmake:
-    needs: build-rocky9-module-cmake
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      artifact-in: build-rocky9-module-cmake
-      image: rockylinux:9
-      cmd: |
-        ./build/openvkl/build/vklTutorialCPU
-        ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
-        ./build/openvkl/build/vklTestsCPU --durations yes
-
   build-ubuntu20_04:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
@@ -194,7 +158,7 @@ jobs:
       artifact-out: build-ubuntu20_04
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF -D BUILD_OPENVDB=OFF # OpenVDB need gcc v11.2, not available on Ubuntu 20.04
+        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF
 
   build-ubuntu22_04:
     secrets: inherit

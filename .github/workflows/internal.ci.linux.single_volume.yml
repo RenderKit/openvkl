@@ -95,6 +95,7 @@ jobs:
       artifact-out: build-vdb
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
+        dnf install gcc-toolset-11 -y
         .github/scripts/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=ON"
 
   # test jobs - per volume type

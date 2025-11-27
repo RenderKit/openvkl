@@ -7,6 +7,10 @@
 #include <iomanip>
 #include <iostream>
 
+#if defined(_MSC_VER)
+#include <windows.h>  // Sleep
+#endif
+
 // setup specialization constant for feature flags
 static_assert(std::is_trivially_copyable<VKLFeatureFlags>::value);
 
@@ -395,6 +399,12 @@ int main()
   vklReleaseDevice(device);
 
   std::cout << "complete." << std::endl;
+
+#if defined(_MSC_VER)
+  // On Windows, sleep for a few seconds so the terminal window doesn't close
+  // immediately.
+  Sleep(3000);
+#endif
 
   return 0;
 }

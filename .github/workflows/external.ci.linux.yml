@@ -24,7 +24,7 @@ jobs:
     - name: Install packages
       run: |
         echo "Installing build dependencies..."
-        dnf install git cmake mesa-libGL-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel -y
+        dnf install git cmake mesa-libGL-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel gcc-toolset-11 -y
         dnf group install "Development Tools" -y
 
     - name: Checkout Repository
@@ -33,7 +33,9 @@ jobs:
         submodules: true
 
     - name: Build OpenVKL
-      run: .github/scripts/build.sh
+      run: |
+        export PATH=/usr/bin:$PATH # prefer newer cmake in /usr/bin instead of /usr/local/bin
+        scl enable gcc-toolset-11 .github/scripts/build.sh
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4

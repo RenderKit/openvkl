@@ -183,7 +183,7 @@ namespace coordinate_generator {
  * benchmark.
  */
 template <class Api>
-inline benchmark::internal::Benchmark *registerBenchmark()
+inline benchmark::Benchmark *registerBenchmark()
 {
   return benchmark::RegisterBenchmark(Api::name().c_str(), Api::run);
 }

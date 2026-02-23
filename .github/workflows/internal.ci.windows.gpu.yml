@@ -21,6 +21,7 @@ jobs:
       submodules: true
       runs-on: '[ "Windows", "build" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
+      msvc-version: 2022
       artifact-out: build-windows-gpu
       artifact-path: ./build
       artifact-on-failure: true
@@ -45,6 +46,7 @@ jobs:
       submodules: true
       runs-on: '[ "Windows", "dg2" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
+      msvc-version: 2022
       artifact-in: build-windows-gpu
       cmd: |
         cd ./build/install/bin
@@ -61,6 +63,7 @@ jobs:
       submodules: true
       runs-on: '[ "Windows", "dg2" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
+      msvc-version: 2022
       artifact-in: build-windows-gpu
       artifact-out: test-examples-dg2
       artifact-path: ./build/install/bin/*.pfm

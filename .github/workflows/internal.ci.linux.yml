@@ -23,7 +23,8 @@ jobs:
       artifact-out: build-rocky8
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh
+        sudo dnf install gcc-toolset-11 -y
+        scl enable gcc-toolset-11 .github/scripts/build.sh
 
   test-rocky8:
     needs: build-rocky8
@@ -193,7 +194,7 @@ jobs:
       artifact-out: build-ubuntu20_04
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF
+        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF -D BUILD_OPENVDB=OFF # OpenVDB need gcc v11.2, not available on Ubuntu 20.04
 
   build-ubuntu22_04:
     secrets: inherit
@@ -353,7 +354,7 @@ jobs:
       artifact-out: build-arch-debug
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh -D CMAKE_BUILD_TYPE=Debug
+        .github/scripts/build.sh -D CMAKE_BUILD_TYPE=Debug -D TBB_VERSION="2021.11.0" -D TBB_HASH=""
 
   test-arch-debug:
     needs: build-arch-debug
@@ -433,7 +434,6 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
     with:
-      coverity: true
       project: OpenVKL
       submodules: true
       prebuild: >

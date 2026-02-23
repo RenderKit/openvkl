@@ -21,7 +21,6 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
     with:
-      coverity: true
       project: OpenVKL
       submodules: true
       prebuild: >
@@ -97,6 +96,7 @@ jobs:
       submodules: true
       runs-on: '[ "Windows", "build" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
+      msvc-version: 2022
       artifact-out: windows_sycl
       artifact-path: ./*.zip
       cmd: |
@@ -184,6 +184,7 @@ jobs:
       submodules: true
       runs-on: '[ "Windows", "dg2" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
+      msvc-version: 2022
       artifact-in: windows_sycl
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"

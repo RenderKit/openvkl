@@ -4,6 +4,7 @@ Version History
 ### Open VKL 2.0.2
 
 -   Minimum CMake version is now v3.10
+-   Minimum ISPC version is now v1.30.0
 
 ### Open VKL 2.0.1
 

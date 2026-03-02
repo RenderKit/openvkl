@@ -356,7 +356,7 @@ TEST_CASE("VDB volume dense consistency", "[volume_sampling]")
             .value_or(std::string(""));
 
     if (vdbFilename.empty()) {
-      WARN("OPENVDB_TEST_VDB_FILENAME not set; not running .vdb tests");
+      WARN("OPENVKL_TEST_VDB_FILENAME not set; not running .vdb tests");
       return;
     }
 

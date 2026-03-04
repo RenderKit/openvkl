@@ -3,7 +3,7 @@
 
 ## Global CMake options ##
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -24,7 +24,7 @@ cmake_policy(SET CMP0074 NEW)
 
 ## Establish project ##
 
-project(openvkl VERSION 2.0.1 LANGUAGES C CXX)
+project(openvkl VERSION 2.0.2 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 
@@ -75,7 +75,7 @@ openvkl_configure_build_type()
 openvkl_configure_global_build_flags()
 openvkl_configure_ispc_isa()
 
-set(RKCOMMON_VERSION_REQUIRED 1.11.0)
+set(RKCOMMON_VERSION_REQUIRED 1.15.2)
 find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
 get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)

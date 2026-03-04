@@ -1,7 +1,7 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: Release Workflow
+name: (Internal) Release
 on:
   push:
     branches:
@@ -14,12 +14,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: read-all
+
 jobs:
   static-analysis:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
     with:
-      coverity: true
       project: OpenVKL
       submodules: true
       prebuild: >
@@ -43,35 +44,31 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Linux", "docker" ]'
-      image: rockylinux:8.7
+      image: rockylinux:8
+      env-from-files: .github/deps/dpcpp-linux-icx.env
       artifact-out: linux
       artifact-path: ./*.gz
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        module load cmake
-        module load intel/2022.1
-        export CC=icx
-        export CXX=icpx
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
-        gitlab/release/linux.sh
+        .github/scripts/release/linux.sh
 
   linux_sycl:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: rockylinux:8.7
+      image: rockylinux:8
       artifact-out: linux_sycl
       artifact-path: ./*.gz
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        module load cmake/3.25.3
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
         export CC=clang
         export CXX=clang++
-        gitlab/release/linux_sycl.sh
+        .github/scripts/release/linux_sycl.sh
 
   windows:
     secrets: inherit
@@ -83,18 +80,19 @@ jobs:
       artifact-out: windows
       artifact-path: ./*.zip
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   windows_sycl:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "build" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
+      msvc-version: 2022
       artifact-out: windows_sycl
       artifact-path: ./*.zip
       cmd: |
@@ -102,9 +100,9 @@ jobs:
         $env:CXXFLAGS = '-w'
         $env:CFLAGS = '-w'
 
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows_sycl.ps1
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/windows_sycl.ps1
 
   macos:
     secrets: inherit
@@ -116,8 +114,8 @@ jobs:
       artifact-out: macos
       artifact-path: ./*.zip
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/macos.sh
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/macos.sh
 
   linux-test:
     needs: linux
@@ -125,16 +123,16 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       runs-on: '[ "Linux", "docker" ]'
-      image: rockylinux:8.7
+      image: rockylinux:8
       artifact-in: linux
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/linux-test.sh
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/linux-test.sh
 
   linux_sycl-test:
     needs: linux_sycl
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
@@ -142,14 +140,13 @@ jobs:
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        module load cmake/3.25.3
-        gitlab/release/linux_sycl-test.sh
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/linux_sycl-test.sh
 
   linux_sycl-test_run_only:
     needs: linux_sycl
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
@@ -157,9 +154,8 @@ jobs:
       env-from-files: .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        module load cmake/3.25.3
-        gitlab/release/linux_sycl-test_run_only.sh
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/linux_sycl-test_run_only.sh
 
   windows-test:
     needs: windows
@@ -169,29 +165,30 @@ jobs:
       runs-on: '[ "Windows" ]'
       artifact-in: windows
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   windows_sycl-test:
     needs: windows_sycl
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "dg2" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
+      msvc-version: 2022
       artifact-in: windows_sycl
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows_sycl-test.ps1
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/windows_sycl-test.ps1
 
   windows_sycl-test_run_only:
     needs: windows_sycl
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
@@ -199,9 +196,9 @@ jobs:
       env-from-files: ./.github/deps/gfx-windows-public.env
       artifact-in: windows_sycl
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/windows_sycl-test_run_only.ps1
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/windows_sycl-test_run_only.ps1
 
   macos-test:
     needs: macos
@@ -211,8 +208,8 @@ jobs:
       runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-in: macos
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.1"
-        gitlab/release/macos-test.sh
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
+        .github/scripts/release/macos-test.sh
 
   binary-analysis:
     needs:

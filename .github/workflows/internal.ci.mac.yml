@@ -1,7 +1,7 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: CI Mac Workflow
+name: (Internal) Mac
 on:
   push:
   workflow_dispatch:
@@ -9,6 +9,8 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions: read-all
 
 jobs:
   build-macOS:
@@ -21,7 +23,7 @@ jobs:
       artifact-out: build-macOS
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh
+        .github/scripts/build.sh
 
   test-macOS:
     needs: build-macOS
@@ -46,7 +48,7 @@ jobs:
       artifact-out: build-macOS-TBB2020
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
+        .github/scripts/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
 
   test-macOS-TBB2020:
     needs: build-macOS-TBB2020
@@ -71,7 +73,7 @@ jobs:
       artifact-out: build-macOS-arm-neon
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -DBUILD_TBB_FROM_SOURCE=ON -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_NEON=ON -DOPENVKL_ISA_NEON2X=OFF"
+        .github/scripts/build.sh -DBUILD_TBB_FROM_SOURCE=ON -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_NEON=ON -DOPENVKL_ISA_NEON2X=OFF"
 
 
   test-macOS-arm-neon:
@@ -98,7 +100,7 @@ jobs:
       artifact-out: build-macOS-arm-neon2x
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -DBUILD_TBB_FROM_SOURCE=ON -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_NEON=OFF -DOPENVKL_ISA_NEON2X=ON"
+        .github/scripts/build.sh -DBUILD_TBB_FROM_SOURCE=ON -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_NEON=OFF -DOPENVKL_ISA_NEON2X=ON"
 
 
   test-macOS-arm-neon2x:

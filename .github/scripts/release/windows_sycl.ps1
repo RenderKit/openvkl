@@ -76,12 +76,13 @@ cp $DEP_INSTALL_DIR/lib/embree*.lib $INSTALL_LIB_DIR
 cp $DEP_INSTALL_DIR/lib/tbb*.lib $INSTALL_LIB_DIR
 
 # copy SYCL runtime dependencies
-$SYCL_BIN_FILE = where.exe clang++
+$SYCL_BIN_FILE = (get-command clang++).Path
 $SYCL_BIN_DIR = Split-Path -Parent "$SYCL_BIN_FILE"
 
-cp ${SYCL_BIN_DIR}/sycl7.dll $INSTALL_BIN_DIR
-cp ${SYCL_BIN_DIR}/pi_win_proxy_loader.dll $INSTALL_BIN_DIR
-cp ${SYCL_BIN_DIR}/pi_level_zero.dll $INSTALL_BIN_DIR
+cp ${SYCL_BIN_DIR}/sycl?.dll $INSTALL_BIN_DIR
+cp ${SYCL_BIN_DIR}/ur_loader.dll $INSTALL_BIN_DIR
+cp ${SYCL_BIN_DIR}/ur_adapter_level_zero.dll $INSTALL_BIN_DIR
+cp ${SYCL_BIN_DIR}/ur_win_proxy_loader.dll $INSTALL_BIN_DIR
 
 # sign
 ;& $env:SIGN_FILE_WINDOWS -q -vv (Get-ChildItem $INSTALL_BIN_DIR\* | Select-Object -Expand FullName)

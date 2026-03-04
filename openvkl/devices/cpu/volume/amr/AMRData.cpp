@@ -25,13 +25,15 @@ namespace openvkl {
         this->cellWidth = info.cellWidth;
         this->value     = *ispc(data);
         this->dims      = this->box.size() + vec3i(1);
-        this->f_dims    = vec3f(this->dims);
+        // make it an ULP smaller such that floor(relBrickPos*f_dims) yields
+        // correct index even for relBrickPos=1.0f
+        this->f_dims    = nextafter(this->dims, -1);
 
         this->worldBounds =
             box3f(vec3f(this->box.lower) * this->cellWidth,
                   vec3f(this->box.upper + vec3i(1)) * this->cellWidth);
         this->gridToWorldScale = 1.f / this->cellWidth;
-        this->worldToGridScale = rcp(this->worldBounds.size());
+        this->worldToGridScale = 1.f / this->worldBounds.size();
       }
 
       /*! this structure defines only the format of the INPUT of amr

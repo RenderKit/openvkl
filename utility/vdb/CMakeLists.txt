@@ -1,7 +1,7 @@
 ## Copyright 2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.10)
 
 # A header-only utility library that shows how vdb volumes can be set up.
 

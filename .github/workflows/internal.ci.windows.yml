@@ -1,0 +1,79 @@
+## Copyright 2022 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: (Internal) Windows
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  build-windows-msvc15:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      submodules: true
+      runs-on: '[ "Windows", "build" ]'
+      artifact-out: build-windows-msvc15
+      artifact-path: ./build/install
+      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "v141" "Release"
+
+  test-windows-msvc15:
+    needs: build-windows-msvc15
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      runs-on: '[ "Windows", "build" ]'
+      artifact-in: build-windows-msvc15
+      cmd: |
+        .github\scripts\run_tests.bat
+
+  build-windows-msvc16:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      submodules: true
+      runs-on: '[ "Windows", "build" ]'
+      artifact-out: build-windows-msvc16
+      artifact-path: ./build/install
+      cmd: .github\scripts\build.bat "Visual Studio 16 2019" "v142" "Release"
+
+  test-windows-msvc16:
+    needs: build-windows-msvc16
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      runs-on: '[ "Windows", "build" ]'
+      artifact-in: build-windows-msvc16
+      cmd: |
+        .github\scripts\run_tests.bat
+
+
+  build-windows-msvc17:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      submodules: true
+      runs-on: '[ "Windows", "build" ]'
+      artifact-out: build-windows-msvc17
+      artifact-path: ./build/install
+      cmd: .github\scripts\build.bat "Visual Studio 17 2022" "v143" "Release"
+
+  test-windows-msvc17:
+    needs: build-windows-msvc17
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      runs-on: '[ "Windows", "build" ]'
+      artifact-in: build-windows-msvc17
+      cmd: |
+        .github\scripts\run_tests.bat
+

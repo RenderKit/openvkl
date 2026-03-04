@@ -1,7 +1,7 @@
-## Copyright 2022 Intel Corporation
+## Copyright 2023 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: CI GPU Linux Workflow
+name: (Internal) GPU ICX Linux
 on:
   push:
   workflow_dispatch:
@@ -10,34 +10,33 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-jobs:
+permissions: read-all
 
+jobs:
   build-gpu:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
       artifact-out: build-gpu
       artifact-path: ./build/install ./build/openvkl/build
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      env-from-files: .github/deps/dpcpp-linux-icx.env
       cmd: |
-        module load cmake/3.25.3
-        gitlab/build.sh -D BUILD_OPENVDB=OFF \
+        .github/scripts/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON"
 
   build-gpu-rel-with-dbg-info:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      env-from-files: .github/deps/dpcpp-linux-icx.env
       cmd: |
-        module load cmake/3.25.3
-        gitlab/build.sh -D BUILD_OPENVDB=OFF \
+        .github/scripts/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON \
@@ -45,14 +44,13 @@ jobs:
 
   build-gpu-debug:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      env-from-files: .github/deps/dpcpp-linux-icx.env
       cmd: |
-        module load cmake/3.25.3
-        gitlab/build.sh -D BUILD_OPENVDB=OFF \
+        .github/scripts/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON \
@@ -61,28 +59,27 @@ jobs:
   test-build-from-install-dg2:
     needs: [ build-gpu ]
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
+      env-from-files: .github/deps/dpcpp-linux-icx.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        module load cmake/3.25.3
         export PATH=`pwd`/build/install/bin:`pwd`/build/install:$PATH
-        gitlab/build-from-install.sh
+        .github/scripts/build-from-install.sh
 
   test-pvc:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-linux-icx.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install/bin
@@ -92,7 +89,7 @@ jobs:
   test-examples-pvc:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -101,22 +98,37 @@ jobs:
       artifact-out: test-examples-pvc
       artifact-path: ./build/install/bin/*.pfm
       artifact-on-failure: true
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-linux-icx.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install/bin
         python3 $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.py $STORAGE_PATH/tools/img-diff/dist_linux/img_diff
 
+  test-cpu:
+    secrets: inherit
+    needs: [ build-gpu ]
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ubuntu:22.04
+      runs-on: '[ "Linux", "docker", "build" ]'
+      artifact-in: build-gpu
+      env-from-files: .github/deps/dpcpp-linux-icx.env
+      cmd: |
+        cd ./build/install/bin
+        ./vklTutorialCPU
+        ./vklTestsCPU --durations yes
+
   test-dg2:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
+      env-from-files: .github/deps/dpcpp-linux-icx.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install/bin
@@ -126,7 +138,7 @@ jobs:
   test-examples-dg2:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -135,7 +147,7 @@ jobs:
       artifact-out: test-examples-dg2
       artifact-path: ./build/install/bin/*.pfm
       artifact-on-failure: true
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
+      env-from-files: .github/deps/dpcpp-linux-icx.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install/bin
@@ -144,7 +156,7 @@ jobs:
   test-examples-big-volume-pvc:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -153,7 +165,7 @@ jobs:
       artifact-out: test-examples-big-volume-pvc
       artifact-path: ./build/install/*.pfm
       artifact-on-failure: true
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env  .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-linux-icx.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install

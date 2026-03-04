@@ -45,7 +45,7 @@ Cpp11BracedListStyle: true
 DerivePointerAlignment: false
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
-ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
+ForEachMacros:   [ foreach, foreach_active, foreach_tiled, foreach_unique, cdo, cfor, cif, cwhile ]
 StatementMacros: [ __vkl_interop_univary, 
                    template_VdbSampler_sampleLeafZYX_constant,
                    template_VdbSampler_sampleLeafZYX_structured,
@@ -78,7 +78,7 @@ StatementMacros: [ __vkl_interop_univary,
                    __vkl_leaf_handler_temporalFormat,
                    __vkl_leaf_handler ]
 IncludeCategories:
-  - Regex:           '^<.*\.h>'
+  - Regex:           '^<.*\.i?h>'
     Priority:        1
   - Regex:           '^<.*'
     Priority:        2

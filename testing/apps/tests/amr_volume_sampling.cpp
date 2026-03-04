@@ -38,6 +38,9 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
   offsets.emplace_back(114.0f);
   offsets.emplace_back(128.0f);
 
+  // sample at the exact brick bound, resulting in relBrickPos=1.0
+  offsets.emplace_back(256.0f);
+
   for (const vec3f &offset : offsets) {
     const auto offsetWithStep = offset * step;
 

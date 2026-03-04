@@ -1,7 +1,7 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: CI Single Volume Workflow
+name: (Internal) Single Volume
 on:
   push:
   workflow_dispatch:
@@ -10,6 +10,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: read-all
+
 jobs:
   build-amr:
     secrets: inherit
@@ -17,11 +19,11 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-amr
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=ON -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
+        .github/scripts/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=ON -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
 
   build-particle:
     secrets: inherit
@@ -29,11 +31,11 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-particle
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
+        .github/scripts/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
 
   build-structuredRegular:
     secrets: inherit
@@ -41,11 +43,11 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-structuredRegular
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
+        .github/scripts/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
 
   build-structuredRegularLegacy:
     secrets: inherit
@@ -53,11 +55,11 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-structuredRegularLegacy
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
+        .github/scripts/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
 
   build-structuredSpherical:
     secrets: inherit
@@ -65,11 +67,11 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-structuredSpherical
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=ON -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
+        .github/scripts/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=ON -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=OFF"
 
   build-unstructured:
     secrets: inherit
@@ -77,11 +79,11 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-unstructured
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=ON -DOPENVKL_DEVICE_CPU_VDB=OFF"
+        .github/scripts/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=ON -DOPENVKL_DEVICE_CPU_VDB=OFF"
 
   build-vdb:
     secrets: inherit
@@ -89,11 +91,12 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: centos:8
+      image: rockylinux:8
       artifact-out: build-vdb
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=ON"
+        dnf install gcc-toolset-11 -y
+        .github/scripts/build.sh -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_DEVICE_CPU_AMR=OFF -DOPENVKL_DEVICE_CPU_PARTICLE=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=OFF -DOPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=OFF -DOPENVKL_DEVICE_CPU_UNSTRUCTURED=OFF -DOPENVKL_DEVICE_CPU_VDB=ON"
 
   # test jobs - per volume type
 
@@ -103,7 +106,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-amr
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -113,7 +116,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-particle
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -123,7 +126,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-structuredRegular
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -133,7 +136,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-structuredRegularLegacy
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -143,7 +146,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-structuredSpherical
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -153,7 +156,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-unstructured
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes
 
@@ -163,6 +166,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       artifact-in: build-vdb
-      image: centos:8
+      image: rockylinux:8
       cmd: |
         ./build/openvkl/build/vklTestsCPU --durations yes

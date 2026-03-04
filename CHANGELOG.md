@@ -1,6 +1,14 @@
 Version History
 ---------------
 
+### Open VKL 2.0.2
+
+-   Fix used element size in copyDeviceBufferToHost
+-   Fix corner case when sampling AMR blocks at exactly the upper bound
+-   Minimum CMake version is now v3.10
+-   Minimum ISPC version is now v1.30.0
+-   Superbuild updates to latest versions of dependencies
+
 ### Open VKL 2.0.1
 
 -   Removed ISPC runtime dependency and level zero loader requirement

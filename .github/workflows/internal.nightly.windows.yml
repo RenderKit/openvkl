@@ -1,7 +1,7 @@
 ## Copyright 2023 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: Nightly Windows Workflow
+name: (Internal) Nightly Windows
 on:
   schedule:
     - cron:  '0 0 * * *'
@@ -11,8 +11,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-jobs:
+permissions: read-all
 
+jobs:
   build-windows-msvc15-debug:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
@@ -22,7 +23,7 @@ jobs:
       runs-on: '[ "Windows", "build" ]'
       artifact-out: build-windows-msvc15-debug
       artifact-path: ./build/install
-      cmd: gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" "Debug"
+      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "v141" "Debug"
 
   test-windows-msvc15-debug:
     needs: build-windows-msvc15-debug
@@ -32,4 +33,4 @@ jobs:
       runs-on: '[ "Windows", "build" ]'
       artifact-in: build-windows-msvc15-debug
       cmd: |
-        gitlab\run_tests.bat
+        .github\scripts\run_tests.bat

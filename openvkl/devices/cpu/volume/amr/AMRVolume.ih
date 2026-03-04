@@ -11,5 +11,5 @@ inline void AMRVolume_transformObjectToLocal(
     varying vec3f &localCoordinates)
 {
   localCoordinates =
-      rcp(volume->gridSpacing) * (objectCoordinates - volume->gridOrigin);
+      (1.0f/volume->gridSpacing) * (objectCoordinates - volume->gridOrigin);
 }

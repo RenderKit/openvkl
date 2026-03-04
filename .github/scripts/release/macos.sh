@@ -1,6 +1,15 @@
 #!/bin/bash
-## Copyright 2023 Intel Corporation
+## Copyright 2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
+
+#### Helper functions ####
+
+umask=`umask`
+function onexit {
+  umask $umask
+}
+trap onexit EXIT
+umask 002
 
 #### Set variables for script ####
 
@@ -9,11 +18,18 @@ ROOT_DIR=$PWD
 DEP_BUILD_DIR=$ROOT_DIR/build_deps
 DEP_INSTALL_DIR=$ROOT_DIR/install_deps
 
-OPENVKL_PKG_BASE=openvkl-${OPENVKL_RELEASE_PACKAGE_VERSION}.sycl.x86_64.linux
+OPENVKL_PKG_BASE=openvkl-${OPENVKL_RELEASE_PACKAGE_VERSION}.x86_64.macos
 OPENVKL_BUILD_DIR=$ROOT_DIR/build_release
 OPENVKL_INSTALL_DIR=$ROOT_DIR/install_release/$OPENVKL_PKG_BASE
 
-THREADS=`nproc`
+MACOSX_DEPLOYMENT_TARGET="10.13"
+
+THREADS=`sysctl -n hw.logicalcpu`
+
+# to make sure we do not include nor link against wrong TBB
+unset CPATH
+unset LIBRARY_PATH
+unset DYLD_LIBRARY_PATH
 
 #### Cleanup any existing directories ####
 
@@ -26,9 +42,6 @@ rm -rf $OPENVKL_INSTALL_DIR
 
 mkdir $DEP_BUILD_DIR
 cd $DEP_BUILD_DIR
-
-# NOTE(jda) - Some Linux OSs need to have lib/ on LD_LIBRARY_PATH at build time
-export LD_LIBRARY_PATH=$DEP_INSTALL_DIR/lib:${LD_LIBRARY_PATH}
 
 cmake --version
 
@@ -66,7 +79,6 @@ cmake -L \
   -D ISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc \
   -D BUILD_BENCHMARKS=ON \
   -D OpenVDB_ROOT=$DEP_INSTALL_DIR $OPENVKL_EXTRA_OPENVDB_OPTIONS \
-  -D OPENVKL_ENABLE_DEVICE_GPU=ON \
   ..
 
 # build
@@ -75,25 +87,13 @@ make -j $THREADS install
 # copy dependent libs into the install
 INSTALL_LIB_DIR=$OPENVKL_INSTALL_DIR/lib
 
-cp -P $DEP_INSTALL_DIR/lib/lib*.so* $INSTALL_LIB_DIR
-cp -P $DEP_INSTALL_DIR/lib/lib*.a* $INSTALL_LIB_DIR
+cp -P $DEP_INSTALL_DIR/lib/lib*.dylib* $INSTALL_LIB_DIR
 
-# OpenVDB static library is large and not needed
-rm $INSTALL_LIB_DIR/libopenvdb*.a
-
-# copy SYCL runtime dependencies
-SYCL_BIN_FILE=`which clang`
-SYCL_BIN_DIR=`dirname ${SYCL_BIN_FILE}`
-SYCL_LIB_DIR="${SYCL_BIN_DIR}/../lib"
-
-cp ${SYCL_LIB_DIR}/libsycl.so* $INSTALL_LIB_DIR
-cp ${SYCL_LIB_DIR}/libpi_level_zero.so $INSTALL_LIB_DIR
-
-# tar up the results
+# zip up the results
 cd $OPENVKL_INSTALL_DIR/..
-tar -czf $OPENVKL_PKG_BASE.tar.gz $OPENVKL_PKG_BASE
+zip -ry $OPENVKL_PKG_BASE.zip $OPENVKL_PKG_BASE
 
 # sign
-$ROOT_DIR/gitlab/release/sign.sh $OPENVKL_PKG_BASE.tar.gz
+$ROOT_DIR/.github/scripts/release/sign.sh $OPENVKL_PKG_BASE.zip
 
-mv *.tar.gz $ROOT_DIR
+mv *.zip $ROOT_DIR

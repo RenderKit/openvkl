@@ -1,78 +1,77 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-name: Benchmarks
+name: (Internal) Benchmarks
 on:
   schedule:
     - cron: '30 1 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
 jobs:
-  build-rocky87-icx:
+  build-rocky8-icx:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      image: rockylinux:8.7
-      artifact-out: build-rocky87-icx
+      image: rockylinux:8
+      env-from-files: .github/deps/dpcpp-linux-icx.env
+      artifact-out: build-rocky8-icx
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        module load cmake
-        module load intel/2022.1
-        export CC=icx
-        export CXX=icpx
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
-        gitlab/build.sh
+        .github/scripts/build.sh
 
   benchmark-x8280-1:
-    needs: build-rocky87-icx
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
       runs-on: '["vis-perf-x8280-1"]'
-      artifact-in: build-rocky87-icx
-      setup-benny: true
+      artifact-in: build-rocky8-icx
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   benchmark-x8380-1:
-    needs: build-rocky87-icx
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
       runs-on: '["vis-perf-x8380-1"]'
-      artifact-in: build-rocky87-icx
-      setup-benny: true
+      artifact-in: build-rocky8-icx
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   benchmark-i9-12900k-1:
-    needs: build-rocky87-icx
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
       runs-on: '["vis-perf-i9-12900k-1"]'
-      artifact-in: build-rocky87-icx
-      setup-benny: true
+      artifact-in: build-rocky8-icx
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   benchmark-a3970x-1:
-    needs: build-rocky87-icx
+    needs: build-rocky8-icx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
     with:
       runs-on: '["vis-perf-a3970x-1"]'
-      artifact-in: build-rocky87-icx
-      setup-benny: true
+      artifact-in: build-rocky8-icx
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh CPU
 
   build-gpu:
     secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
@@ -80,8 +79,7 @@ jobs:
       artifact-path: ./build/install ./build/openvkl/build
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
-        module load cmake/3.25.3
-        gitlab/build.sh -D BUILD_OPENVDB=OFF \
+        .github/scripts/build.sh -D BUILD_OPENVDB=OFF \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON"
@@ -89,14 +87,13 @@ jobs:
   perf-dg2:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "vis-perf-dg2-01" ]'
       artifact-in: build-gpu
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
-      setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh GPU
@@ -104,14 +101,13 @@ jobs:
   perf-pvc:
     secrets: inherit
     needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       image: ubuntu:22.04
-      runs-on: '[ "vis-perf-spr-pvc-01" ]'
+      runs-on: '[ "pvc" ]'
       artifact-in: build-gpu
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
-      setup-benny: true
       cmd: |
         cd ./build/install
         $GITHUB_WORKSPACE/.github/scripts/run-benchmarks.sh GPU

@@ -8,8 +8,6 @@ include_directories_ispc(
   ${RKCOMMON_INCLUDE_DIRS}
 )
 
-option(VKL_BUILD_VDB_ITERATOR_SIZE_HELPER "Build helper program that computes sizeof(VdbIterator)" OFF)
-
 # for toggling enablement of specific volume types
 option(OPENVKL_DEVICE_CPU_AMR "enable CPU device AMR volume type" ON)
 option(OPENVKL_DEVICE_CPU_PARTICLE "enable CPU device particle volume type" ON)

@@ -7,7 +7,7 @@ namespace ispc {
 
   struct DualCellID
   {
-    // position of LOWER-LEFT COORDINATE (ie, CENTER of lower-left cell
+    // position of LOWER-LEFT COORDINATE (ie, CENTER of lower-left cell)
     vec3f pos;
     // width of dual cell, also doubles as level indicator
     float width;
@@ -38,18 +38,6 @@ namespace ispc {
     return (xfmed - f_idx);
   }
 
-  inline void initDualCell(DualCell &D, const vec3f &P, const AMRLevel &level)
-  {
-    const float cellWidth     = level.cellWidth;
-    const float halfCellWidth = 0.5f * cellWidth;
-    const float rcpCellWidth  = rcp(cellWidth);
-    const vec3f xfmed         = (P - halfCellWidth) * rcpCellWidth;
-    const vec3f f_idx         = floor(xfmed);
-    D.cellID.pos              = f_idx * cellWidth + halfCellWidth;
-    D.cellID.width            = cellWidth;
-    D.weights                 = xfmed - f_idx;
-  }
-
   inline void initDualCell(DualCell &D, const vec3f &P, const float cellWidth)
   {
     const float halfCellWidth = cellWidth * 0.5f;
@@ -59,6 +47,11 @@ namespace ispc {
     D.cellID.pos              = f_idx * cellWidth + halfCellWidth;
     D.cellID.width            = cellWidth;
     D.weights                 = xfmed - f_idx;
+  }
+
+  inline void initDualCell(DualCell &D, const vec3f &P, const AMRLevel &level)
+  {
+    initDualCell(D, P, level.cellWidth);
   }
 
   inline bool allCornersAreLeaves(const DualCell &D)
@@ -77,30 +70,6 @@ namespace ispc {
            (D.actualWidth[5] == D.cellID.width) &
            (D.actualWidth[6] == D.cellID.width) &
            (D.actualWidth[7] == D.cellID.width);
-  }
-
-  inline float lerp(const DualCell &D)
-  {
-    const vec3f &w   = D.weights;
-    const float f000 = D.value[C000];
-    const float f001 = D.value[C001];
-    const float f010 = D.value[C010];
-    const float f011 = D.value[C011];
-    const float f100 = D.value[C100];
-    const float f101 = D.value[C101];
-    const float f110 = D.value[C110];
-    const float f111 = D.value[C111];
-
-    const float f00 = (1.f - w.x) * f000 + w.x * f001;
-    const float f01 = (1.f - w.x) * f010 + w.x * f011;
-    const float f10 = (1.f - w.x) * f100 + w.x * f101;
-    const float f11 = (1.f - w.x) * f110 + w.x * f111;
-
-    const float f0 = (1.f - w.y) * f00 + w.y * f01;
-    const float f1 = (1.f - w.y) * f10 + w.y * f11;
-
-    const float f = (1.f - w.z) * f0 + w.z * f1;
-    return f;
   }
 
   inline float lerpWithExplicitWeights(const DualCell &D, const vec3f &w)
@@ -124,6 +93,11 @@ namespace ispc {
 
     const float f = (1.f - w.z) * f0 + w.z * f1;
     return f;
+  }
+
+  inline float lerp(const DualCell &D)
+  {
+    return lerpWithExplicitWeights(D, D.weights);
   }
 
   inline float lerpAlpha(const DualCell &D)

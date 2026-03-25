@@ -28,8 +28,10 @@ extern CellRef findCell(const AMR *uniform self,
         for (uniform int i=0;any(true);i++) {
           const AMRBrick *uniform brick = leaf->brickList[i];
           if (brick->cellWidth >= minWidth) {
-            const vec3f relBrickPos
+            vec3f relBrickPosUnclamped
               = (worldSpacePos - brick->bounds.lower) * brick->bounds_scale;
+            // clamp to 1ULP-less-1 for f_bc stay in valid index range
+            const vec3f relBrickPos = min(relBrickPosUnclamped, make_vec3f(0x1.fffffep-1f));
             // brick coords: integer cell coordinates inside brick
             // OPT: the same calculations as below, just in
             // floats. this works as long as all values we calculate
@@ -75,8 +77,10 @@ extern CellRef findLeafCell(const AMR *uniform self,
       if (isLeaf(node)) {
         const AMRLeaf *uniform leaf = &self->leaf[getOfs(node)];
         const AMRBrick *uniform brick = leaf->brickList[0];
-        const vec3f relBrickPos
+        const vec3f relBrickPosUnclamped
           = (worldSpacePos - brick->bounds.lower) * brick->bounds_scale;
+        // clamp to 1ULP-less-1 for f_bc stay in valid index range
+        const vec3f relBrickPos = min(relBrickPosUnclamped, make_vec3f(0x1.fffffep-1f));
         // brick coords: integer cell coordinates inside brick
         // OPT: the same calculations as below, just in
         // floats. this works as long as all values we calculate

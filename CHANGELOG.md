@@ -1,6 +1,10 @@
 Version History
 ---------------
 
+### Open VKL 2.0.3
+
+-   Fix artifacts when sampling AMR volume
+
 ### Open VKL 2.0.2
 
 -   Fix used element size in copyDeviceBufferToHost

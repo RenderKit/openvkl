@@ -8,10 +8,9 @@
 // ========================================================================== //
 // An enum for temporal format constants.
 // ========================================================================== //
-#if __cplusplus > 201103L
-enum VKLTemporalFormat : vkl_uint32
-#else
 enum VKLTemporalFormat
+#ifdef __cplusplus
+    : vkl_uint32
 #endif
 {
   // There is no temporal variation.
@@ -19,7 +18,7 @@ enum VKLTemporalFormat
   // Each voxel contains the same number of temporal samples and they
   // are placed regularly in [0, 1].
   VKL_TEMPORAL_FORMAT_STRUCTURED,
-  // Temporal resolution is adaptive, such that voxels may have different 
+  // Temporal resolution is adaptive, such that voxels may have different
   // numbers of time steps. See the api documentation for more detail.
   VKL_TEMPORAL_FORMAT_UNSTRUCTURED,
   VKL_TEMPORAL_FORMAT_INVALID = 100

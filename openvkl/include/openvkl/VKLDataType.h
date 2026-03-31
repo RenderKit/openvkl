@@ -3,7 +3,7 @@
 
 #pragma once
 
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
 #include <cstdint>
 #endif
 
@@ -13,10 +13,9 @@
 //
 // IMPORTANT: enums added here should also be represented in stringForType() and
 // other functions in VKLCommon.cpp!
-#if __cplusplus >= 201103L
-typedef enum : uint32_t
-#else
 typedef enum
+#ifdef __cplusplus
+    : uint32_t
 #endif
 {
   // Driver reference type.

@@ -14,7 +14,7 @@
 
 // flags that can be passed to vklNewData(), which can be OR'ed together
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {

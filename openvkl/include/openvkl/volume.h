@@ -24,19 +24,19 @@ typedef VKLObject VKLVolume;
 
 // cell types definition for unstructured volumes, values are set to match VTK
 typedef enum
-# if __cplusplus >= 201103L
-: uint8_t
+#ifdef __cplusplus
+    : uint8_t
 #endif
 {
   VKL_TETRAHEDRON = 10,
-  VKL_HEXAHEDRON = 12,
-  VKL_WEDGE = 13,
-  VKL_PYRAMID = 14
+  VKL_HEXAHEDRON  = 12,
+  VKL_WEDGE       = 13,
+  VKL_PYRAMID     = 14
 } VKLUnstructuredCellType;
 
 // AMR volume interpolation methods
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {

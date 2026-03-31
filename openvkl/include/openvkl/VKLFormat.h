@@ -9,10 +9,9 @@
 // An enum for data format constants.
 // This value determines how voxel data buffers are interpreted by VKL.
 // ========================================================================== //
-#if __cplusplus > 201103L
-enum VKLFormat : vkl_uint32
-#else
 enum VKLFormat
+#ifdef __cplusplus
+    : vkl_uint32
 #endif
 {
   // The node has no spatial variation.

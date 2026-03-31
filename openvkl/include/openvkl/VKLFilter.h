@@ -9,8 +9,8 @@
 // An enum that represents the different filter types available in volumes.
 // ======================================================================== //
 enum VKLFilter
-#if __cplusplus >= 201103L
-: vkl_uint32
+#ifdef __cplusplus
+    : vkl_uint32
 #endif
 {
   // Only read the voxel the sample position is in, treating it as

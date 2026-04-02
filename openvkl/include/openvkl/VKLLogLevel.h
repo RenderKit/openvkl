@@ -6,7 +6,7 @@
 // Log levels which can be set on a device via "logLevel" parameter or
 // "OPENVKL_LOG_LEVEL" environment variable
 typedef enum
-#if __cplusplus >= 201103L
+#ifdef __cplusplus
     : uint32_t
 #endif
 {

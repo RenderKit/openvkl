@@ -23,7 +23,7 @@ jobs:
       runs-on: '[ "Windows", "build" ]'
       artifact-out: build-windows-msvc15-debug
       artifact-path: ./build/install
-      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "v141" "Debug"
+      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "Debug"
 
   test-windows-msvc15-debug:
     needs: build-windows-msvc15-debug

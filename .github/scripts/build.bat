@@ -11,14 +11,13 @@ cmake --version
 
 cmake -L ^
 -G "%~1" ^
--T "%~2" ^
 -D CMAKE_INSTALL_LIBDIR=lib ^
 -D BUILD_OPENVKL_BENCHMARKS=OFF ^
 -D BUILD_OPENVKL_TESTING=ON ^
-%~4 %~5 %~6 %~7 %~8 %~9 ^
+%~3 %~4 %~5 %~6 %~7 %~8 %~9 ^
 ../superbuild
 
-cmake --build . --verbose --config "%~3" --target ALL_BUILD -- /m /nologo
+cmake --build . --verbose --config "%~2" --target ALL_BUILD -- /m /nologo
 
 :abort
 endlocal

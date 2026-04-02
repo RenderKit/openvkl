@@ -8,7 +8,7 @@ performance of their volume rendering applications by leveraging Open VKL’s
 performance-optimized kernels, which include volume traversal and sampling
 functionality for a variety of volumetric data formats. Open VKL supports x86
 CPUs under Linux, macOS, and Windows; ARM CPUs on macOS; as well as Intel® GPUs
-under Linux and Windows (currently in beta).
+under Linux and Windows.
 
 Open VKL contains kernels optimized for the latest x86 processors with support
 for SSE, AVX, AVX2, and AVX-512 instructions, and for ARM processors with

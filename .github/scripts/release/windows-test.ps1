@@ -19,7 +19,6 @@ cmake --version
 
 cmake -L `
   -G $args[0] `
-  -T $args[1] `
   ../examples/from_openvkl_install
 
 cmake --build . --config Release --target ALL_BUILD -- /m /nologo

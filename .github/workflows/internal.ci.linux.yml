@@ -23,7 +23,7 @@ jobs:
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         dnf install gcc-toolset-11 -y
-        scl enable gcc-toolset-11 .github/scripts/build.sh
+        scl enable gcc-toolset-11 '.github/scripts/build.sh -D BUILD_EMBREE_FROM_SOURCE=OFF'
 
   test-rocky8:
     needs: build-rocky8
@@ -50,7 +50,7 @@ jobs:
       cmd: |
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
-        .github/scripts/build.sh
+        .github/scripts/build.sh -D BUILD_EMBREE_FROM_SOURCE=OFF
 
   test-rocky8-icx:
     needs: build-rocky8-icx
@@ -77,6 +77,7 @@ jobs:
       cmd: |
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
+        # pre-built Embree needs oneTBB
         .github/scripts/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
 
   test-rocky8-icx-tbb2020:
@@ -104,6 +105,7 @@ jobs:
       cmd: |
         export CXXFLAGS="-fPIC -fp-model=precise"
         export LDFLAGS="-static-intel"
+        # pre-built Embree needs oneTBB
         .github/scripts/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH="" -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_AVX512SKX_8_WIDE=ON -DOPENVKL_ISA_AVX512SKX=OFF"
 
   test-rocky8-icx-tbb2020-avx512_8:
@@ -128,7 +130,7 @@ jobs:
       artifact-out: build-rocky9
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh
+        .github/scripts/build.sh -D BUILD_EMBREE_FROM_SOURCE=OFF
 
   test-rocky9:
     needs: build-rocky9
@@ -152,7 +154,7 @@ jobs:
       artifact-out: build-ubuntu20_04
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF
+        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF -D BUILD_EMBREE_FROM_SOURCE=OFF
 
   build-ubuntu22_04:
     secrets: inherit
@@ -163,7 +165,7 @@ jobs:
       artifact-out: build-ubuntu22_04
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF
+        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF -D BUILD_EMBREE_FROM_SOURCE=OFF
 
   build-ubuntu24_04:
     secrets: inherit
@@ -174,7 +176,7 @@ jobs:
       artifact-out: build-ubuntu24_04
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF
+        .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF -D BUILD_EMBREE_FROM_SOURCE=OFF
 
   test-ubuntu20_04:
     needs: build-ubuntu20_04
@@ -227,7 +229,7 @@ jobs:
       artifact-out: build-arch
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh
+        .github/scripts/build.sh -D BUILD_EMBREE_FROM_SOURCE=OFF
 
   test-arch:
     needs: build-arch
@@ -253,7 +255,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        .github/scripts/build.sh
+        .github/scripts/build.sh -D BUILD_EMBREE_FROM_SOURCE=OFF
 
   test-arch-clang:
     needs: build-arch-clang
@@ -282,6 +284,7 @@ jobs:
         export CFLAGS=-fsanitize=address
         export CXXFLAGS=-fsanitize=address
         export LDFLAGS=-fsanitize=address
+        # Embree from source, to sanitize it as well
         .github/scripts/build.sh -D BUILD_OPENVDB=OFF
 
   test-arch-address-sanitizer:
@@ -306,7 +309,7 @@ jobs:
       artifact-out: build-arch-debug
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh -D CMAKE_BUILD_TYPE=Debug -D TBB_VERSION="2021.11.0" -D TBB_HASH=""
+        .github/scripts/build.sh -D CMAKE_BUILD_TYPE=Debug -D TBB_VERSION="2021.11.0" -D TBB_HASH="" -D BUILD_EMBREE_FROM_SOURCE=OFF
 
   test-arch-debug:
     needs: build-arch-debug
@@ -354,7 +357,7 @@ jobs:
       artifact-out: build-linux-arch
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        .github/scripts/build.sh -G Ninja
+        .github/scripts/build.sh -G Ninja -D BUILD_EMBREE_FROM_SOURCE=OFF
 
   test-linux-arch:
     needs: build-linux-arch

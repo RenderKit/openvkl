@@ -71,21 +71,23 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 60
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "NAS", "build" ]'
+      runs-on: '[ "build", "x86_64" ]'
       artifact-out: windows
       artifact-path: ./*.zip
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
-        .github/scripts/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
+        .github/scripts/release/windows.ps1 "Visual Studio 17 2022"
 
   windows_sycl:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 30
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "build" ]'
+      runs-on: '[ "build", "x86_64" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
       msvc-version: 2022
       artifact-out: windows_sycl
@@ -156,12 +158,12 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '[ "Windows" ]'
+      runs-on: '[ "x86_64" ]'
       artifact-in: windows
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
-        .github/scripts/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
+        .github/scripts/release/windows-test.ps1 "Visual Studio 17 2022"
 
   windows_sycl-test:
     needs: windows_sycl
@@ -169,7 +171,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "dg2" ]'
+      runs-on: '[ "bmg" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
       msvc-version: 2022
       artifact-in: windows_sycl
@@ -184,7 +186,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "dg2" ]'
+      runs-on: '[ "bmg" ]'
       env-from-files: ./.github/deps/gfx-windows-public.env
       artifact-in: windows_sycl
       cmd: |
@@ -217,6 +219,18 @@ jobs:
       artifact-in-windows: windows
       path: "*.zip *.gz"
 
+  binary-analysis_sycl:
+    needs:
+      - linux_sycl
+      - windows_sycl
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/binary_analysis.yml@main
+    with:
+      project: openvkl
+      artifact-in-linux: linux_sycl
+      artifact-in-windows: windows_sycl
+      path: "*.zip *.gz"
+
   antivirus-scan:
     needs:
       - linux
@@ -229,4 +243,16 @@ jobs:
       artifact-in-linux: linux
       artifact-in-macos: macos
       artifact-in-windows: windows
+      path: "*.zip *.gz"
+
+  antivirus-scan_sycl:
+    needs:
+      - linux_sycl
+      - windows_sycl
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/antivirus_scan.yml@main
+    with:
+      project: openvkl
+      artifact-in-linux: linux_sycl
+      artifact-in-windows: windows_sycl
       path: "*.zip *.gz"

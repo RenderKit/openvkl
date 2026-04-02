@@ -17,8 +17,9 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 30
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "build" ]'
+      runs-on: '[ "build", "x86_64" ]'
       env-from-files: .github/deps/dpcpp-windows-icx.env
       msvc-version: 2022
       artifact-out: build-windows-gpu
@@ -42,8 +43,9 @@ jobs:
     needs: [ build-windows-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 45
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "build" ]'
+      runs-on: '[ "build", "x86_64" ]'
       env-from-files: .github/deps/dpcpp-windows-icx.env
       msvc-version: 2022
       artifact-in: build-windows-gpu
@@ -58,8 +60,9 @@ jobs:
     needs: [ build-windows-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 45
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "dg2" ]'
+      runs-on: '[ "dg2" ]'
       env-from-files: .github/deps/dpcpp-windows-icx.env .github/deps/gfx-windows-public.env
       msvc-version: 2022
       artifact-in: build-windows-gpu
@@ -74,8 +77,9 @@ jobs:
     needs: [ build-windows-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 45
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "bmg" ]'
+      runs-on: '[ "bmg" ]'
       env-from-files: .github/deps/dpcpp-windows-icx.env .github/deps/gfx-windows-public.env
       msvc-version: 2022
       artifact-in: build-windows-gpu
@@ -90,8 +94,9 @@ jobs:
     needs: [ build-windows-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 45
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "lnl" ]'
+      runs-on: '[ "lnl" ]'
       env-from-files: .github/deps/dpcpp-windows-icx.env .github/deps/gfx-windows-public.env
       msvc-version: 2022
       artifact-in: build-windows-gpu
@@ -106,8 +111,9 @@ jobs:
     needs: [ build-windows-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 45
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "dg2" ]'
+      runs-on: '[ "dg2" ]'
       env-from-files: .github/deps/dpcpp-windows-icx.env .github/deps/gfx-windows-public.env
       msvc-version: 2022
       artifact-in: build-windows-gpu
@@ -123,8 +129,9 @@ jobs:
     needs: [ build-windows-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 45
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "bmg" ]'
+      runs-on: '[ "bmg" ]'
       env-from-files: .github/deps/dpcpp-windows-icx.env .github/deps/gfx-windows-public.env
       msvc-version: 2022
       artifact-in: build-windows-gpu
@@ -140,8 +147,9 @@ jobs:
     needs: [ build-windows-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 45
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "lnl" ]'
+      runs-on: '[ "lnl" ]'
       env-from-files: .github/deps/dpcpp-windows-icx.env .github/deps/gfx-windows-public.env
       msvc-version: 2022
       artifact-in: build-windows-gpu

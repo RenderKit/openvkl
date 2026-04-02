@@ -13,42 +13,22 @@ concurrency:
 permissions: read-all
 
 jobs:
-  build-windows-msvc15:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "build" ]'
-      artifact-out: build-windows-msvc15
-      artifact-path: ./build/install
-      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "v141" "Release"
-
-  test-windows-msvc15:
-    needs: build-windows-msvc15
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
-    with:
-      runs-on: '[ "Windows", "build" ]'
-      artifact-in: build-windows-msvc15
-      cmd: |
-        .github\scripts\run_tests.bat
-
   build-windows-msvc16:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "build" ]'
+      runs-on: '[ "build", "x86_64" ]'
       artifact-out: build-windows-msvc16
       artifact-path: ./build/install
-      cmd: .github\scripts\build.bat "Visual Studio 16 2019" "v142" "Release"
+      cmd: .github\scripts\build.bat "Visual Studio 16 2019" "Release" '"-DBUILD_EMBREE_FROM_SOURCE=OFF"'
 
   test-windows-msvc16:
     needs: build-windows-msvc16
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '[ "Windows", "build" ]'
+      runs-on: '[ "build", "x86_64" ]'
       artifact-in: build-windows-msvc16
       cmd: |
         .github\scripts\run_tests.bat
@@ -59,18 +39,27 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "build" ]'
+      runs-on: '[ "build", "x86_64" ]'
       artifact-out: build-windows-msvc17
       artifact-path: ./build/install
-      cmd: .github\scripts\build.bat "Visual Studio 17 2022" "v143" "Release"
+      cmd: .github\scripts\build.bat "Visual Studio 17 2022" "Release" '"-DBUILD_EMBREE_FROM_SOURCE=OFF"'
+
+  build-windows-msvc17-source:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      runs-on: '[ "build", "x86_64" ]'
+      cmd: .github\scripts\build.bat "Visual Studio 17 2022" "Release"
 
   test-windows-msvc17:
     needs: build-windows-msvc17
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '[ "Windows", "build" ]'
+      runs-on: '[ "build", "x86_64" ]'
       artifact-in: build-windows-msvc17
       cmd: |
         .github\scripts\run_tests.bat
 
+# TODO add msvc18, but VC 2026 v18.9 miscompiles

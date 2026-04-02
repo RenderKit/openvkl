@@ -14,22 +14,22 @@ concurrency:
 permissions: read-all
 
 jobs:
-  build-windows-msvc15-debug:
+  build-windows-msvc17-debug:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "Windows", "build" ]'
-      artifact-out: build-windows-msvc15-debug
+      runs-on: '[ "build", "x86_64" ]'
+      artifact-out: build-windows-msvc17-debug
       artifact-path: ./build/install
-      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "v141" "Debug"
+      cmd: .github\scripts\build.bat "Visual Studio 17 2022" "Debug"
 
-  test-windows-msvc15-debug:
-    needs: build-windows-msvc15-debug
+  test-windows-msvc17-debug:
+    needs: build-windows-msvc17-debug
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
-      runs-on: '[ "Windows", "build" ]'
-      artifact-in: build-windows-msvc15-debug
+      runs-on: '[ "build", "x86_64" ]'
+      artifact-in: build-windows-msvc17-debug
       cmd: |
         .github\scripts\run_tests.bat

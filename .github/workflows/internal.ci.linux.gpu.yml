@@ -17,6 +17,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      timeout-minutes: 30
       image: ubuntu:22.04
       artifact-out: build-gpu
       artifact-path: ./build/install ./build/openvkl/build
@@ -31,6 +32,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      timeout-minutes: 30
       image: ubuntu:22.04
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
@@ -44,6 +46,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      timeout-minutes: 30
       image: ubuntu:22.04
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
@@ -58,6 +61,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      timeout-minutes: 45
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
@@ -72,6 +76,7 @@ jobs:
     needs: [ build-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      timeout-minutes: 45
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
@@ -87,6 +92,7 @@ jobs:
     needs: [ build-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      timeout-minutes: 45
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
@@ -104,6 +110,7 @@ jobs:
     needs: [ build-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      timeout-minutes: 45
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
@@ -119,6 +126,7 @@ jobs:
     needs: [ build-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      timeout-minutes: 45
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
@@ -136,6 +144,7 @@ jobs:
     needs: [ build-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      timeout-minutes: 45
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu

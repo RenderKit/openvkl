@@ -90,11 +90,11 @@ INSTALL_LIB_DIR=$OPENVKL_INSTALL_DIR/lib
 
 cp -P $DEP_INSTALL_DIR/lib/lib*.dylib* $INSTALL_LIB_DIR
 
+# sign
+$SIGN_MACOS $OPENVKL_INSTALL_DIR
+
 # zip up the results
 cd $OPENVKL_INSTALL_DIR/..
 zip -ry $OPENVKL_PKG_BASE.zip $OPENVKL_PKG_BASE
-
-# sign
-$ROOT_DIR/.github/scripts/release/sign.sh $OPENVKL_PKG_BASE.zip
 
 mv *.zip $ROOT_DIR

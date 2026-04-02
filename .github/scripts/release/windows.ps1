@@ -21,7 +21,6 @@ cmake --version
 
 cmake -L `
   -G $args[0] `
-  -T $args[1] `
   -D BUILD_DEPENDENCIES_ONLY=ON `
   -D BUILD_OPENVKL_BENCHMARKS=ON `
   -D CMAKE_INSTALL_PREFIX=$DEP_INSTALL_DIR `
@@ -45,7 +44,6 @@ $env:glfw3_DIR = $DEP_INSTALL_DIR
 # set release settings
 cmake -L `
   -G $args[0] `
-  -T $args[1] `
   -D CMAKE_PREFIX_PATH="$DEP_INSTALL_DIR\lib\cmake" `
   -D CMAKE_INSTALL_PREFIX="$OPENVKL_INSTALL_DIR" `
   -D CMAKE_INSTALL_INCLUDEDIR=include `

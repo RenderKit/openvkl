@@ -5,6 +5,7 @@ Version History
 
 -   Fix artifacts when sampling AMR volume
 -   Fix enum size on Windows with older MSVC
+-   Superbuild updates to use Embree v4.4.1
 
 ### Open VKL 2.0.2
 

@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v2.0.2 of Intel® Open VKL. For changes and new features
+This is release v2.0.3 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -14,7 +14,7 @@ leveraging Open VKL’s performance-optimized kernels, which include
 volume traversal and sampling functionality for a variety of volumetric
 data formats. Open VKL supports x86 CPUs under Linux, macOS, and
 Windows; ARM CPUs on macOS; as well as Intel® GPUs under Linux and
-Windows (currently in beta).
+Windows.
 
 Open VKL contains kernels optimized for the latest x86 processors with
 support for SSE, AVX, AVX2, and AVX-512 instructions, and for ARM
@@ -42,6 +42,12 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 2.0.3
+
+- Fix artifacts when sampling AMR volume
+- Fix enum size on Windows with older MSVC
+- Superbuild updates to use Embree v4.4.1
 
 ### Open VKL 2.0.2
 

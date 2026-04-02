@@ -60,6 +60,7 @@ jobs:
     needs: [ build-windows-gpu ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      timeout-minutes: 45
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "dg2" ]'

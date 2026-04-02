@@ -22,7 +22,7 @@ jobs:
       runs-on: '[ "Windows", "build" ]'
       artifact-out: build-windows-msvc15
       artifact-path: ./build/install
-      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "Release"
+      cmd: .github\scripts\build.bat "Visual Studio 15 2017 Win64" "Release" '"-DBUILD_EMBREE_FROM_SOURCE=OFF"'
 
   test-windows-msvc15:
     needs: build-windows-msvc15
@@ -43,7 +43,7 @@ jobs:
       runs-on: '[ "Windows", "build" ]'
       artifact-out: build-windows-msvc16
       artifact-path: ./build/install
-      cmd: .github\scripts\build.bat "Visual Studio 16 2019" "Release"
+      cmd: .github\scripts\build.bat "Visual Studio 16 2019" "Release" '"-DBUILD_EMBREE_FROM_SOURCE=OFF"'
 
   test-windows-msvc16:
     needs: build-windows-msvc16
@@ -64,6 +64,17 @@ jobs:
       submodules: true
       runs-on: '[ "Windows", "build" ]'
       artifact-out: build-windows-msvc17
+      artifact-path: ./build/install
+      cmd: .github\scripts\build.bat "Visual Studio 17 2022" "Release" '"-DBUILD_EMBREE_FROM_SOURCE=OFF"'
+
+  build-windows-msvc17-source:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      submodules: true
+      runs-on: '[ "Windows", "build" ]'
+      artifact-out: build-windows-msvc17-s
       artifact-path: ./build/install
       cmd: .github\scripts\build.bat "Visual Studio 17 2022" "Release"
 

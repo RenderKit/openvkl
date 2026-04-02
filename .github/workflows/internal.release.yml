@@ -82,7 +82,7 @@ jobs:
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
-        .github/scripts/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
+        .github/scripts/release/windows.ps1 "Visual Studio 17 2022"
 
   windows_sycl:
     secrets: inherit
@@ -167,7 +167,7 @@ jobs:
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
-        .github/scripts/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
+        .github/scripts/release/windows-test.ps1 "Visual Studio 17 2022"
 
   windows_sycl-test:
     needs: windows_sycl

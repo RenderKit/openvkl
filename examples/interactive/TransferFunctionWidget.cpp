@@ -340,7 +340,7 @@ namespace openvkl {
 
       // draw preview texture
       ImGui::SetCursorScreenPos(ImVec2(canvas_x + margin, canvas_y));
-      ImGui::Image(reinterpret_cast<void *>(tfnPaletteTexture),
+      ImGui::Image(static_cast<ImTextureID>(tfnPaletteTexture),
                    ImVec2(width, height));
 
       ImGui::SetCursorScreenPos(ImVec2(canvas_x, canvas_y));
@@ -400,7 +400,6 @@ namespace openvkl {
                                 ImGuiColorEditFlags_NoAlpha |
                                     ImGuiColorEditFlags_NoInputs |
                                     ImGuiColorEditFlags_NoLabel |
-                                    ImGuiColorEditFlags_AlphaPreview |
                                     ImGuiColorEditFlags_NoOptions |
                                     ImGuiColorEditFlags_NoTooltip)) {
             (*tfnColorPoints)[i].y = picked_color.x;
@@ -421,10 +420,7 @@ namespace openvkl {
                 ImGui::GetFontSize() * 4 +
                     ImGui::GetStyle().FramePadding.y * 2);
             ImGui::ColorButton(
-                "##PreviewColor",
-                picked_color,
-                ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_AlphaPreview,
-                sz);
+                "##PreviewColor", picked_color, ImGuiColorEditFlags_NoAlpha, sz);
             ImGui::SameLine();
             ImGui::Text(
                 "Left click to edit\n"

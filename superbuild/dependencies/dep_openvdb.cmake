@@ -27,6 +27,12 @@ ExternalProject_Add(${COMPONENT_NAME}
   BINARY_DIR ${COMPONENT_NAME}/build
   URL ${OPENVDB_URL}
   ${OPENVDB_HASH_ARGS}
+  # `patch` is not available on all systems, so use `git apply` instead. Note
+  # that we initialize a Git repo in the OpenVDB download directory to allow the
+  # Git patching approach to work. Also note that we don't want to actually
+  # check out the OpenVDB Git repo, since we want our OPENVDB_HASH security
+  # checks to still function correctly.
+  PATCH_COMMAND git init -q . && git apply -v --ignore-space-change -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/openvdb.patch
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX=${COMPONENT_PATH}
@@ -41,7 +47,6 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DOPENVDB_BUILD_PYTHON_MODULE:BOOL=OFF
     -DOPENVDB_BUILD_UNITTESTS:BOOL=OFF
     -DOPENVDB_CODE_COVERAGE:BOOL=OFF
-    -DIlmBase_ROOT=${ILMBASE_PATH}
     -DZLIB_ROOT=${ZLIB_PATH}
     -DBoost_ROOT=${BOOST_PATH}
     -DUSE_BLOSC:BOOL=${BUILD_BLOSC}
@@ -60,7 +65,6 @@ ExternalProject_Add(${COMPONENT_NAME}
 ExternalProject_Add_StepDependencies(openvdb
   configure
     boost
-    ilmbase
     $<$<BOOL:${BUILD_BLOSC}>:c-blosc>
     $<$<BOOL:${BUILD_TBB}>:tbb>
 )

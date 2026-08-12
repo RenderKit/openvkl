@@ -54,6 +54,11 @@ if (APPLE)
   set(CMAKE_INSTALL_RPATH "@loader_path/" "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
 else()
   set(CMAKE_INSTALL_RPATH "\$ORIGIN:\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+  if (NOT WIN32)
+    # unlike DT_RUNPATH, DT_RPATH also covers deps of dlopened libs (UR adapters)
+    set(CMAKE_EXE_LINKER_FLAGS
+        "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags")
+  endif()
 endif()
 
 ## openvkl specific configuration ##
@@ -76,6 +81,8 @@ openvkl_configure_global_build_flags()
 openvkl_configure_ispc_isa()
 
 set(RKCOMMON_VERSION_REQUIRED 1.15.2)
+set(OPENVKL_IMGUI_GIT_TAG b48d1afbe8ee8b238e2961dc363a949dd7304e23) # v1.92.9b-docking
+
 find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
 get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)

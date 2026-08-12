@@ -200,7 +200,7 @@ namespace openvkl {
         }
 
         ImGui::SetCursorScreenPos(ImVec2(imgOrigin.x, imgOrigin.y));
-        ImGui::Image((void *)(intptr_t)fbTexId,
+        ImGui::Image(static_cast<ImTextureID>(fbTexId),
                      imgSize,
                      // Mirror the image. This way, we can just render images
                      // naturally and they will the right side up both in the

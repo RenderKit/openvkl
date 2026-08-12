@@ -82,6 +82,7 @@ $SYCL_BIN_DIR = Split-Path -Parent "$SYCL_BIN_FILE"
 cp ${SYCL_BIN_DIR}/sycl?.dll $INSTALL_BIN_DIR
 cp ${SYCL_BIN_DIR}/ur_loader.dll $INSTALL_BIN_DIR
 cp ${SYCL_BIN_DIR}/ur_adapter_level_zero.dll $INSTALL_BIN_DIR
+cp ${SYCL_BIN_DIR}/ur_adapter_level_zero_v?.dll $INSTALL_BIN_DIR
 cp ${SYCL_BIN_DIR}/ur_win_proxy_loader.dll $INSTALL_BIN_DIR
 
 # sign

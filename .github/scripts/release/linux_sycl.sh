@@ -89,6 +89,7 @@ SYCL_LIB_DIR="${SYCL_BIN_DIR}/../lib"
 cp ${SYCL_LIB_DIR}/libsycl.so.? $INSTALL_LIB_DIR
 cp ${SYCL_LIB_DIR}/libur_loader.so.? $INSTALL_LIB_DIR
 cp ${SYCL_LIB_DIR}/libur_adapter_level_zero.so.? $INSTALL_LIB_DIR
+cp ${SYCL_LIB_DIR}/libur_adapter_level_zero_v?.so.? $INSTALL_LIB_DIR
 cp ${SYCL_LIB_DIR}/libumf.so.? $INSTALL_LIB_DIR
 
 # tar up the results

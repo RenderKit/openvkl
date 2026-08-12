@@ -21,9 +21,9 @@ ExternalProject_Add(${COMPONENT_NAME}
   # Git patching approach to work. Also note that we don't want to actually
   # check out the GLFW Git repo, since we want our GLFW_HASH security checks
   # to still function correctly.
-  PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw.patch
+  PATCH_COMMAND git init -q . && git apply -v --ignore-space-change -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw.patch
   CMAKE_ARGS
-    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} # GLFW is a C project
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
     -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
     -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
@@ -33,6 +33,7 @@ ExternalProject_Add(${COMPONENT_NAME}
     -DGLFW_BUILD_DOCS=OFF
     -DGLFW_BUILD_EXAMPLES=OFF
     -DGLFW_BUILD_TESTS=OFF
+    -DGLFW_BUILD_WAYLAND=OFF # avoid wayland-scanner and libwayland dependency
     -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
     -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
   BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}

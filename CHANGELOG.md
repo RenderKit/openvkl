@@ -5,6 +5,7 @@ Version History
 
 -   Fix artifacts when sampling AMR volume
 -   Fix enum size on Windows with older MSVC
+-   Update to latest versions of dependencies
 
 ### Open VKL 2.0.2
 
@@ -52,7 +53,7 @@ GPU Flex Series and Intel® Data Center GPU Max Series through SYCL.
 
 -   Move to and require latest versions of RenderKit dependencies: Embree v4.0.0
     and rkcommon v1.11.0
--   ARM support: expose ISPC neon-i32x8 target via OPENVKL_ISA_NEON2X CMake
+-   ARM support: expose ISPC neon-i32x8 target via `OPENVKL_ISA_NEON2X` CMake
     option
 -   Superbuild updates to latest versions of dependencies
 

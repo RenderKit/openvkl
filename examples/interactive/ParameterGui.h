@@ -5,7 +5,6 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
-#include <imgui_internal.h>  // Push/PopDisabled
 
 #include <memory>
 

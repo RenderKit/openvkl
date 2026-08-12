@@ -47,40 +47,8 @@ terms are listed below.
 
 --------------------------------------------------------------------------------
 
-2.  IlmBase (part of OpenEXR)
-    Copyright (c) 2006-2019 OpenEXR a Series of LF Projects, LLC. All rights
-    reserved.
-
-    BSD 3-Clause "New" or "Revised" License
-
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions are met:
-
-    1. Redistributions of source code must retain the above copyright notice,
-    this list of conditions and the following disclaimer.
-
-    2. Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
-    3. Neither the name of the copyright holder nor the names of its
-    contributors may be used to endorse or promote products derived from this
-    software without specific prior written permission. THIS SOFTWARE IS
-    PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
-    OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-    OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
-    NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY
-    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-    ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
---------------------------------------------------------------------------------
-
-3.  Dear ImGui
-    Copyright (c) 2014-2020 Omar Cornut
+2.  Dear ImGui
+    Copyright (c) 2014-2026 Omar Cornut
 
     half
     Copyright (c) 2012-2021 Christian Rau <rauy@users.sourceforge.net>
@@ -109,7 +77,7 @@ terms are listed below.
 
 --------------------------------------------------------------------------------
 
-4.  Embree
+3.  Embree
     Copyright 2009-2020 Intel Corporation
 
     Google Benchmark
@@ -312,7 +280,7 @@ terms are listed below.
 
 --------------------------------------------------------------------------------
 
-5.  GLFW
+4.  GLFW
     Copyright (c) 2002-2006 Marcus Geelnard
     Copyright (c) 2006-2019 Camilla Löwy
 
@@ -341,7 +309,7 @@ terms are listed below.
 
 --------------------------------------------------------------------------------
 
-6.  OpenVDB
+5.  OpenVDB
     Copyright Contributors to the OpenVDB Project
 
     Mozilla Public License Version 2.0
@@ -671,7 +639,7 @@ terms are listed below.
 
 --------------------------------------------------------------------------------
 
-7. C-Blosc
+6. C-Blosc
    Copyright (C) 2009-2018 Francesc Alted <francesc@blosc.org>
    Copyright (C) 2019-present Blosc Development team <blosc@blosc.org>
 

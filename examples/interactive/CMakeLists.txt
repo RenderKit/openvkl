@@ -21,20 +21,7 @@ if (OPENGL_FOUND)
 
   find_package(glfw3 REQUIRED)
 
-  set(OPENVKL_IMGUI_ROOT "${CMAKE_CURRENT_LIST_DIR}/imgui-1.83"
-    CACHE PATH "Path to imgui.")
-
-  add_library(imgui STATIC
-    ${OPENVKL_IMGUI_ROOT}/imgui.cpp
-    ${OPENVKL_IMGUI_ROOT}/imgui_draw.cpp
-    ${OPENVKL_IMGUI_ROOT}/imgui_tables.cpp
-    ${OPENVKL_IMGUI_ROOT}/imgui_widgets.cpp
-    ${OPENVKL_IMGUI_ROOT}/backends/imgui_impl_glfw.cpp
-    ${OPENVKL_IMGUI_ROOT}/backends/imgui_impl_opengl2.cpp)
-
-  target_include_directories(imgui PUBLIC ${OPENVKL_IMGUI_ROOT})
-  target_link_libraries(imgui PUBLIC glfw vkl_opengl)
-  target_compile_definitions(imgui PUBLIC VKL_HAVE_IMGUI)
+  add_subdirectory(external/imgui)
 endif()
 
 set(ENABLED_TARGETS "CPU")

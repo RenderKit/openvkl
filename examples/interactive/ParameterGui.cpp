@@ -154,9 +154,9 @@ namespace openvkl {
         ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
         if (ImGui::TreeNode("Motion")) {
           changed |= ImGui::Checkbox("Motion Blur", &p.motionBlur);
-          ImGui::PushDisabled(!p.motionBlur);
+          ImGui::BeginDisabled(!p.motionBlur);
           changed |= ImGui::SliderFloat("Shutter", &p.shutter, 0.f, 1.f);
-          ImGui::PopDisabled();
+          ImGui::EndDisabled();
           ImGui::TreePop();
         }
         ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
@@ -440,10 +440,10 @@ namespace openvkl {
               std::max<unsigned>(numAttributes, 1) - 1;
           p.attributeIndex =
               std::min<int>(p.attributeIndex, static_cast<int>(maxAttribute));
-          ImGui::PushDisabled(numAttributes <= 1);
+          ImGui::BeginDisabled(numAttributes <= 1);
           changed |= ImGui::SliderInt(
               "Attribute Index", &p.attributeIndex, 0, maxAttribute);
-          ImGui::PopDisabled();
+          ImGui::EndDisabled();
 
           if (tfWidget.updateUI()) {
             p.transferFunction =
@@ -456,12 +456,12 @@ namespace openvkl {
         ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
         if (ImGui::CollapsingHeader("Framebuffer", 0)) {
           changed |= ImGui::Checkbox("Fixed Size", &p.fixedFramebufferSize);
-          ImGui::PushDisabled(!p.fixedFramebufferSize);
+          ImGui::BeginDisabled(!p.fixedFramebufferSize);
           changed |= ImGui::InputInt2("##Size", &p.framebufferSize.x);
 
           changed |=
               ImGui::Checkbox("Restrict Pixel Range", &p.restrictPixelRange);
-          ImGui::PushDisabled(!p.restrictPixelRange);
+          ImGui::BeginDisabled(!p.restrictPixelRange);
           changed |= ImGui::DragIntRange2("X",
                                           &p.pixelRange.lower.x,
                                           &p.pixelRange.upper.x,
@@ -474,8 +474,8 @@ namespace openvkl {
                                           1.f,
                                           0,
                                           INT_MAX);
-          ImGui::PopDisabled();
-          ImGui::PopDisabled();
+          ImGui::EndDisabled();
+          ImGui::EndDisabled();
         }
         return changed;
       }
@@ -522,10 +522,10 @@ namespace openvkl {
 
         ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
         if (ImGui::CollapsingHeader("Volume", 0)) {
-          ImGui::PushDisabled(!changed);
+          ImGui::BeginDisabled(!changed);
           needsUpdate = ImGui::Button(
               "Rebuild Volume", ImVec2(ImGui::GetContentRegionAvail().x, 0));
-          ImGui::PopDisabled();
+          ImGui::EndDisabled();
 
           ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
           if (ImGui::TreeNode("Type")) {
@@ -557,14 +557,14 @@ namespace openvkl {
                 "Field Source##FieldSource", p.source, supSources);
 
             const bool isFile = (p.source == "file");
-            ImGui::PushDisabled(!isFile);
+            ImGui::BeginDisabled(!isFile);
             changed |= imgui::inputText("Filename", p.filename);
-            ImGui::PopDisabled();
+            ImGui::EndDisabled();
 
             if (isFile) {
-              ImGui::PushDisabled(p.volumeType != "vdb");
+              ImGui::BeginDisabled(p.volumeType != "vdb");
               changed |= imgui::inputText("Field##FieldInFile", p.fieldInFile);
-              ImGui::PopDisabled();
+              ImGui::EndDisabled();
             } else {
               const std::vector<std::string> &supFields =
                   p.supportedFields(p.volumeType);
@@ -580,7 +580,7 @@ namespace openvkl {
 
             const std::vector<VKLDataType> &voxelTypes =
                 p.supportedVoxelTypes(p.volumeType);
-            ImGui::PushDisabled(voxelTypes.empty() || p.source == "file");
+            ImGui::BeginDisabled(voxelTypes.empty() || p.source == "file");
             {
               if (!voxelTypes.empty()) {
                 // Fix voxel type if needed.
@@ -594,11 +594,11 @@ namespace openvkl {
               changed |= imgui::comboBox<VKLDataType>(
                   "Voxel Type", p.voxelType, voxelTypes, voxelTypeToString);
             }
-            ImGui::PopDisabled();
+            ImGui::EndDisabled();
 
             ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
             if (ImGui::TreeNode("Transform")) {
-              ImGui::PushDisabled(p.volumeType == "particle" ||
+              ImGui::BeginDisabled(p.volumeType == "particle" ||
                                   p.source == "file");
               {
                 bool transformChanged = false;
@@ -613,27 +613,27 @@ namespace openvkl {
                 }
                 changed |= transformChanged;
               }
-              ImGui::PopDisabled();
+              ImGui::EndDisabled();
               ImGui::TreePop();
             }
 
-            ImGui::PushDisabled(p.volumeType != "particle");
+            ImGui::BeginDisabled(p.volumeType != "particle");
             {
               changed |= ImGui::InputInt("Particles", &p.numParticles);
             }
-            ImGui::PopDisabled();
+            ImGui::EndDisabled();
 
-            ImGui::PushDisabled(!(p.volumeType == "structuredRegular" ||
+            ImGui::BeginDisabled(!(p.volumeType == "structuredRegular" ||
                                   p.volumeType == "vdb"));
             {
               changed |=
                   ImGui::Checkbox("Multiple Attributes", &p.multiAttribute);
             }
-            ImGui::PopDisabled();
+            ImGui::EndDisabled();
 
             ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
             if (ImGui::TreeNode("Motion")) {
-              ImGui::PushDisabled(!(p.volumeType == "structuredRegular" ||
+              ImGui::BeginDisabled(!(p.volumeType == "structuredRegular" ||
                                     p.volumeType == "vdb"));
               {
                 if (ImGui::RadioButton("Temporally Constant",
@@ -660,7 +660,7 @@ namespace openvkl {
                 ImGui::SetNextItemOpen(p.motionBlurStructured,
                                        ImGuiCond_FirstUseEver);
                 if (ImGui::TreeNode("Structured Timesteps")) {
-                  ImGui::PushDisabled(!p.motionBlurStructured);
+                  ImGui::BeginDisabled(!p.motionBlurStructured);
                   {
                     int timesteps = p.motionBlurStructuredNumTimesteps;
                     if (ImGui::InputInt("##TS", &timesteps)) {
@@ -669,14 +669,14 @@ namespace openvkl {
                       changed = true;
                     }
                   }
-                  ImGui::PopDisabled();
+                  ImGui::EndDisabled();
                   ImGui::TreePop();
                 }
 
                 ImGui::SetNextItemOpen(p.motionBlurUnstructured,
                                        ImGuiCond_FirstUseEver);
                 if (ImGui::TreeNode("Unstructured Timesteps")) {
-                  ImGui::PushDisabled(!p.motionBlurUnstructured);
+                  ImGui::BeginDisabled(!p.motionBlurUnstructured);
                   constexpr size_t minSize = 2;
                   constexpr float minValue = 0;
                   constexpr float maxValue = 1.f;
@@ -685,11 +685,11 @@ namespace openvkl {
                                      minSize,
                                      minValue,
                                      maxValue);
-                  ImGui::PopDisabled();
+                  ImGui::EndDisabled();
                   ImGui::TreePop();
                 }
               }
-              ImGui::PopDisabled();
+              ImGui::EndDisabled();
               ImGui::TreePop();
             }
 
@@ -708,11 +708,11 @@ namespace openvkl {
                 p.background = 0.f;
               }
             }
-            ImGui::PushDisabled(bgIsUndefined);
+            ImGui::BeginDisabled(bgIsUndefined);
             {
               changed |= ImGui::InputFloat("Background Value", &p.background);
             }
-            ImGui::PopDisabled();
+            ImGui::EndDisabled();
             ImGui::TreePop();
           }
         }
@@ -729,14 +729,14 @@ namespace openvkl {
 
         ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
         if (ImGui::CollapsingHeader("Sampler", 0)) {
-          ImGui::PushDisabled(volumeParams.volumeType != "vdb");
+          ImGui::BeginDisabled(volumeParams.volumeType != "vdb");
           changed |=
               ImGui::SliderInt("Maximum Sampling Depth##maxSamplingDepth",
                                &p.maxSamplingDepth,
                                0,
                                VKL_VDB_NUM_LEVELS - 1);
-          ImGui::PopDisabled();
-          ImGui::PushDisabled(supFilters.empty());
+          ImGui::EndDisabled();
+          ImGui::BeginDisabled(supFilters.empty());
           changed |= imgui::comboBox("Sampling Filter##samplingFilter",
                                      p.filter,
                                      supFilters,
@@ -745,7 +745,7 @@ namespace openvkl {
                                      p.gradientFilter,
                                      supFilters,
                                      filterToString);
-          ImGui::PopDisabled();
+          ImGui::EndDisabled();
         }
 
         return changed;

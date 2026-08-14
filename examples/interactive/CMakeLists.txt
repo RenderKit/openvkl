@@ -75,8 +75,7 @@ if (BUILD_BENCHMARKS)
 
     target_link_libraries(vklBenchmark${ET}
     PRIVATE
-      benchmark
-      openvkl_testing_${ET_LOWER}
+      benchmark::benchmark
       vkl_example_renderers_${ET_LOWER}
     )
 

@@ -18,7 +18,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       artifact-out: build-amr
       artifact-path: ./build/install ./build/openvkl/build
@@ -30,7 +29,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       artifact-out: build-particle
       artifact-path: ./build/install ./build/openvkl/build
@@ -42,7 +40,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       artifact-out: build-structuredRegular
       artifact-path: ./build/install ./build/openvkl/build
@@ -54,7 +51,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       artifact-out: build-structuredRegularLegacy
       artifact-path: ./build/install ./build/openvkl/build
@@ -66,7 +62,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       artifact-out: build-structuredSpherical
       artifact-path: ./build/install ./build/openvkl/build
@@ -78,7 +73,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       artifact-out: build-unstructured
       artifact-path: ./build/install ./build/openvkl/build
@@ -90,7 +84,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       artifact-out: build-vdb
       artifact-path: ./build/install ./build/openvkl/build

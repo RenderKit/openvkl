@@ -10,7 +10,7 @@ if (BUILD_BENCHMARKS)
   )
 
   target_link_libraries(vklBenchmarkStructuredVolume
-    benchmark
+    benchmark::benchmark
     openvkl_testing_cpu
   )
 
@@ -25,7 +25,7 @@ if (BUILD_BENCHMARKS)
   )
 
   target_link_libraries(vklBenchmarkStructuredVolumeMulti
-    benchmark
+    benchmark::benchmark
     openvkl_testing_cpu
   )
 
@@ -40,7 +40,7 @@ if (BUILD_BENCHMARKS)
   )
 
   target_link_libraries(vklBenchmarkUnstructuredVolume
-    benchmark
+    benchmark::benchmark
     openvkl_testing_cpu
   )
 
@@ -55,7 +55,7 @@ if (BUILD_BENCHMARKS)
   )
 
   target_link_libraries(vklBenchmarkVdbVolume
-    benchmark
+    benchmark::benchmark
     openvkl_testing_cpu
   )
 
@@ -70,7 +70,7 @@ if (BUILD_BENCHMARKS)
   )
 
   target_link_libraries(vklBenchmarkVdbVolumeMulti
-    benchmark
+    benchmark::benchmark
     openvkl_testing_cpu
   )
 
@@ -85,7 +85,7 @@ if (BUILD_BENCHMARKS)
   )
 
   target_link_libraries(vklBenchmarkParticleVolume
-    benchmark
+    benchmark::benchmark
     openvkl_testing_cpu
   )
 

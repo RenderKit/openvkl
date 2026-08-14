@@ -18,7 +18,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-out: build-macOS
       artifact-path: ./build/install ./build/openvkl/build
@@ -43,7 +42,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-out: build-macOS-TBB2020
       artifact-path: ./build/install ./build/openvkl/build
@@ -68,7 +66,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       runs-on: '[ "macOS", "build", "arm" ]'
       artifact-out: build-macOS-arm-neon
       artifact-path: ./build/install ./build/openvkl/build
@@ -95,7 +92,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       runs-on: '[ "macOS", "build", "arm" ]'
       artifact-out: build-macOS-arm-neon2x
       artifact-path: ./build/install ./build/openvkl/build

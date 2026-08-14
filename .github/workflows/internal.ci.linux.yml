@@ -18,7 +18,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       artifact-out: build-rocky8
       artifact-path: ./build/install ./build/openvkl/build
@@ -44,7 +43,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       env-from-files: .github/deps/dpcpp-linux-icx.env
       artifact-out: build-rocky8-icx
@@ -72,7 +70,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       dpcpp-version: intel/2025.2 # icx 2025.3 does not compile TBB 2020.3
       artifact-out: build-rocky8-icx-tbb2020
@@ -100,7 +97,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:8
       dpcpp-version: intel/2025.2 # icx 2025.3 does not compile TBB 2020.3
       artifact-out: build-rocky8-icx-tbb2020-avx512_8
@@ -128,7 +124,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: rockylinux:9
       artifact-out: build-rocky9
       artifact-path: ./build/install ./build/openvkl/build
@@ -153,7 +148,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: ubuntu:20.04
       artifact-out: build-ubuntu20_04
       artifact-path: ./build/install ./build/openvkl/build
@@ -165,7 +159,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: ubuntu:22.04
       artifact-out: build-ubuntu22_04
       artifact-path: ./build/install ./build/openvkl/build
@@ -177,7 +170,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: ubuntu:24.04
       artifact-out: build-ubuntu24_04
       artifact-path: ./build/install ./build/openvkl/build
@@ -231,7 +223,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: archlinux:latest
       artifact-out: build-arch
       artifact-path: ./build/install ./build/openvkl/build
@@ -256,14 +247,13 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: archlinux:latest
       artifact-out: build-arch-clang
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
         export CC=clang
         export CXX=clang++
-        .github/scripts/build.sh 
+        .github/scripts/build.sh
 
   test-arch-clang:
     needs: build-arch-clang
@@ -283,7 +273,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: archlinux:latest
       artifact-out: build-arch-address-sanitizer
       artifact-path: ./build/install ./build/openvkl/build
@@ -313,7 +302,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: archlinux:latest
       artifact-out: build-arch-debug
       artifact-path: ./build/install ./build/openvkl/build
@@ -338,7 +326,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: archlinux:latest
       artifact-out: build-arch-devel-rkdeps
       artifact-path: ./build/install ./build/openvkl/build
@@ -363,7 +350,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
-      submodules: true
       image: archlinux:latest
       artifact-out: build-linux-arch
       artifact-path: ./build/install ./build/openvkl/build
@@ -399,7 +385,6 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
     with:
       project: OpenVKL
-      submodules: true
       prebuild: >
         mkdir build &&
         cd build &&

@@ -205,6 +205,16 @@ if (BUILD_GLFW)
   include(dep_glfw)
 endif()
 
+
+if (BUILD_OPENVKL_BENCHMARKS)
+  set(BENCHMARK_VERSION "1.9.5")
+  set(BENCHMARK_URL "https://github.com/google/benchmark/archive/refs/tags/v${BENCHMARK_VERSION}.tar.gz"
+    CACHE STRING "URL of the Google benchmark source archive.")
+  set(BENCHMARK_HASH "9631341c82bac4a288bef951f8b26b41f69021794184ece969f8473977eaa340"
+    CACHE STRING "SHA256 hash of the Google benchmark source archive.")
+  include(dep_benchmark)
+endif()
+
 # We always build or download OpenVDB and all its dependencies if OpenVDB is
 # enabled, and to not attempt to find them in the environment.
 set(BUILD_OPENVDB_DEFAULT ON)
@@ -311,5 +321,6 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
     $<$<BOOL:${BUILD_GLFW}>:glfw>
     $<$<BOOL:${BUILD_EMBREE}>:embree>
     $<$<BOOL:${BUILD_OPENVDB}>:openvdb>
+    $<$<BOOL:${BUILD_OPENVKL_BENCHMARKS}>:benchmark>
   )
 endif()

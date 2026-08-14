@@ -48,6 +48,7 @@ cmake --version
 cmake \
   "$@" \
   -D BUILD_DEPENDENCIES_ONLY=ON \
+  -D BUILD_OPENVKL_BENCHMARKS=ON \
   -D CMAKE_INSTALL_PREFIX=$DEP_INSTALL_DIR \
   -D CMAKE_INSTALL_LIBDIR=lib \
   ../superbuild

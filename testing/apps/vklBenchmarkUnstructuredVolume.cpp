@@ -19,14 +19,17 @@ using namespace openvkl;
 using namespace openvkl::testing;
 using namespace rkcommon::utility;
 
-#define BENCHMARK_ALL_PRIMS(...)                   \
-  BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_HEXAHEDRON)  \
-      ->Ranges({{0, 1}, {0, 1}, {0, 1}, {0, 1}});  \
-  BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_TETRAHEDRON) \
-      ->Ranges({{0, 1}, {0, 1}, {0, 1}});          \
-  BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_WEDGE)       \
-      ->Ranges({{0, 1}, {0, 1}, {0, 1}});          \
-  BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_PYRAMID)     \
+// MSVC forwards __VA_ARGS__ as a single argument, re-expand to split it again
+#define BENCHMARK_EXPAND(X) X
+
+#define BENCHMARK_ALL_PRIMS(...)                                      \
+  BENCHMARK_EXPAND(BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_HEXAHEDRON))   \
+      ->Ranges({{0, 1}, {0, 1}, {0, 1}, {0, 1}});                     \
+  BENCHMARK_EXPAND(BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_TETRAHEDRON))  \
+      ->Ranges({{0, 1}, {0, 1}, {0, 1}});                             \
+  BENCHMARK_EXPAND(BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_WEDGE))        \
+      ->Ranges({{0, 1}, {0, 1}, {0, 1}});                             \
+  BENCHMARK_EXPAND(BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_PYRAMID))      \
       ->Ranges({{0, 1}, {0, 1}, {0, 1}});
 
 template <VKLUnstructuredCellType primType>

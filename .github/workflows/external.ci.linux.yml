@@ -29,8 +29,6 @@ jobs:
 
     - name: Checkout Repository
       uses: actions/checkout@v4
-      with:
-        submodules: true
 
     - name: Build OpenVKL
       run: |
@@ -87,8 +85,6 @@ jobs:
 
     - name: Checkout Repository
       uses: actions/checkout@v4
-      with:
-        submodules: true
 
     - name: Build OpenVKL
       run: .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF

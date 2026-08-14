@@ -178,9 +178,10 @@ int main(int argc, char **argv)
 {
   initializeOpenVKL();
 
-  const int windowDimension             = 1024;
-  const int smallVolumeDimension        = 128;
-  const int bigVolumeDimension          = 512;
+  // static: MSVC captures them in BENCHMARK_CAPTURE's lambdas otherwise
+  static constexpr int windowDimension      = 1024;
+  static constexpr int smallVolumeDimension = 128;
+  static constexpr int bigVolumeDimension   = 512;
 
 #ifdef OPENVKL_TESTING_CPU
   // wavelet structured regular

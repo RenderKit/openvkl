@@ -19,11 +19,17 @@
 
 #define BENCHMARK_WARMUP_MIN_SECONDS 1.f
 
+/*
+ * Strips the parentheses which call sites use to protect commas; MSVC has no
+ * statement expressions.
+ */
+#define BENCHMARK_UNPAREN(...) __VA_ARGS__
+
 #define BENCHMARK_WARMUP_AND_RUN(BODY)                                      \
   /* warm-up iterations */                                                  \
   auto begin = std::chrono::steady_clock::now();                            \
   while (true) {                                                            \
-    BODY;                                                                   \
+    BENCHMARK_UNPAREN BODY;                                                 \
     auto end = std::chrono::steady_clock::now();                            \
     float durationSeconds =                                                 \
         (std::chrono::duration_cast<std::chrono::microseconds>(end - begin) \
@@ -36,7 +42,7 @@
                                                                             \
   /* benchmark loop */                                                      \
   for (auto _ : state) {                                                    \
-    BODY;                                                                   \
+    BENCHMARK_UNPAREN BODY;                                                 \
   }
 
 /*

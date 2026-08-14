@@ -23,6 +23,7 @@ cmake -L `
   -G $args[0] `
   -T $args[1] `
   -D BUILD_DEPENDENCIES_ONLY=ON `
+  -D BUILD_OPENVKL_BENCHMARKS=ON `
   -D CMAKE_INSTALL_PREFIX=$DEP_INSTALL_DIR `
   -D CMAKE_INSTALL_LIBDIR=lib `
   ../superbuild
@@ -53,7 +54,7 @@ cmake -L `
   -D CMAKE_INSTALL_BINDIR=bin `
   -D RKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR `
   -D ISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc.exe `
-  -D BUILD_BENCHMARKS=OFF `
+  -D BUILD_BENCHMARKS=ON `
   ..
 
 # build

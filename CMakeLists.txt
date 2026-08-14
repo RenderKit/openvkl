@@ -93,6 +93,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${rkcommon_DIR})
 find_package(embree 4.0.0 REQUIRED)
 openvkl_create_embree_target()
 
+if (BUILD_BENCHMARKS)
+  find_package(benchmark REQUIRED)
+endif()
+
 ## Build library, examples, and tests ##
 
 add_subdirectory(openvkl)

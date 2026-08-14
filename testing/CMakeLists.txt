@@ -44,11 +44,4 @@ if (${OPENVKL_ENABLE_DEVICE_GPU})
   )
 endif()
 
-if (BUILD_BENCHMARKS)
-  set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
-  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-
-  add_subdirectory(external/benchmark)
-endif()
-
 add_subdirectory(apps)

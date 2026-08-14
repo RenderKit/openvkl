@@ -27,9 +27,6 @@ namespace openvkl {
       void initializeImgui();
       void finalizeImgui();
       bool createWindow(bool disableVSync);
-      void initDockspace(unsigned &leftNodeId,
-                         unsigned &centerNodeId,
-                         unsigned &rightNodeId);
       void showContextMenu();
       void disableInvisibleRenderViews();
       void enableVisibleRenderViews();

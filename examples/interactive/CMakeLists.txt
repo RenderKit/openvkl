@@ -32,6 +32,10 @@ endif()
 
 if (TARGET imgui)
 
+  # separate target, WA for https://github.com/intel/llvm/issues/22972
+  add_library(vkl_example_dockspace STATIC Dockspace.cpp)
+  target_link_libraries(vkl_example_dockspace PUBLIC imgui)
+
   foreach (ET IN LISTS ENABLED_TARGETS)  
     add_executable(vklExamples${ET}
       vklExamples.cpp
@@ -47,7 +51,7 @@ if (TARGET imgui)
 
     target_link_libraries(vklExamples${ET}
       PRIVATE
-        imgui
+        vkl_example_dockspace
         vkl_example_renderers_${ET_LOWER}
     )
 

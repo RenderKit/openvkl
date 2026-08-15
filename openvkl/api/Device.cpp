@@ -99,7 +99,7 @@ namespace openvkl {
             LogMessageStream(nullptr, VKL_LOG_DEBUG)
                 << "application requested ISPC device width "
                 << requestedDeviceWidth << "via device name " << deviceName;
-          } catch (const std::invalid_argument &ia) {
+          } catch (const std::invalid_argument &) {
             LogMessageStream(nullptr, VKL_LOG_ERROR)
                 << "could not parse requested ISPC device width for name: "
                 << deviceName;

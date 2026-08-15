@@ -30,31 +30,32 @@ using namespace openvkl::cpu_device;
     AddDeviceAPIs *deviceObj =                                        \
         reinterpret_cast<AddDeviceAPIs *>(managedObject->device.ptr); \
     try {
-#define OPENVKL_CATCH_END_NO_DEVICE(a)                                         \
+// variadic to also accept the empty return value of void functions
+#define OPENVKL_CATCH_END_NO_DEVICE(...)                                       \
   }                                                                            \
   catch (const std::bad_alloc &)                                               \
   {                                                                            \
     openvkl::handleError(deviceObj,                                            \
                          VKL_OUT_OF_MEMORY,                                    \
                          "Open VKL was unable to allocate memory");            \
-    return a;                                                                  \
+    return __VA_ARGS__;                                                        \
   }                                                                            \
   catch (const std::exception &e)                                              \
   {                                                                            \
     openvkl::handleError(deviceObj, VKL_UNKNOWN_ERROR, e.what());              \
-    return a;                                                                  \
+    return __VA_ARGS__;                                                        \
   }                                                                            \
   catch (...)                                                                  \
   {                                                                            \
     openvkl::handleError(                                                      \
         deviceObj, VKL_UNKNOWN_ERROR, "an unrecognized exception was caught"); \
-    return a;                                                                  \
+    return __VA_ARGS__;                                                        \
   }                                                                            \
   }
 
-#define OPENVKL_CATCH_END(a) \
-  assert(deviceObj);         \
-  OPENVKL_CATCH_END_NO_DEVICE(a)
+#define OPENVKL_CATCH_END(...) \
+  assert(deviceObj);           \
+  OPENVKL_CATCH_END_NO_DEVICE(__VA_ARGS__)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Device initialization //////////////////////////////////////////////////////

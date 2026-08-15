@@ -292,7 +292,7 @@ namespace openvkl {
     }
 
     VKL_REGISTER_DEVICE(GPUDevice<VKL_TARGET_WIDTH>,
-                        CONCAT1(internal_gpu_, VKL_TARGET_WIDTH))
+                        CONCAT1(internal_gpu_, VKL_TARGET_WIDTH));
 
   }  // namespace gpu_device
 }  // namespace openvkl

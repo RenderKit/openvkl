@@ -1086,7 +1086,7 @@ namespace openvkl {
     }
 
     VKL_REGISTER_VOLUME(VdbVolume<VKL_TARGET_WIDTH>,
-                        CONCAT1(internal_vdb_, VKL_TARGET_WIDTH))
+                        CONCAT1(internal_vdb_, VKL_TARGET_WIDTH));
 
   }  // namespace cpu_device
 }  // namespace openvkl

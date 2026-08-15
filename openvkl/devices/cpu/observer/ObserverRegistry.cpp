@@ -41,7 +41,7 @@ namespace openvkl {
       CALL_ISPC(ObserverRegistry_remove, ispcEquivalent, ptr);
     }
 
-    template struct ObserverRegistry<VKL_TARGET_WIDTH>;
+    template class ObserverRegistry<VKL_TARGET_WIDTH>;
 
   }  // namespace cpu_device
 }  // namespace openvkl

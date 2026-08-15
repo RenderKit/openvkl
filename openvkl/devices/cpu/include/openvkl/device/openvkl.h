@@ -15,11 +15,23 @@
 
 #include "max_iterator_size.h"
 
+// these functions live in the CPU device module, not in the OpenVKL core
+// library, thus they need their own import/export macro
+#ifdef _WIN32
+#ifdef openvkl_module_cpu_device_EXPORTS
+#define OPENVKL_DEVICE_INTERFACE __declspec(dllexport)
+#else
+#define OPENVKL_DEVICE_INTERFACE __declspec(dllimport)
+#endif
+#else
+#define OPENVKL_DEVICE_INTERFACE
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklInit();
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -28,13 +40,13 @@ void vklInit();
 
 // single attribute sampling
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 float vklComputeSample(const VKLSampler *sampler,
                        const vkl_vec3f *objectCoordinates,
                        unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
                        float time VKL_DEFAULT_VAL(= 0));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeSample4(const int *valid,
                        const VKLSampler *sampler,
                        const vkl_vvec3f4 *objectCoordinates,
@@ -42,7 +54,7 @@ void vklComputeSample4(const int *valid,
                        unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
                        const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeSample8(const int *valid,
                        const VKLSampler *sampler,
                        const vkl_vvec3f8 *objectCoordinates,
@@ -50,7 +62,7 @@ void vklComputeSample8(const int *valid,
                        unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
                        const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeSample16(const int *valid,
                         const VKLSampler *sampler,
                         const vkl_vvec3f16 *objectCoordinates,
@@ -58,7 +70,7 @@ void vklComputeSample16(const int *valid,
                         unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
                         const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeSampleN(const VKLSampler *sampler,
                        unsigned int N,
                        const vkl_vec3f *objectCoordinates,
@@ -68,7 +80,7 @@ void vklComputeSampleN(const VKLSampler *sampler,
 
 // multi-attribute sampling
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeSampleM(const VKLSampler *sampler,
                        const vkl_vec3f *objectCoordinates,
                        float *samples,
@@ -76,7 +88,7 @@ void vklComputeSampleM(const VKLSampler *sampler,
                        const unsigned int *attributeIndices,
                        float time VKL_DEFAULT_VAL(= 0));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeSampleM4(const int *valid,
                         const VKLSampler *sampler,
                         const vkl_vvec3f4 *objectCoordinates,
@@ -85,7 +97,7 @@ void vklComputeSampleM4(const int *valid,
                         const unsigned int *attributeIndices,
                         const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeSampleM8(const int *valid,
                         const VKLSampler *sampler,
                         const vkl_vvec3f8 *objectCoordinates,
@@ -94,7 +106,7 @@ void vklComputeSampleM8(const int *valid,
                         const unsigned int *attributeIndices,
                         const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeSampleM16(const int *valid,
                          const VKLSampler *sampler,
                          const vkl_vvec3f16 *objectCoordinates,
@@ -103,7 +115,7 @@ void vklComputeSampleM16(const int *valid,
                          const unsigned int *attributeIndices,
                          const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeSampleMN(const VKLSampler *sampler,
                         unsigned int N,
                         const vkl_vec3f *objectCoordinates,
@@ -112,13 +124,13 @@ void vklComputeSampleMN(const VKLSampler *sampler,
                         const unsigned int *attributeIndices,
                         const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 vkl_vec3f vklComputeGradient(const VKLSampler *sampler,
                              const vkl_vec3f *objectCoordinates,
                              unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
                              float time VKL_DEFAULT_VAL(= 0));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeGradient4(const int *valid,
                          const VKLSampler *sampler,
                          const vkl_vvec3f4 *objectCoordinates,
@@ -126,7 +138,7 @@ void vklComputeGradient4(const int *valid,
                          unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
                          const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeGradient8(const int *valid,
                          const VKLSampler *sampler,
                          const vkl_vvec3f8 *objectCoordinates,
@@ -134,7 +146,7 @@ void vklComputeGradient8(const int *valid,
                          unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
                          const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeGradient16(const int *valid,
                           const VKLSampler *sampler,
                           const vkl_vvec3f16 *objectCoordinates,
@@ -142,7 +154,7 @@ void vklComputeGradient16(const int *valid,
                           unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
                           const float *times VKL_DEFAULT_VAL(= nullptr));
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklComputeGradientN(const VKLSampler *sampler,
                          unsigned int N,
                          const vkl_vec3f *objectCoordinates,
@@ -204,16 +216,16 @@ typedef struct VKL_ALIGN(64)
  * Return the size, in bytes, required to store an interval iterator for the
  * given volume.
  */
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 size_t vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 size_t vklGetIntervalIteratorSize4(const VKLIntervalIteratorContext *context);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 size_t vklGetIntervalIteratorSize8(const VKLIntervalIteratorContext *context);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 size_t vklGetIntervalIteratorSize16(const VKLIntervalIteratorContext *context);
 
 /*
@@ -235,7 +247,7 @@ size_t vklGetIntervalIteratorSize16(const VKLIntervalIteratorContext *context);
  * The returned object is a pointer, and points to a block of memory inside
  * buffer. It however may be distinct from buffer.
  */
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 VKLIntervalIterator vklInitIntervalIterator(
     const VKLIntervalIteratorContext *context,
     const vkl_vec3f *origin,
@@ -244,7 +256,7 @@ VKLIntervalIterator vklInitIntervalIterator(
     float time,
     void *buffer);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 VKLIntervalIterator4 vklInitIntervalIterator4(
     const int *valid,
     const VKLIntervalIteratorContext *context,
@@ -254,7 +266,7 @@ VKLIntervalIterator4 vklInitIntervalIterator4(
     const float *times,
     void *buffer);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 VKLIntervalIterator8 vklInitIntervalIterator8(
     const int *valid,
     const VKLIntervalIteratorContext *context,
@@ -264,7 +276,7 @@ VKLIntervalIterator8 vklInitIntervalIterator8(
     const float *times,
     void *buffer);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 VKLIntervalIterator16 vklInitIntervalIterator16(
     const int *valid,
     const VKLIntervalIteratorContext *context,
@@ -275,22 +287,22 @@ VKLIntervalIterator16 vklInitIntervalIterator16(
     void *buffer);
 
 // returns true while the iterator is still within the volume
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 int vklIterateInterval(VKLIntervalIterator iterator, VKLInterval *interval);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklIterateInterval4(const int *valid,
                          VKLIntervalIterator4 iterator,
                          VKLInterval4 *interval,
                          int *result);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklIterateInterval8(const int *valid,
                          VKLIntervalIterator8 iterator,
                          VKLInterval8 *interval,
                          int *result);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklIterateInterval16(const int *valid,
                           VKLIntervalIterator16 iterator,
                           VKLInterval16 *interval,
@@ -344,16 +356,16 @@ typedef struct VKL_ALIGN(64)
  * Return the size, in bytes, required to store a hit iterator for the
  * given volume.
  */
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 size_t vklGetHitIteratorSize(const VKLHitIteratorContext *context);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 size_t vklGetHitIteratorSize4(const VKLHitIteratorContext *context);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 size_t vklGetHitIteratorSize8(const VKLHitIteratorContext *context);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 size_t vklGetHitIteratorSize16(const VKLHitIteratorContext *context);
 
 /*
@@ -376,7 +388,7 @@ size_t vklGetHitIteratorSize16(const VKLHitIteratorContext *context);
  * buffer. It however may be distinct from buffer.
  */
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 VKLHitIterator vklInitHitIterator(const VKLHitIteratorContext *context,
                                   const vkl_vec3f *origin,
                                   const vkl_vec3f *direction,
@@ -384,7 +396,7 @@ VKLHitIterator vklInitHitIterator(const VKLHitIteratorContext *context,
                                   float time,
                                   void *buffer);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 VKLHitIterator4 vklInitHitIterator4(const int *valid,
                                     const VKLHitIteratorContext *context,
                                     const vkl_vvec3f4 *origin,
@@ -393,7 +405,7 @@ VKLHitIterator4 vklInitHitIterator4(const int *valid,
                                     const float *times,
                                     void *buffer);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 VKLHitIterator8 vklInitHitIterator8(const int *valid,
                                     const VKLHitIteratorContext *context,
                                     const vkl_vvec3f8 *origin,
@@ -402,7 +414,7 @@ VKLHitIterator8 vklInitHitIterator8(const int *valid,
                                     const float *times,
                                     void *buffer);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 VKLHitIterator16 vklInitHitIterator16(const int *valid,
                                       const VKLHitIteratorContext *context,
                                       const vkl_vvec3f16 *origin,
@@ -412,22 +424,22 @@ VKLHitIterator16 vklInitHitIterator16(const int *valid,
                                       void *buffer);
 
 // returns true while the iterator is still within the volume
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 int vklIterateHit(VKLHitIterator iterator, VKLHit *hit);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklIterateHit4(const int *valid,
                     VKLHitIterator4 iterator,
                     VKLHit4 *hit,
                     int *result);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklIterateHit8(const int *valid,
                     VKLHitIterator8 iterator,
                     VKLHit8 *hit,
                     int *result);
 
-OPENVKL_INTERFACE
+OPENVKL_DEVICE_INTERFACE
 void vklIterateHit16(const int *valid,
                      VKLHitIterator16 iterator,
                      VKLHit16 *hit,

@@ -16,8 +16,12 @@ using namespace rkcommon::math;
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/OnScopeExit.h"
 
+#include <cstdio>  // for snprintf
+
 #ifdef _WIN32
-#include <process.h>  // for getpid
+#include <process.h>  // for _getpid
+#else
+#include <unistd.h>  // for getpid
 #endif
 
 using namespace openvkl;
@@ -25,7 +29,11 @@ using namespace openvkl;
 inline std::string getPidString()
 {
   char s[100];
-  sprintf(s, "(pid %i)", getpid());
+#ifdef _WIN32
+  snprintf(s, sizeof(s), "(pid %i)", _getpid());
+#else
+  snprintf(s, sizeof(s), "(pid %i)", getpid());
+#endif
   return s;
 }
 
@@ -38,18 +46,21 @@ inline std::string getPidString()
   {                                   \
     Device *deviceObj = nullptr;      \
     try {
-#define OPENVKL_CATCH_BEGIN_SAFE(deviceSource)    \
-  {                                               \
-    THROW_IF_NULL(deviceSource);                  \
-    Device *deviceObj = deviceFrom(deviceSource); \
-    try {
-#define OPENVKL_CATCH_BEGIN_SAFE2(deviceSource)                   \
-  {                                                               \
-    THROW_IF_NULL(deviceSource.host);                             \
-    openvkl::ManagedObject *managedObject =                       \
-        static_cast<openvkl::ManagedObject *>(deviceSource.host); \
-    Device *deviceObj = managedObject->device.ptr;                \
-    try {
+// THROW_IF_NULL inside the try: functions with C linkage must not throw
+#define OPENVKL_CATCH_BEGIN_SAFE(deviceSource) \
+  {                                            \
+    Device *deviceObj = nullptr;               \
+    try {                                      \
+      THROW_IF_NULL(deviceSource);             \
+      deviceObj = deviceFrom(deviceSource);
+#define OPENVKL_CATCH_BEGIN_SAFE2(deviceSource)                     \
+  {                                                                 \
+    Device *deviceObj = nullptr;                                    \
+    try {                                                           \
+      THROW_IF_NULL(deviceSource.host);                             \
+      openvkl::ManagedObject *managedObject =                       \
+          static_cast<openvkl::ManagedObject *>(deviceSource.host); \
+      deviceObj = managedObject->device.ptr;
 #define OPENVKL_CATCH_BEGIN_UNSAFE(deviceSource)  \
   {                                               \
     assert(deviceSource != nullptr);              \
@@ -62,31 +73,35 @@ inline std::string getPidString()
         static_cast<openvkl::ManagedObject *>(deviceSource.host); \
     Device *deviceObj = managedObject->device.ptr;                \
     try {
-#define OPENVKL_CATCH_END_NO_DEVICE(a)                                         \
+// variadic to also accept the empty return value of void functions
+#define OPENVKL_CATCH_END_NO_DEVICE(...)                                       \
   }                                                                            \
   catch (const std::bad_alloc &)                                               \
   {                                                                            \
     openvkl::handleError(deviceObj,                                            \
                          VKL_OUT_OF_MEMORY,                                    \
                          "Open VKL was unable to allocate memory");            \
-    return a;                                                                  \
+    return __VA_ARGS__;                                                        \
   }                                                                            \
   catch (const std::exception &e)                                              \
   {                                                                            \
     openvkl::handleError(deviceObj, VKL_UNKNOWN_ERROR, e.what());              \
-    return a;                                                                  \
+    return __VA_ARGS__;                                                        \
   }                                                                            \
   catch (...)                                                                  \
   {                                                                            \
     openvkl::handleError(                                                      \
         deviceObj, VKL_UNKNOWN_ERROR, "an unrecognized exception was caught"); \
-    return a;                                                                  \
+    return __VA_ARGS__;                                                        \
   }                                                                            \
   }
 
-#define OPENVKL_CATCH_END(a) \
-  assert(deviceObj);         \
-  OPENVKL_CATCH_END_NO_DEVICE(a)
+#define OPENVKL_CATCH_END(...) \
+  assert(deviceObj);           \
+  OPENVKL_CATCH_END_NO_DEVICE(__VA_ARGS__)
+
+// definitions return VKLObject-derived types with C linkage, see common.h
+NOWARN_C_LINKAGE_PUSH
 
 ///////////////////////////////////////////////////////////////////////////////
 // Device helpers /////////////////////////////////////////////////////////////
@@ -523,3 +538,5 @@ extern "C" void vklGetValueRangeRef(const VKLVolume *volume,
   *valueRange          = reinterpret_cast<const vkl_range1f &>(result);
 }
 OPENVKL_CATCH_END()
+
+NOWARN_C_LINKAGE_POP

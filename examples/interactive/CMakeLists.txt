@@ -10,7 +10,7 @@ find_package(OpenGL 2)
 
 if (OPENGL_FOUND)
   add_library(vkl_opengl INTERFACE)
-  target_compile_definitions(vkl_opengl INTERFACE GL_SILENCE_DEPRECATION)
+  target_compile_definitions(vkl_opengl INTERFACE GL_SILENCE_DEPRECATION=)
   if (TARGET OpenGL::GL)
     target_link_libraries(vkl_opengl INTERFACE OpenGL::GL)
   else ()

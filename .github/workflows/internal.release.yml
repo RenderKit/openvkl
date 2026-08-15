@@ -93,10 +93,6 @@ jobs:
       artifact-out: windows_sycl
       artifact-path: ./*.zip
       cmd: |
-        # disable warnings which lead to excessively large log files
-        $env:CXXFLAGS = '-w'
-        $env:CFLAGS = '-w'
-
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
         .github/scripts/release/windows_sycl.ps1

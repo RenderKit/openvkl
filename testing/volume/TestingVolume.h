@@ -9,6 +9,9 @@
 #include "rkcommon/math/range.h"
 #include "rkcommon/math/vec.h"
 // half
+// we do not use the `_h` literals, whose declaration in half.hpp uses the
+// `operator "" _h` spelling that is deprecated since C++23
+#define HALF_ENABLE_CPP11_USER_LITERALS 0
 #include "../external/half.hpp"
 
 #include <vector>

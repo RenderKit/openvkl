@@ -52,7 +52,7 @@ namespace openvkl {
                 static_cast<int *>(result));
     }
 
-    template class DefaultIntervalIterator<VKL_TARGET_WIDTH>;
+    template struct DefaultIntervalIterator<VKL_TARGET_WIDTH>;
 
     __vkl_verify_max_interval_iterator_size(
         DefaultIntervalIterator<VKL_TARGET_WIDTH>)

@@ -12,9 +12,9 @@ namespace openvkl {
   namespace examples {
 
     class Renderer;
-    class RendererParams;
+    struct RendererParams;
     class Scheduler;
-    class Scene;
+    struct Scene;
 
     class ParameterGui
     {

@@ -182,9 +182,9 @@ void demoVectorAPI(VKLVolume volume)
   vkl_vvec3f4 coord4;
   int valid[4];
   for (int i = 0; i < 4; i++) {
-    coord4.x[i] = i * 3 + 0;
-    coord4.y[i] = i * 3 + 1;
-    coord4.z[i] = i * 3 + 2;
+    coord4.x[i] = (float)(i * 3 + 0);
+    coord4.y[i] = (float)(i * 3 + 1);
+    coord4.z[i] = (float)(i * 3 + 2);
     valid[i]    = -1;  // valid mask: 0 = not valid, -1 = valid
   }
 
@@ -245,9 +245,9 @@ void demoStreamAPI(VKLVolume volume)
   vkl_vec3f coord[5];
 
   for (int i = 0; i < 5; i++) {
-    coord[i].x = i * 3 + 0;
-    coord[i].y = i * 3 + 1;
-    coord[i].z = i * 3 + 2;
+    coord[i].x = (float)(i * 3 + 0);
+    coord[i].y = (float)(i * 3 + 1);
+    coord[i].z = (float)(i * 3 + 2);
   }
 
   for (int i = 0; i < 5; i++) {

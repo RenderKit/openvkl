@@ -24,3 +24,15 @@ export void EXPORT_UNIQUE(Sampler_setFilters,
                           void *uniform _sampler,
                           uniform VKLFilter filter,
                           uniform VKLFilter gradientFilter);
+
+/*
+ * ISPC-internal variant of the above; ISPC discourages calling exported
+ * functions from ISPC code.
+ */
+inline void Sampler_setFiltersInternal(SamplerShared *uniform sampler,
+                                       uniform VKLFilter filter,
+                                       uniform VKLFilter gradientFilter)
+{
+  sampler->filter         = filter;
+  sampler->gradientFilter = gradientFilter;
+}

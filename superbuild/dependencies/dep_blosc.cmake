@@ -16,6 +16,9 @@ ExternalProject_Add(${COMPONENT_NAME}
   BINARY_DIR ${COMPONENT_NAME}/build
   URL ${BLOSC_URL}
   URL_HASH SHA256=${BLOSC_HASH}
+  # c-blosc's -Wall blows up the log; -w via env to keep CMake's defaults
+  CMAKE_COMMAND ${CMAKE_COMMAND} -E env
+    "CXXFLAGS=$ENV{CXXFLAGS} -w" "CFLAGS=$ENV{CFLAGS} -w" ${CMAKE_COMMAND}
   CMAKE_ARGS
     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} # c-blosc is a C project
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}

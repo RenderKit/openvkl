@@ -52,7 +52,7 @@ extern "C" OPENVKL_DLLEXPORT void vklInit()
 // Sampler ////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
+extern "C" SYCL_EXTERNAL float vklComputeSample(
     const VKLSampler *sampler,
     const vkl_vec3f *objectCoordinates,
     unsigned int attributeIndex,
@@ -132,7 +132,7 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
   }
 }
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
+extern "C" SYCL_EXTERNAL void vklComputeSampleM(
     const VKLSampler *sampler,
     const vkl_vec3f *objectCoordinates,
     float *samples,
@@ -217,7 +217,7 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
   }
 }
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT vkl_vec3f
+extern "C" SYCL_EXTERNAL vkl_vec3f
 vklComputeGradient(const VKLSampler *sampler,
                    const vkl_vec3f *objectCoordinates,
                    unsigned int attributeIndex,
@@ -311,7 +311,7 @@ static_assert(
                                sizeof(VdbIntervalIterator) +
                                    alignof(VdbIntervalIterator)))));
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
+extern "C" SYCL_EXTERNAL size_t
 vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
 {
   assert(context);
@@ -344,7 +344,7 @@ vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
   }
 }
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT VKLIntervalIterator
+extern "C" SYCL_EXTERNAL VKLIntervalIterator
 vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
                         const vkl_vec3f *origin,
                         const vkl_vec3f *direction,
@@ -466,7 +466,7 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
   }
 }
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
+extern "C" SYCL_EXTERNAL int vklIterateInterval(
     VKLIntervalIterator iterator,
     VKLInterval *interval,
     const VKLFeatureFlags featureFlags)
@@ -549,7 +549,7 @@ static_assert(
                                             sizeof(VdbHitIterator) +
                                                 alignof(VdbHitIterator)))))));
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
+extern "C" SYCL_EXTERNAL size_t
 vklGetHitIteratorSize(const VKLHitIteratorContext *context)
 {
   assert(context);
@@ -587,7 +587,7 @@ vklGetHitIteratorSize(const VKLHitIteratorContext *context)
   }
 }
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT VKLHitIterator
+extern "C" SYCL_EXTERNAL VKLHitIterator
 vklInitHitIterator(const VKLHitIteratorContext *context,
                    const vkl_vec3f *origin,
                    const vkl_vec3f *direction,
@@ -734,7 +734,7 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
   }
 }
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
+extern "C" SYCL_EXTERNAL int vklIterateHit(
     VKLHitIterator iterator, VKLHit *hit, const VKLFeatureFlags featureFlags)
 {
   assert(iterator);

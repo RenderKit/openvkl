@@ -73,7 +73,7 @@ namespace openvkl {
     // this is the old / legacy structured regular implementation!
     VKL_REGISTER_VOLUME(StructuredRegularVolume<VKL_TARGET_WIDTH>,
                         CONCAT1(internal_structuredRegularLegacy_,
-                                VKL_TARGET_WIDTH))
+                                VKL_TARGET_WIDTH));
 
   }  // namespace cpu_device
 }  // namespace openvkl

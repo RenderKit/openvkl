@@ -261,21 +261,6 @@ namespace openvkl {
     return data;
   }
 
-  inline void ManagedObject::requireParamDataIsCompact(const char *name)
-  {
-    Data *data = getParam<Data *>(name);
-
-    if (!data) {
-      return;
-    }
-
-    if (!data->compact()) {
-      throw std::runtime_error(toString() +
-                               " only supports naturally strided data for '" +
-                               name + "' array");
-    }
-  }
-
   // Helper functions /////////////////////////////////////////////////////////
 
   inline const ispc::Data1D *ispc(

@@ -12,7 +12,7 @@ namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    class VdbVolume;
+    struct VdbVolume;
 
     template <int W>
     struct VdbInnerNodeObserver : public Observer<W>

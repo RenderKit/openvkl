@@ -33,8 +33,7 @@
     }                                                                         \
     return instance;                                                          \
   }                                                                           \
-  // additional declaration to avoid "extra ;" -Wpedantic warnings             \
-  Object *openvkl_create_##object_name##__##external_name()
+  struct swallow_semicolon
 
 #define VKL_REGISTER_OBJECT(Object, object_name, InternalClass, external_name) \
   extern "C" OPENVKL_DLLEXPORT Object                                          \
@@ -48,8 +47,7 @@
     }                                                                          \
     return instance;                                                           \
   }                                                                            \
-  // additional declaration to avoid "extra ;" -Wpedantic warnings             \
-  Object *openvkl_create_##object_name##__##external_name()
+  struct swallow_semicolon
 
 namespace openvkl {
 

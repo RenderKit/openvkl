@@ -194,7 +194,7 @@ namespace openvkl {
       bool synchronous = false;
 
       if (args.empty()) {
-        std::runtime_error(
+        throw std::runtime_error(
             "invalid argument list provided to Scene::parseCommandLine");
       }
       const std::string programName = args.front();

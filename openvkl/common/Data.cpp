@@ -263,4 +263,19 @@ namespace openvkl {
     return byteStride == sizeOf(dataType);
   }
 
+  void ManagedObject::requireParamDataIsCompact(const char *name)
+  {
+    Data *data = getParam<Data *>(name);
+
+    if (!data) {
+      return;
+    }
+
+    if (!data->compact()) {
+      throw std::runtime_error(toString() +
+                               " only supports naturally strided data for '" +
+                               name + "' array");
+    }
+  }
+
 }  // namespace openvkl

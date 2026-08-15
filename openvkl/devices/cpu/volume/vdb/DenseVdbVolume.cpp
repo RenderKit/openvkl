@@ -199,7 +199,7 @@ namespace openvkl {
     }
 
     VKL_REGISTER_VOLUME(DenseVdbVolume<VKL_TARGET_WIDTH>,
-                        CONCAT1(internal_structuredRegular_, VKL_TARGET_WIDTH))
+                        CONCAT1(internal_structuredRegular_, VKL_TARGET_WIDTH));
 
   }  // namespace cpu_device
 }  // namespace openvkl

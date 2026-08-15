@@ -44,9 +44,11 @@ __define_wide_types(16, 64);
 #define __vkl_concat(A, B) __vkl_concat_impl(A, B)
 #define __vkl_concat_impl(A, B) A##B
 
-// ignore warnings in clang for returning VKLObject-derived types; these are
-// standard layout types (verified by static_assert in types.h) which are legal
-// to return via C linkage.
+// ignore warnings for returning VKLObject-derived types; these are standard
+// layout types (verified by static_assert in types.h) which are legal to return
+// via C linkage.
+#if defined(__clang__)
+
 #ifdef _WIN32
 
 #define NOWARN_C_LINKAGE_PUSH      \
@@ -62,5 +64,20 @@ __define_wide_types(16, 64);
   _Pragma("clang diagnostic ignored \"-Wreturn-type-c-linkage\"");
 
 #define NOWARN_C_LINKAGE_POP _Pragma("clang diagnostic pop");
+
+#endif
+
+#elif defined(_MSC_VER)
+
+#define NOWARN_C_LINKAGE_PUSH \
+  __pragma(warning(push));    \
+  __pragma(warning(disable : 4190));
+
+#define NOWARN_C_LINKAGE_POP __pragma(warning(pop));
+
+#else
+
+#define NOWARN_C_LINKAGE_PUSH
+#define NOWARN_C_LINKAGE_POP
 
 #endif

@@ -64,7 +64,7 @@ namespace openvkl {
     // Sampler ////////////////////////////////////////////////////////////////
 
     template <int W>
-    class Volume;
+    struct Volume;
 
     template <int W>
     struct Sampler : public AddStructShared<ManagedObject, ispc::SamplerShared>

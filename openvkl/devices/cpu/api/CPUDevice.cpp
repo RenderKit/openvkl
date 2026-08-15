@@ -707,7 +707,7 @@ namespace openvkl {
     }
 
     VKL_REGISTER_DEVICE(CPUDevice<VKL_TARGET_WIDTH>,
-                        CONCAT1(internal_cpu_, VKL_TARGET_WIDTH))
+                        CONCAT1(internal_cpu_, VKL_TARGET_WIDTH));
 
   }  // namespace cpu_device
 }  // namespace openvkl

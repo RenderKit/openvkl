@@ -142,7 +142,7 @@ namespace openvkl {
 
     VKL_REGISTER_VOLUME(StructuredSphericalVolume<VKL_TARGET_WIDTH>,
                         CONCAT1(internal_structuredSpherical_,
-                                VKL_TARGET_WIDTH))
+                                VKL_TARGET_WIDTH));
 
   }  // namespace cpu_device
 }  // namespace openvkl

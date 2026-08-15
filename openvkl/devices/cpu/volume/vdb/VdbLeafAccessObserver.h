@@ -12,7 +12,7 @@ namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    class VdbSampler;
+    struct VdbSampler;
     using ispc::VdbGrid;
 
     /*

@@ -45,7 +45,7 @@ namespace openvkl {
                 static_cast<int *>(result));
     }
 
-    template class VdbIntervalIterator<VKL_TARGET_WIDTH>;
+    template struct VdbIntervalIterator<VKL_TARGET_WIDTH>;
 
     __vkl_verify_max_interval_iterator_size(
         VdbIntervalIterator<VKL_TARGET_WIDTH>)

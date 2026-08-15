@@ -26,10 +26,6 @@ jobs:
       artifact-path: ./build
       artifact-on-failure: true
       cmd: |
-        # disable warnings which lead to excessively large log files
-        $env:CXXFLAGS = '-w'
-        $env:CFLAGS = '-w'
-
         mkdir build
         cd build
 

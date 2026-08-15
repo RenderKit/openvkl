@@ -521,7 +521,7 @@ namespace openvkl {
     }
 
     VKL_REGISTER_VOLUME(UnstructuredVolume<VKL_TARGET_WIDTH>,
-                        CONCAT1(internal_unstructured_, VKL_TARGET_WIDTH))
+                        CONCAT1(internal_unstructured_, VKL_TARGET_WIDTH));
 
   }  // namespace cpu_device
 }  // namespace openvkl

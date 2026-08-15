@@ -21,8 +21,7 @@ export void EXPORT_UNIQUE(Sampler_setFilters,
                           uniform VKLFilter gradientFilter)
 {
   SamplerShared *uniform sampler = (SamplerShared *uniform)_sampler;
-  sampler->filter = filter;
-  sampler->gradientFilter = gradientFilter;
+  Sampler_setFiltersInternal(sampler, filter, gradientFilter);
 }
 
 export void EXPORT_UNIQUE(Sampler_destroy,

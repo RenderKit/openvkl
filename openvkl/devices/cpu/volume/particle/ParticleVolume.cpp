@@ -381,7 +381,7 @@ namespace openvkl {
     }
 
     VKL_REGISTER_VOLUME(ParticleVolume<VKL_TARGET_WIDTH>,
-                        CONCAT1(internal_particle_, VKL_TARGET_WIDTH))
+                        CONCAT1(internal_particle_, VKL_TARGET_WIDTH));
 
   }  // namespace cpu_device
 }  // namespace openvkl

@@ -24,7 +24,7 @@
 #include "renderer/Scheduler.h"
 
 #include <algorithm>
-#include <cstring>  // memset
+#include <cstring>  // memset, memcpy
 #include <string>
 #include <vector>
 
@@ -38,7 +38,7 @@ namespace openvkl {
         constexpr size_t bufSize = 1024;
         char buf[bufSize];
         std::memset(buf, 0, bufSize);
-        std::strncpy(buf, text.c_str(), bufSize - 1);
+        std::memcpy(buf, text.c_str(), std::min(text.size(), bufSize - 1));
         const bool changed = ImGui::InputText(label.c_str(), buf, bufSize);
         if (changed) {
           text = buf;

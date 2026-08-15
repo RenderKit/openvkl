@@ -78,7 +78,7 @@ namespace openvkl {
                 static_cast<int *>(result));
     }
 
-    template class GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>;
+    template struct GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>;
 
     __vkl_verify_max_interval_iterator_size(
         GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>);
@@ -144,7 +144,7 @@ namespace openvkl {
                 static_cast<int *>(result));
     }
 
-    template class GridAcceleratorHitIterator<VKL_TARGET_WIDTH>;
+    template struct GridAcceleratorHitIterator<VKL_TARGET_WIDTH>;
 
     __vkl_verify_max_hit_iterator_size(
         GridAcceleratorHitIterator<VKL_TARGET_WIDTH>)

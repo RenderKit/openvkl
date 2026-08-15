@@ -16,8 +16,13 @@ if(NOT CMAKE_INSTALL_PREFIX)
       CACHE STRING "Final install location." FORCE)
 endif()
 
+# must be cached, MSVC's platform module defaults the cache entry to Debug
 if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the build type." FORCE)
+endif()
+# dependencies are not debugged, thus keep them optimized
+if (NOT DEPENDENCIES_BUILD_TYPE)
+  set(DEPENDENCIES_BUILD_TYPE Release)
 endif()
 
 ## ======================================================================== ##
@@ -54,7 +59,7 @@ if (${CMAKE_VERSION} VERSION_GREATER 3.11.4)
   set(PARALLEL_JOBS_OPTS -j ${BUILD_JOBS})
 endif()
 
-set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release ${PARALLEL_JOBS_OPTS})
+set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${DEPENDENCIES_BUILD_TYPE} ${PARALLEL_JOBS_OPTS})
 
 # We must replace separators so that ExternalProject_Add can work with the
 # paths we generate.
@@ -273,6 +278,8 @@ endif()
 ## ======================================================================== ##
 ## Build OpenVKL
 ## ======================================================================== ##
+
+set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} ${PARALLEL_JOBS_OPTS})
 
 set(COMPONENT_NAME openvkl)
 

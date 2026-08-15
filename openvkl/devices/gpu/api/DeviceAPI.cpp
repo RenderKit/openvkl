@@ -43,7 +43,7 @@ inline void assertValidTime(const float time)
 
 extern "C" void openvkl_init_module_gpu_device();
 
-extern "C" OPENVKL_DLLEXPORT void vklInit()
+extern "C" void vklInit()
 {
   openvkl_init_module_gpu_device();
 }

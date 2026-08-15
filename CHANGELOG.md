@@ -8,6 +8,7 @@ Version History
 -   Fix benchmark compilation with MSVC
 -   Ship all release packages with OpenVDB
 -   Set DEPENDENTLOADFLAG also on the Windows binaries built with Clang/SYCL
+-   Fix linking applications against the GPU device module on Windows
 -   Update to latest versions of dependencies
 
 ### Open VKL 2.0.2

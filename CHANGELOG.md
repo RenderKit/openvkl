@@ -6,6 +6,7 @@ Version History
 -   Fix artifacts when sampling AMR volume
 -   Fix enum size on Windows with older MSVC
 -   Fix benchmark compilation with MSVC
+-   Ship all release packages with OpenVDB
 -   Update to latest versions of dependencies
 
 ### Open VKL 2.0.2

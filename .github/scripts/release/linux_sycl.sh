@@ -2,6 +2,9 @@
 ## Copyright 2023 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
+# abort on any error
+set -e
+
 #### Set variables for script ####
 
 ROOT_DIR=$PWD
@@ -46,18 +49,12 @@ cd $ROOT_DIR
 
 #### Build Open VKL ####
 
-mkdir -p $OPENVKL_BUILD_DIR
+mkdir $OPENVKL_BUILD_DIR
 cd $OPENVKL_BUILD_DIR
-
-# Setup environment variables for dependencies
-export rkcommon_DIR=$DEP_INSTALL_DIR
-export embree_DIR=$DEP_INSTALL_DIR
-export glfw3_DIR=$DEP_INSTALL_DIR
-
-export OPENVKL_EXTRA_OPENVDB_OPTIONS="-DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON"
 
 # set release settings
 cmake -L \
+  -D CMAKE_PREFIX_PATH=$DEP_INSTALL_DIR \
   -D CMAKE_INSTALL_PREFIX=$OPENVKL_INSTALL_DIR \
   -D CMAKE_INSTALL_INCLUDEDIR=include \
   -D CMAKE_INSTALL_LIBDIR=lib \
@@ -66,21 +63,21 @@ cmake -L \
   -D RKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR \
   -D ISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc \
   -D BUILD_BENCHMARKS=ON \
-  -D OpenVDB_ROOT=$DEP_INSTALL_DIR $OPENVKL_EXTRA_OPENVDB_OPTIONS \
+  -D OpenVDB_ROOT=$DEP_INSTALL_DIR \
+  -D CMAKE_NO_SYSTEM_FROM_IMPORTED=ON \
   -D OPENVKL_ENABLE_DEVICE_GPU=ON \
   ..
 
-# build
-make -j $THREADS install
+# build and install
+cmake --build . --parallel $THREADS --target install
 
 # copy dependent libs into the install
 INSTALL_LIB_DIR=$OPENVKL_INSTALL_DIR/lib
 
 cp -P $DEP_INSTALL_DIR/lib/lib*.so* $INSTALL_LIB_DIR
-cp -P $DEP_INSTALL_DIR/lib/lib*.a* $INSTALL_LIB_DIR
 
-# OpenVDB static library is large and not needed
-rm $INSTALL_LIB_DIR/libopenvdb*.a
+# the debug variants of TBB are not needed
+rm -f $INSTALL_LIB_DIR/*_debug.so*
 
 # copy SYCL runtime dependencies
 SYCL_BIN_FILE=`command -v clang`

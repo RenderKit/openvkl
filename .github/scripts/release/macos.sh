@@ -2,6 +2,9 @@
 ## Copyright 2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
+# abort on any error
+set -e
+
 #### Helper functions ####
 
 umask=`umask`
@@ -22,7 +25,8 @@ OPENVKL_PKG_BASE=openvkl-${OPENVKL_RELEASE_PACKAGE_VERSION}.x86_64.macos
 OPENVKL_BUILD_DIR=$ROOT_DIR/build_release
 OPENVKL_INSTALL_DIR=$ROOT_DIR/install_release/$OPENVKL_PKG_BASE
 
-MACOSX_DEPLOYMENT_TARGET="10.13"
+# raise the workflow's default, TBB needs aligned new/delete
+export MACOSX_DEPLOYMENT_TARGET="10.13"
 
 THREADS=`sysctl -n hw.logicalcpu`
 
@@ -59,18 +63,12 @@ cd $ROOT_DIR
 
 #### Build Open VKL ####
 
-mkdir -p $OPENVKL_BUILD_DIR
+mkdir $OPENVKL_BUILD_DIR
 cd $OPENVKL_BUILD_DIR
-
-# Setup environment variables for dependencies
-export rkcommon_DIR=$DEP_INSTALL_DIR
-export embree_DIR=$DEP_INSTALL_DIR
-export glfw3_DIR=$DEP_INSTALL_DIR
-
-export OPENVKL_EXTRA_OPENVDB_OPTIONS="-DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON"
 
 # set release settings
 cmake -L \
+  -D CMAKE_PREFIX_PATH=$DEP_INSTALL_DIR \
   -D CMAKE_INSTALL_PREFIX=$OPENVKL_INSTALL_DIR \
   -D CMAKE_INSTALL_INCLUDEDIR=include \
   -D CMAKE_INSTALL_LIBDIR=lib \
@@ -79,16 +77,20 @@ cmake -L \
   -D RKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR \
   -D ISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc \
   -D BUILD_BENCHMARKS=ON \
-  -D OpenVDB_ROOT=$DEP_INSTALL_DIR $OPENVKL_EXTRA_OPENVDB_OPTIONS \
+  -D OpenVDB_ROOT=$DEP_INSTALL_DIR \
+  -D CMAKE_NO_SYSTEM_FROM_IMPORTED=ON \
   ..
 
-# build
-make -j $THREADS install
+# build and install
+cmake --build . --parallel $THREADS --target install
 
 # copy dependent libs into the install
 INSTALL_LIB_DIR=$OPENVKL_INSTALL_DIR/lib
 
 cp -P $DEP_INSTALL_DIR/lib/lib*.dylib* $INSTALL_LIB_DIR
+
+# the debug variants of TBB are not needed
+rm -f $INSTALL_LIB_DIR/*_debug*.dylib
 
 # sign
 $SIGN_MACOS $OPENVKL_INSTALL_DIR

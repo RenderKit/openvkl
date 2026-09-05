@@ -82,6 +82,7 @@ openvkl_configure_ispc_isa()
 
 set(RKCOMMON_VERSION_REQUIRED 1.15.2)
 set(OPENVKL_IMGUI_GIT_TAG b48d1afbe8ee8b238e2961dc363a949dd7304e23) # v1.92.9b-docking
+set(OPENVKL_CATCH2_GIT_TAG v3.16.0)
 
 find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
 get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon

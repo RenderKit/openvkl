@@ -30,7 +30,7 @@ void gradients_at_particle_centers(size_t numParticles,
     const vec3f p3(p.x, p.y, p.z);
 
     INFO("particle i = " << i << ", p = " << p.x << " " << p.y << " " << p.z
-                         << ", radius = " << p.w)
+                         << ", radius = " << p.w);
 
     const vkl_vec3f vklGradient =
         vklComputeGradientWrapper(&vklSampler, (const vkl_vec3f *)&p3, 0, 0);

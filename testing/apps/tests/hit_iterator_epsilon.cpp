@@ -233,7 +233,7 @@ TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
       std::stringstream ss;
       ss << "vector (" << nativeWidth << "-wide";
 
-      SECTION(ss.str())
+      DYNAMIC_SECTION(ss.str())
       {
         if (nativeWidth == 4) {
           vector_hit_epsilons<4>(testingVolumes[i], isovalues);

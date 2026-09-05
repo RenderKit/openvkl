@@ -98,7 +98,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               nullptr,
               buffer.data());
 
-          VKLInterval4 intervalPrevious, intervalCurrent;
+          VKLInterval4 intervalPrevious{}, intervalCurrent;
           int result[4];
 
           int counter = 0;
@@ -164,7 +164,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               nullptr,
               buffer.data());
 
-          VKLInterval8 intervalPrevious, intervalCurrent;
+          VKLInterval8 intervalPrevious{}, intervalCurrent;
           int result[8];
 
           int counter = 0;
@@ -230,7 +230,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               nullptr,
               buffer.data());
 
-          VKLInterval16 intervalPrevious, intervalCurrent;
+          VKLInterval16 intervalPrevious{}, intervalCurrent;
           int result[16];
 
           int counter = 0;

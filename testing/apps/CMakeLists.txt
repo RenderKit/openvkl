@@ -109,7 +109,6 @@ if (BUILD_TESTING)
   )
 
   openvkl_add_executable_ispc(vklTestsCPU
-    vklTests.cpp
     tests/alignment.cpp
     tests/enum.cpp
     tests/background_undefined.cpp
@@ -156,7 +155,7 @@ if (BUILD_TESTING)
 
   target_include_directories(vklTestsCPU PRIVATE ${ISPC_TARGET_DIR})
 
-  target_link_libraries(vklTestsCPU PRIVATE openvkl_testing_cpu)
+  target_link_libraries(vklTestsCPU PRIVATE openvkl_testing_cpu Catch2::Catch2WithMain)
 
   # Needed for SIMD conformance tests
   foreach(TARGET_NAME "openvkl_module_cpu_device_4"
@@ -183,7 +182,6 @@ if (BUILD_TESTING)
     )
 
     openvkl_add_executable_ispc(vklTestsGPU
-      vklTests.cpp
       tests/structured_regular_volume_sampling.cpp
       tests/structured_regular_volume_strides.cpp
       tests/structured_regular_volume_multi.cpp
@@ -210,11 +208,9 @@ if (BUILD_TESTING)
     )
     target_include_directories(vklTestsGPU PRIVATE ${ISPC_TARGET_DIR})
 
-    target_link_libraries(vklTestsGPU PRIVATE openvkl_testing_gpu)
-
-    # We need to disable catching signals to make USM Shared buffers on GPU work properly
-    target_compile_definitions(vklTestsGPU PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS=1)
-    target_compile_definitions(vklTestsGPU PRIVATE CATCH_CONFIG_NO_WINDOWS_SEH=1)
+    # signal / SEH handlers, needed off for USM Shared buffers, are configured
+    # in ../external/catch2
+    target_link_libraries(vklTestsGPU PRIVATE openvkl_testing_gpu Catch2::Catch2WithMain)
 
     install(TARGETS vklTestsGPU
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

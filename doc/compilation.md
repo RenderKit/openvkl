@@ -45,10 +45,10 @@ prerequisites:
         git clone https://github.com/openvkl/openvkl.git
 
 -   To build Open VKL you need [CMake](http://www.cmake.org) version 3.10 or
-    higher, any form of C++11
-    compiler (we recommend using GCC, but also support Clang and MSVC), and
-    standard Linux development tools. To build the examples, you should also
-    have some version of OpenGL.
+    higher (3.16 when compiling the tests), any form of C++11 compiler
+    (C++14 when compiling the tests; we recommend using GCC, but also
+    support Clang and MSVC), and standard Linux development tools. To
+    build the examples, you should also have some version of OpenGL.
 
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
     Compiler (Intel® ISPC)](http://ispc.github.io), version 1.18.0 or later.

@@ -31,11 +31,11 @@ void sampling_at_particle_centers(size_t numParticles,
     const vec3f p3(p.x, p.y, p.z);
 
     INFO("particle i = " << i << ", p = " << p.x << " " << p.y << " " << p.z
-                         << ", radius = " << p.w)
+                         << ", radius = " << p.w);
 
     float referenceValue = v->computeProceduralValue(p3);
 
-    INFO("reference = " << referenceValue)
+    INFO("reference = " << referenceValue);
 
     test_scalar_and_vector_sampling(
         vklSampler, vec3f(p.x, p.y, p.z), referenceValue, 1e-6f);

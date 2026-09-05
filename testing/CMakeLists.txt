@@ -44,4 +44,8 @@ if (${OPENVKL_ENABLE_DEVICE_GPU})
   )
 endif()
 
+if (BUILD_TESTING)
+  add_subdirectory(external/catch2)
+endif()
+
 add_subdirectory(apps)

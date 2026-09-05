@@ -288,7 +288,7 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
   std::stringstream sectionName;
   sectionName << "randomized stream sampling, attribute " << attributeIndex;
 
-  SECTION(sectionName.str())
+  DYNAMIC_SECTION(sectionName.str())
   {
     vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -357,7 +357,7 @@ inline void test_stream_sampling_multi(
   std::stringstream sectionName;
   sectionName << "randomized stream sampling, multi-attribute";
 
-  SECTION(sectionName.str())
+  DYNAMIC_SECTION(sectionName.str())
   {
     vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 

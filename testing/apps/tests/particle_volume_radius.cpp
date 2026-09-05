@@ -14,7 +14,7 @@ static float originParticleRadius = 1e-3f;
 
 // verifies sampling at particle center yields the particle weight
 static void sampling_at_particle_centers(VKLVolume vklVolume,
-                                         const std::vector<vec4f> particles)
+                                         const std::vector<vec4f> &particles)
 {
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
@@ -25,7 +25,7 @@ static void sampling_at_particle_centers(VKLVolume vklVolume,
     const vkl_vec3f p3{p.x, p.y, p.z};
 
     INFO("particle i = " << i << ", p = " << p.x << " " << p.y << " " << p.z
-                         << ", radius = " << p.w)
+                         << ", radius = " << p.w);
 
     const bool zeroRadiusParticle = p.w <= 0.f;
 
@@ -39,7 +39,7 @@ static void sampling_at_particle_centers(VKLVolume vklVolume,
     // if the particle radius is zero, then the sampled results should be zero
     const float referenceValue = zeroRadiusParticle ? 0.f : 1.f;
     const float sampledValue = vklComputeSampleWrapper(&vklSampler, &p3, 0, 0);
-    INFO("sampled = " << sampledValue)
+    INFO("sampled = " << sampledValue);
 
     REQUIRE(referenceValue == sampledValue);
   }

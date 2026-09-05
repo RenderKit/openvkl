@@ -222,7 +222,7 @@ void scalar_interval_value_ranges_with_value_ranges(
     const unsigned int attributeIndex,
     const vkl_vec3f &origin,
     const vkl_vec3f &direction,
-    const std::vector<vkl_range1f> valueRanges)
+    const std::vector<vkl_range1f> &valueRanges)
 {
   vkl_range1f tRange{0.f, inf};
 

@@ -19,7 +19,7 @@ terms are listed below.
     Copyright Rene Rivera 2004-2005.
 
     Catch2
-    Copyright 2010 Two Blue Cubes Ltd
+    Copyright Catch2 Authors
 
     Boost Software License - Version 1.0 - August 17th, 2003
 

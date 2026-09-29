@@ -36,7 +36,12 @@ if (POLICY CMP0135)
   cmake_policy(SET CMP0135 NEW) # 3.24
 endif ()
 
+if (POLICY CMP0114)
+  cmake_policy(SET CMP0114 NEW) # 3.19
+endif ()
+
 include(ExternalProject)
+set_property(DIRECTORY PROPERTY EP_STEP_TARGETS download) # parallel downloads
 include(GNUInstallDirs)
 include(ProcessorCount)
 

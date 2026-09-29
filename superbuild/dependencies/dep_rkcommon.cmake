@@ -42,9 +42,10 @@ ExternalProject_Add(${COMPONENT_NAME}
   BUILD_ALWAYS ${ALWAYS_REBUILD}
 )
 
-if (BUILD_TBB)
-  ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
-endif()
+ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
+configure
+  $<$<BOOL:${BUILD_TBB}>:tbb>
+)
 
 add_to_prefix_path(${COMPONENT_PATH})
 

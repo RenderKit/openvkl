@@ -68,17 +68,17 @@ else()
     INSTALL_COMMAND "${CMAKE_COMMAND}"
       -DSRC=<SOURCE_DIR>
       -DDST=${COMPONENT_PATH}
-      -DMANIFEST=<BINARY_DIR>/install_manifest.txt
+      -DMANIFEST=<BINARY_DIR>/package_manifest.txt
       -P ${CMAKE_CURRENT_LIST_DIR}/package_install.cmake
     BUILD_ALWAYS OFF
   )
 
-  # the package bundles TBB, install after ours to keep it
-  ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
-  install
-    $<$<BOOL:${BUILD_TBB}>:tbb>
-  )
-
+  if (NOT INSTALL_IN_SEPARATE_DIRECTORIES) # bundled deps must not win
+    ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
+    install
+      $<$<BOOL:${BUILD_TBB}>:tbb>
+    )
+  endif()
 endif()
 
 add_to_prefix_path(${COMPONENT_PATH})

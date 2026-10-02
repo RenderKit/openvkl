@@ -28,10 +28,10 @@ namespace openvkl {
     }
 
     template <int W>
-    void ObserverRegistry<W>::add(void *ptr)
+    void ObserverRegistry<W>::add(void *ptr, size_t numElements)
     {
       std::lock_guard<std::recursive_mutex> g(mtx);
-      CALL_ISPC(ObserverRegistry_add, ispcEquivalent, ptr);
+      CALL_ISPC(ObserverRegistry_add, ispcEquivalent, ptr, numElements);
     }
 
     template <int W>

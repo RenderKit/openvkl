@@ -52,7 +52,8 @@ namespace openvkl {
         allocator.deallocate(grid->leafData);
         allocator.deallocate(grid->nodesPackedDense);
         allocator.deallocate(grid->nodesPackedTile);
-        allocator.deallocate(grid);
+        std::memset(grid, 0, sizeof(VdbGrid));
+        grid = nullptr;
       }
 
       // other Data members are cleared in commit() as they are replaced, or on
@@ -596,7 +597,7 @@ namespace openvkl {
       // We use exceptions for error reporting, so make sure to release
       // memory in catch()!
       try {
-        grid = allocator.allocate<VdbGrid>(1);
+        grid = &this->getSh()->grid;
 
         if (dense && !denseData.size()) {
           runtimeError("VdbVolume has dense flag set, but no dense data");
@@ -1036,10 +1037,6 @@ namespace openvkl {
             throw std::runtime_error("encountered unknown temporal format");
           }
         }
-
-        CALL_ISPC(VdbVolume_setGrid,
-                  this->getSh(),
-                  reinterpret_cast<const ispc::VdbGrid *>(grid));
 
         computeValueRanges(
             leafOffsets, *leafLevel, *leafFormat, this->getSh(), grid);

@@ -8,4 +8,5 @@ struct ObserverRegistry
   size_t size;
   size_t capacity;
   void *uniform *uniform data;
+  size_t *uniform numElements;  // per data entry
 };

@@ -144,6 +144,7 @@ if (BUILD_TESTING)
     tests/vdb_volume_motion_blur.cpp
     tests/vdb_volume_inner_node_observer.cpp
     tests/vdb_volume_dense.cpp
+    tests/vdb_volume_recommit.cpp
     tests/particle_volume_sampling.cpp
     tests/particle_volume_gradients.cpp
     tests/particle_volume_value_range.cpp
@@ -194,6 +195,7 @@ if (BUILD_TESTING)
       tests/vdb_volume.cpp
       tests/vdb_volume_multi.cpp
       tests/vdb_volume_motion_blur.cpp
+      tests/vdb_volume_recommit.cpp
       tests/hit_iterator.cpp
       tests/interval_iterator.cpp
       tests/multi_device.cpp

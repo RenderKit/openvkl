@@ -21,7 +21,7 @@ namespace openvkl {
     {
       accessBuffer = allocator.allocate<uint32>(grid.numLeaves);
       size         = grid.numLeaves;
-      getRegistry().add(accessBuffer);
+      getRegistry().add(accessBuffer, size);
     }
 
     template <int W>

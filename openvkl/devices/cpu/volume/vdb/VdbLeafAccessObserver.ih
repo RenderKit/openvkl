@@ -25,7 +25,8 @@ inline uniform bool VdbLeafAccessObserver_isObservable(
     for (uniform size_t i = 0; i < registry->size; ++i) {                      \
       uint32 *uniform accessBuffer = ((uint32 * uniform) registry->data[i]);   \
       /* NOTE: this is not synchronized between threads! */                    \
-      accessBuffer[leafIndex] = 1;                                             \
+      if (leafIndex < registry->numElements[i])                                \
+        accessBuffer[leafIndex] = 1;                                           \
     }                                                                          \
   }
 

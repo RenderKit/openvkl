@@ -9,6 +9,7 @@ Version History
 -   Ship all release packages with OpenVDB
 -   Set DEPENDENTLOADFLAG also on the Windows binaries built with Clang/SYCL
 -   Fix linking applications against the GPU device module on Windows
+-   Fix VDB recommit and observer registry issues
 -   Update to latest versions of dependencies (compiling the tests now
     needs CMake v3.16 and C++14)
 

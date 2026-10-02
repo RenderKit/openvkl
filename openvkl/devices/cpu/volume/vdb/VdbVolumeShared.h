@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../VolumeShared.h"
+#include "VdbGridShared.h"
 
 #ifdef __cplusplus
 namespace ispc {
@@ -16,7 +17,7 @@ namespace ispc {
   struct VdbVolume
   {
     VolumeShared super;
-    const VdbGrid *VKL_INTEROP_UNIFORM grid;
+    VdbGrid grid;  // embedded: samplers rely on a stable address
   };
 
 #ifdef __cplusplus

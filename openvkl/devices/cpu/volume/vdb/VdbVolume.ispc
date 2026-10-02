@@ -31,15 +31,3 @@ export void EXPORT_UNIQUE(VdbVolume_Constructor, void *uniform _self)
  * Destructor for ISPC versions of the volume.
  */
 export void EXPORT_UNIQUE(VdbVolume_destroy, void *uniform _self) {}
-
-/*
- * Initialize the volume data structure.
- */
-export void EXPORT_UNIQUE(VdbVolume_setGrid,
-                          void *uniform _self,
-                          const VdbGrid *uniform grid)
-{
-  assert(_self);
-  VdbVolume *uniform volume = (VdbVolume * uniform) _self;
-  volume->grid              = grid;
-}

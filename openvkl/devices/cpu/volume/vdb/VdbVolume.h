@@ -201,7 +201,7 @@ namespace openvkl {
 
       VKLFeatureFlagsInternal temporalFeatureFlags{VKL_FEATURE_FLAG_NONE};
 
-      VdbGrid *grid{nullptr};
+      VdbGrid *grid{nullptr};  // &getSh()->grid if committed
       Allocator allocator{this->getDevice()};
 
       // Data can either be interpreted as constant cell data, or

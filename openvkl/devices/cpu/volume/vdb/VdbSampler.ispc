@@ -575,7 +575,7 @@ export void EXPORT_UNIQUE(VdbSampler_create,
   // Our internal sampling interface. The sampler object is passed into the
   // inner loop.
   const VdbVolume *uniform vdbVolume = (const VdbVolume *uniform)volume;
-  sampler->grid                      = volume->grid;
+  sampler->grid                      = &volume->grid;
   sampler->leafAccessObservers       = leafAccessObservers;
 }
 

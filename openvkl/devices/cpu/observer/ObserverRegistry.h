@@ -29,7 +29,7 @@ namespace openvkl {
       ObserverRegistry(ObserverRegistry &&other) = delete;
       ObserverRegistry &operator=(ObserverRegistry &&other) = delete;
 
-      void add(void *ptr);
+      void add(void *ptr, size_t numElements);
 
       void remove(void *ptr);
 

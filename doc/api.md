@@ -1845,6 +1845,10 @@ so that the observer may be mapped again.
 
 When an observer is no longer needed, it should be released using `vklRelease`.
 
+Observers are tied to the state of the observed volume at the time the observer
+was created. Before committing a volume again, release all observers of that
+volume and of its samplers; create new observers after the commit as needed.
+
 The observer API is not thread safe, and these functions should not
 be called concurrently on the same object.
 

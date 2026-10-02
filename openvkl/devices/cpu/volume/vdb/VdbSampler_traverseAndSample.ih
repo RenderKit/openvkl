@@ -6,6 +6,7 @@
 #include "VdbGrid.h"
 #include "VdbLeafAccessObserver.ih"
 #include "VdbSamplerShared.h"
+#include "VdbVolumeShared.h"
 #include "VdbSampler_denseHandler.ih"
 #include "VdbSampler_leafHandler.ih"
 #include "VdbSampler_packedHandler.ih"
@@ -323,7 +324,9 @@ inline uniform float VdbSampler_traverseAndSample_dense(
   const uniform vec3ui domainOffset =
       VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
   if (VdbSampler_isInDomain(sampler->grid->activeSize, domainOffset)) {
-    return sampler->denseLeafSample_uniform[attributeIndex](
+    const VdbVolume *uniform volume =
+        (const VdbVolume *uniform)sampler->super.super.volume;
+    return volume->denseLeafSample_uniform[attributeIndex](
         sampler->grid, attributeIndex, domainOffset, time);
   }
   return sampler->super.super.volume->background[attributeIndex];
@@ -342,7 +345,9 @@ inline float VdbSampler_traverseAndSample_dense(
   const vec3ui domainOffset =
       VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
   if (VdbSampler_isInDomain(sampler->grid->activeSize, domainOffset)) {
-    return sampler->denseLeafSample_varying[attributeIndex](
+    const VdbVolume *uniform volume =
+        (const VdbVolume *uniform)sampler->super.super.volume;
+    return volume->denseLeafSample_varying[attributeIndex](
         sampler->grid, attributeIndex, domainOffset, time);
   }
   return sampler->super.super.volume->background[attributeIndex];

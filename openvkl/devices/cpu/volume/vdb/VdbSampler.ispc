@@ -593,52 +593,63 @@ export void EXPORT_UNIQUE(VdbSampler_set,
       VdbSampler_iterator_computeSample_varying;
 
   sampler->maxSamplingDepth = maxSamplingDepth;
+}
 
-  if (sampler->grid && sampler->grid->dense) {
-    // Redefine handler macros to allow us to use them for setting function
-    // pointers, rather than making function calls.
+export void EXPORT_UNIQUE(VdbSampler_destroy, void *uniform _sampler) {}
+
+// Dense sampling dispatch, owned by the volume (depends on grid only).
+export void EXPORT_UNIQUE(VdbSampler_initDenseLeafSampling,
+                          void *uniform _volume)
+{
+  VdbVolume *uniform volume   = (VdbVolume * uniform) _volume;
+  const VdbGrid *uniform grid = &volume->grid;
+  if (!grid->dense)
+    return;
+
+  // Redefine handler macros to allow us to use them for setting function
+  // pointers, rather than making function calls.
 #undef __vkl_vdb_dense_handler_impl
 #define __vkl_vdb_dense_handler_impl(handler, postfix, ...) handler##_##postfix;
 
-    const uniform uint32 numAttributes = sampler->grid->numAttributes;
+  const uniform uint32 numAttributes = grid->numAttributes;
 
-    sampler->denseLeafSample_varying =
-        uniform new DenseLeafSamplingVaryingFunc[numAttributes];
-    sampler->denseLeafSample_uniform =
-        uniform new DenseLeafSamplingUniformFunc[numAttributes];
+  volume->denseLeafSample_varying =
+      uniform new DenseLeafSamplingVaryingFunc[numAttributes];
+  volume->denseLeafSample_uniform =
+      uniform new DenseLeafSamplingUniformFunc[numAttributes];
 
-    for (uniform uint32 i = 0; i < numAttributes; i++) {
-      const uniform vkl_uint32 voxelType = sampler->grid->attributeTypes[i];
-      const uniform VKLTemporalFormat temporalFormat =
-          sampler->grid->denseTemporalFormat;
-      const uniform bool addressing32bit =
-          safe_32bit_indexing(sampler->grid->denseData[i]);
+  for (uniform uint32 i = 0; i < numAttributes; i++) {
+    const uniform vkl_uint32 voxelType = grid->attributeTypes[i];
+    const uniform VKLTemporalFormat temporalFormat = grid->denseTemporalFormat;
+    const uniform bool addressing32bit = safe_32bit_indexing(grid->denseData[i]);
 
-      __vkl_vdb_dense_handler(
-          sampler->denseLeafSample_uniform[i] = VdbSampler_sample_dense_uniform,
-          voxelType,
-          temporalFormat,
-          addressing32bit);
+    __vkl_vdb_dense_handler(
+        volume->denseLeafSample_uniform[i] = VdbSampler_sample_dense_uniform,
+        voxelType,
+        temporalFormat,
+        addressing32bit);
 
-      __vkl_vdb_dense_handler(
-          sampler->denseLeafSample_varying[i] = VdbSampler_sample_dense_varying,
-          voxelType,
-          temporalFormat,
-          addressing32bit);
-    }
-#undef __vkl_vdb_dense_handler_impl
+    __vkl_vdb_dense_handler(
+        volume->denseLeafSample_varying[i] = VdbSampler_sample_dense_varying,
+        voxelType,
+        temporalFormat,
+        addressing32bit);
   }
+#undef __vkl_vdb_dense_handler_impl
 }
 
-export void EXPORT_UNIQUE(VdbSampler_destroy, void *uniform _sampler)
+export void EXPORT_UNIQUE(VdbSampler_cleanupDenseLeafSampling,
+                          void *uniform _volume)
 {
-  VdbSamplerShared *uniform sampler = (VdbSamplerShared * uniform) _sampler;
+  VdbVolume *uniform volume = (VdbVolume * uniform) _volume;
 
-  if (sampler->denseLeafSample_varying) {
-    delete[] sampler->denseLeafSample_varying;
+  if (volume->denseLeafSample_varying) {
+    delete[] volume->denseLeafSample_varying;
+    volume->denseLeafSample_varying = NULL;
   }
 
-  if (sampler->denseLeafSample_uniform) {
-    delete[] sampler->denseLeafSample_uniform;
+  if (volume->denseLeafSample_uniform) {
+    delete[] volume->denseLeafSample_uniform;
+    volume->denseLeafSample_uniform = NULL;
   }
 }

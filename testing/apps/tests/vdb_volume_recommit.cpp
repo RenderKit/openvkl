@@ -58,6 +58,20 @@ static void requireSamplesOfFreshSampler(VKLVolume volume,
   vklRelease(freshSampler);
 }
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR && !defined(OPENVKL_TESTING_GPU)
+static VKLData newVoxelData(const TestingStructuredVolume &v)
+{
+  std::vector<unsigned char> voxels;
+  std::vector<float> time;
+  std::vector<uint32_t> tuvIndex;
+  v.generateVoxels(voxels, time, tuvIndex);
+  return vklNewData(getOpenVKLDevice(),
+                    v.getDimensions().long_product(),
+                    v.getVoxelType(),
+                    voxels.data());
+}
+#endif
+
 #if OPENVKL_DEVICE_CPU_VDB || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("VDB volume recommit with existing sampler", "[volume_sampling]")
 {
@@ -83,6 +97,40 @@ TEST_CASE("VDB volume recommit with existing sampler", "[volume_sampling]")
       vklRelease(sampler);
     }
   }
+
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR && !defined(OPENVKL_TESTING_GPU)
+  // structuredRegular is implemented as dense VDB on CPU
+  SECTION("dense")
+  {
+    for (VKLFilter filter : filters) {
+      WaveletStructuredRegularVolumeFloat v(
+          vec3i(8, 9, 10), vec3f(0.f), vec3f(1.f));
+      VKLVolume volume   = v.getVKLVolume(getOpenVKLDevice());
+      VKLSampler sampler = newSampler(volume, filter);
+
+      // other dimensions, voxel type and number of attributes
+      const vec3i dimensions(12, 10, 9);
+      const VKLData attributes[] = {
+          newVoxelData(WaveletStructuredRegularVolumeUChar(
+              dimensions, vec3f(0.f), vec3f(1.f))),
+          newVoxelData(XYZStructuredRegularVolumeFloat(
+              dimensions, vec3f(0.f), vec3f(1.f)))};
+      VKLData data = vklNewData(getOpenVKLDevice(), 2, VKL_DATA, attributes);
+      vklSetVec3i(
+          volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+      vklSetData(volume, "data", data);
+      vklRelease(data);
+      for (VKLData d : attributes)
+        vklRelease(d);
+      vklCommit(volume);
+
+      requireSamplesOfFreshSampler(volume, sampler, filter, 0);
+      requireSamplesOfFreshSampler(volume, sampler, filter, 1);
+
+      vklRelease(sampler);
+    }
+  }
+#endif
 
   shutdownOpenVKL();
 }

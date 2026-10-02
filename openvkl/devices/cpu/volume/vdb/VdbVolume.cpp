@@ -52,6 +52,7 @@ namespace openvkl {
         allocator.deallocate(grid->leafData);
         allocator.deallocate(grid->nodesPackedDense);
         allocator.deallocate(grid->nodesPackedTile);
+        CALL_ISPC(VdbSampler_cleanupDenseLeafSampling, this->getSh());
         std::memset(grid, 0, sizeof(VdbGrid));
         grid = nullptr;
       }
@@ -1037,6 +1038,8 @@ namespace openvkl {
             throw std::runtime_error("encountered unknown temporal format");
           }
         }
+
+        CALL_ISPC(VdbSampler_initDenseLeafSampling, this->getSh());
 
         computeValueRanges(
             leafOffsets, *leafLevel, *leafFormat, this->getSh(), grid);

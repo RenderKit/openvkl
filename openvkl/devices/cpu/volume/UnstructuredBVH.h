@@ -4,6 +4,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 #include <mutex>
 #include <vector>
 #include "../../common/BufferShared.h"
@@ -150,7 +151,7 @@ namespace openvkl {
 
     struct Node
     {
-      vec3f nominalLength;  // x set to negative for LeafNode;
+      vec3f nominalLength;  // sign bit of x set => leaf (incl. -0)
       range1f valueRange;
       int level;
       Node *parent;
@@ -276,14 +277,14 @@ namespace openvkl {
 
     inline bool isLeafNode(const Node *node)
     {
-      return (node->nominalLength.x < 0);
+      return (std::signbit)(node->nominalLength.x);
     }
 
     inline void addLevelToNodes(Node *root, int level)
     {
       root->level = level;
 
-      if (root->nominalLength.x > 0) {
+      if (!isLeafNode(root)) {
         auto inner = (InnerNode *)root;
 
         addLevelToNodes(inner->children[0], level + 1);
@@ -293,7 +294,7 @@ namespace openvkl {
 
     inline int getMaxNodeLevel(Node *root)
     {
-      if (root->nominalLength.x > 0) {
+      if (!isLeafNode(root)) {
         auto inner = (InnerNode *)root;
         return std::max(getMaxNodeLevel(inner->children[0]),
                         getMaxNodeLevel(inner->children[1]));

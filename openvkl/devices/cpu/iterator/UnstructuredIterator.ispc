@@ -140,7 +140,7 @@ static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
           iterator->super.super.context->super.sampler;
 
   while (1) {
-    uniform bool isInner = (node->nominalLength.x >= 0);
+    uniform bool isInner = !isLeafNode(node);
 
     if (isInner &&
         (elementaryCellIteration ||

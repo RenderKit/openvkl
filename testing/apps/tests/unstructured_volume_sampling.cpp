@@ -194,4 +194,47 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
 
   shutdownOpenVKL();
 }
+
+// zero x-spacing: all cells flat, BVH leaves have nominalLength.x == -0
+static void zero_extent_cells(const vec3i &dimensions)
+{
+  XYZUnstructuredProceduralVolume v(
+      dimensions, vec3f(0.f), vec3f(0.f, 1.f, 1.f), VKL_TETRAHEDRON);
+
+  VKLVolume vklVolume  = v.getVKLVolume(getOpenVKLDevice());
+  const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+  REQUIRE(bbox.lower.x == 0.f);
+  REQUIRE(bbox.upper.x == 0.f);
+
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
+
+  // flat cells are never inside
+  multidim_index_sequence<2> mis(vec2i(dimensions.y, dimensions.z) * 2);
+  for (const auto &yz : mis) {
+    const vec3f oc(0.f, 0.25f + 0.5f * yz.x, 0.25f + 0.5f * yz.y);
+    INFO("objectCoordinates = " << oc.x << " " << oc.y << " " << oc.z);
+    REQUIRE(std::isnan(
+        vklComputeSampleWrapper(&vklSampler, (const vkl_vec3f *)&oc, 0, 0.f)));
+  }
+
+  vklRelease(vklSampler);
+}
+
+TEST_CASE("Unstructured volume zero-extent cells", "[volume_sampling]")
+{
+  initializeOpenVKL();
+
+  SECTION("BVH root is leaf")
+  {
+    zero_extent_cells(vec3i(1));
+  }
+
+  SECTION("BVH with inner nodes")
+  {
+    zero_extent_cells(vec3i(1, 4, 4));
+  }
+
+  shutdownOpenVKL();
+}
 #endif

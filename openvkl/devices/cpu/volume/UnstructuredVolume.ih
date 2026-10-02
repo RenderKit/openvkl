@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../common/Data.ih"
+#include "UnstructuredBVH.ih"
 #include "UnstructuredVolumeShared.h"
 
 inline uniform Node *uniform sibling(uniform Node *uniform node)

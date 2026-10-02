@@ -1,0 +1,22 @@
+// Copyright 2026 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "rkcommon/math/math.ih"
+#include "UnstructuredVolumeBaseShared.h"
+
+#ifndef ISPC
+namespace ispc {
+#endif
+
+  // leaf iff sign bit of nominalLength.x set (incl. -0, missed by < 0)
+  inline VKL_INTEROP_UNIFORM bool isLeafNode(
+      const VKL_INTEROP_UNIFORM Node *VKL_INTEROP_UNIFORM node)
+  {
+    return (intbits(node->nominalLength.x) >> 31) != 0;
+  }
+
+#ifndef ISPC
+}  // namespace ispc
+#endif

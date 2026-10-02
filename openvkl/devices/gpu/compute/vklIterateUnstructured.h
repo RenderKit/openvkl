@@ -8,6 +8,7 @@
 
 #include "../../cpu/iterator/IteratorContextShared.h"
 #include "../../cpu/iterator/IteratorShared.h"
+#include "../../cpu/volume/UnstructuredBVH.ih"
 
 namespace ispc {
 
@@ -401,7 +402,7 @@ namespace ispc {
     const SamplerShared *sampler = (const SamplerShared *)iterator->sampler;
 
     while (1) {
-      bool isInner = (node->nominalLength.x >= 0);
+      bool isInner = !isLeafNode(node);
 
       if (isInner &&
           (elementaryCellIteration ||

@@ -31,7 +31,7 @@ inline bool pointInAABBTest(const uniform box3fa &box, const vec3f &point)
     uniform int stackPtr = 0;                                                  \
                                                                                \
     while (1) {                                                                \
-      uniform bool isLeaf = (node->nominalLength.x < 0);                       \
+      uniform bool isLeaf = isLeafNode(node);                                  \
       if (isLeaf) {                                                            \
         uniform LeafNodeSingle *uniform leaf =                                 \
             (uniform LeafNodeSingle * uniform) node;                           \
@@ -80,7 +80,7 @@ inline bool pointInAABBTest(const uniform box3fa &box, const vec3f &point)
     uniform int stackPtr = 0;                                                  \
                                                                                \
     while (1) {                                                                \
-      uniform bool isLeaf = (node->nominalLength.x < 0);                       \
+      uniform bool isLeaf = isLeafNode(node);                                  \
       if (isLeaf) {                                                            \
         uniform LeafNodeMulti *uniform leaf =                                  \
             (uniform LeafNodeMulti * uniform) node;                            \
@@ -145,7 +145,7 @@ inline void traverseBVH(uniform Node *uniform root,
   uniform uint32 bitstack    = 0;
 
   while (1) {
-    uniform bool isInner = (node->nominalLength.x >= 0);
+    uniform bool isInner = !isLeafNode(node);
 
     if (isInner) {
       uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;

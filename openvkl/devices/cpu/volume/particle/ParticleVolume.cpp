@@ -284,7 +284,7 @@ namespace openvkl {
         throw std::runtime_error("bvh build failure");
       }
 
-      if (rtcRoot->nominalLength.x < 0) {
+      if (isLeafNode(rtcRoot)) {
         auto &val = ((ParticleLeafNode *)rtcRoot)->bounds;
         bounds    = box3f(val.lower, val.upper);
       } else {

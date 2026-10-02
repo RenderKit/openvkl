@@ -46,7 +46,7 @@ namespace openvkl {
 
     static void dumpBVH(Node *root, int indent = 0)
     {
-      if (root->nominalLength.x < 0) {
+      if (isLeafNode(root)) {
         auto leaf = (LeafNodeSingle *)root;
         tabIndent(indent);
         std::cerr << "id: " << leaf->cellID << " bounds: " << leaf->bounds
@@ -381,7 +381,7 @@ namespace openvkl {
         throw std::runtime_error("bvh build failure");
       }
 
-      if (rtcRoot->nominalLength.x < 0) {
+      if (isLeafNode(rtcRoot)) {
         auto &val = ((LeafNode *)rtcRoot)->bounds;
         bounds    = box3f(val.lower, val.upper);
       } else {

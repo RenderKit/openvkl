@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "../../cpu/volume/UnstructuredBVH.ih"
 #include "../../cpu/volume/particle/ParticleVolumeShared.h"
 
 namespace ispc {
@@ -89,7 +90,7 @@ namespace ispc {
     int stackPtr = 0;
 
     while (1) {
-      bool isLeaf = (node->nominalLength.x < 0);
+      bool isLeaf = isLeafNode(node);
       if (isLeaf) {
         LeafNodeMulti *leaf = (LeafNodeMulti *)node;
         if (pointInAABBTest(leaf->super.bounds, samplePos)) {

@@ -26,8 +26,3 @@ export void EXPORT_UNIQUE(VdbVolume_Constructor, void *uniform _self)
   uniform VdbVolume *uniform self = (uniform VdbVolume * uniform) _self;
   memset(self, 0, sizeof(uniform VdbVolume));
 }
-
-/*
- * Destructor for ISPC versions of the volume.
- */
-export void EXPORT_UNIQUE(VdbVolume_destroy, void *uniform _self) {}

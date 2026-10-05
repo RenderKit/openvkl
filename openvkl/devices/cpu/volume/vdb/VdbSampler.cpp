@@ -29,12 +29,6 @@ namespace openvkl {
     }
 
     template <int W>
-    VdbSampler<W>::~VdbSampler()
-    {
-      CALL_ISPC(VdbSampler_destroy, this->getSh());
-    }
-
-    template <int W>
     void VdbSampler<W>::commit()
     {
       const VKLFilter filter = (VKLFilter)this->template getParam<int>(

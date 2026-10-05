@@ -595,8 +595,6 @@ export void EXPORT_UNIQUE(VdbSampler_set,
   sampler->maxSamplingDepth = maxSamplingDepth;
 }
 
-export void EXPORT_UNIQUE(VdbSampler_destroy, void *uniform _sampler) {}
-
 // Dense sampling dispatch, owned by the volume (depends on grid only).
 export void EXPORT_UNIQUE(VdbSampler_initDenseLeafSampling,
                           void *uniform _volume)

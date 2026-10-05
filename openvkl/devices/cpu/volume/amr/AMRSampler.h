@@ -29,7 +29,6 @@ namespace openvkl {
                                                ispc::UnstructuredSamplerShared>
     {
       AMRSampler(Device *, AMRVolume<W> &volume);
-      ~AMRSampler() override;
 
       void commit() override;
 
@@ -71,12 +70,6 @@ namespace openvkl {
               device, volume)
     {
       CALL_ISPC(AMRSampler_create, volume.getSh(), this->getSh());
-    }
-
-    template <int W>
-    inline AMRSampler<W>::~AMRSampler()
-    {
-      CALL_ISPC(AMRSampler_destroy, this->getSh());
     }
 
     template <int W>

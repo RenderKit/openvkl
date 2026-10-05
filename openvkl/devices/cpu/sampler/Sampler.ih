@@ -18,8 +18,6 @@ export void EXPORT_UNIQUE(Sampler_create,
                           const void *uniform _volume,
                           void *uniform _sampler);
 
-export void EXPORT_UNIQUE(Sampler_destroy, void *uniform _sampler);
-
 export void EXPORT_UNIQUE(Sampler_setFilters,
                           void *uniform _sampler,
                           uniform VKLFilter filter,

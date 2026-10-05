@@ -27,7 +27,6 @@ namespace openvkl {
         : public AddStructShared<VdbSamplerBase<W>, ispc::VdbSamplerShared>
     {
       explicit VdbSampler(Device *, VdbVolume<W> &volume);
-      ~VdbSampler() override;
 
       void commit() override;
 

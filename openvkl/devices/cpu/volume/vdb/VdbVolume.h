@@ -237,7 +237,6 @@ namespace openvkl {
     VdbVolume<W>::~VdbVolume()
     {
       cleanup();
-      CALL_ISPC(VdbVolume_destroy, this->getSh());
       this->SharedStructInitialized = false;
     }
 

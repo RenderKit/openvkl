@@ -201,5 +201,3 @@ export void EXPORT_UNIQUE(AMRSampler_create,
 
   sampler->computeGradient_varying = AMRVolume_computeGradient;
 }
-
-export void EXPORT_UNIQUE(AMRSampler_destroy, void *uniform _sampler) {}

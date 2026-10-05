@@ -24,13 +24,6 @@ export void EXPORT_UNIQUE(Sampler_setFilters,
   Sampler_setFiltersInternal(sampler, filter, gradientFilter);
 }
 
-export void EXPORT_UNIQUE(Sampler_destroy,
-                          void *uniform _sampler)
-{
-  SamplerShared *uniform sampler = (SamplerShared *uniform)_sampler;
-  delete sampler;
-}
-
 // these functions do not yet support multi-attribute or time-varying volumes.
 
 export void EXPORT_UNIQUE(Sampler_sample_N_export,

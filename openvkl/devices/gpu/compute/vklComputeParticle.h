@@ -36,7 +36,7 @@ namespace ispc {
                                            uint64 numIds,
                                            uint64 *ids,
                                            vec3f &result,
-                                           vec3f samplePos)
+                                           const vec3f &samplePos)
   {
     const VKLParticleVolume *self = (const VKLParticleVolume *uniform)userData;
 
@@ -59,7 +59,7 @@ namespace ispc {
                                          uint64 numIds,
                                          uint64 *ids,
                                          float &result,
-                                         vec3f samplePos)
+                                         const vec3f &samplePos)
   {
     const VKLParticleVolume *self = (const VKLParticleVolume *)userData;
 

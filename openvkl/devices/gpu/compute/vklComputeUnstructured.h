@@ -6,6 +6,9 @@
 #include "../../cpu/volume/UnstructuredBVH.ih"
 #include "../../cpu/volume/UnstructuredVolumeShared.h"
 
+// WA for IGC-17746 miscompile: force inlining (and pass samplePos by const&)
+#define VKL_WA_IGC17746_INLINE __attribute__((always_inline)) inline
+
 namespace ispc {
 
   ////////////////////////////////////////////////////////////////////////////
@@ -113,11 +116,11 @@ namespace ispc {
   // intersect / sampling functions //////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////
 
-  inline bool intersectAndSampleTet(const void *userData,
-                                    uint64_t id,
-                                    bool assumeInside,
-                                    float &result,
-                                    vec3f samplePos)
+  VKL_WA_IGC17746_INLINE bool intersectAndSampleTet(const void *userData,
+                                                    uint64_t id,
+                                                    bool assumeInside,
+                                                    float &result,
+                                                    const vec3f &samplePos)
   {
     const VKLUnstructuredVolume *self = (const VKLUnstructuredVolume *)userData;
 
@@ -219,11 +222,11 @@ namespace ispc {
   static const float WEDGE_CONVERGED              = 0.0001f;
   static const float WEDGE_OUTSIDE_CELL_TOLERANCE = 0.000001f;
 
-  inline bool intersectAndSampleWedge(const void *userData,
-                                      uint64_t id,
-                                      bool assumeInside,
-                                      float &result,
-                                      vec3f samplePos)
+  VKL_WA_IGC17746_INLINE bool intersectAndSampleWedge(const void *userData,
+                                                      uint64_t id,
+                                                      bool assumeInside,
+                                                      float &result,
+                                                      const vec3f &samplePos)
   {
     const VKLUnstructuredVolume *self = (const VKLUnstructuredVolume *)userData;
 
@@ -359,11 +362,11 @@ namespace ispc {
   static const float PYRAMID_CONVERGED              = 0.0001f;
   static const float PYRAMID_OUTSIDE_CELL_TOLERANCE = 0.000001f;
 
-  inline bool intersectAndSamplePyramid(const void *userData,
-                                        uint64_t id,
-                                        bool assumeInside,
-                                        float &result,
-                                        vec3f samplePos)
+  VKL_WA_IGC17746_INLINE bool intersectAndSamplePyramid(const void *userData,
+                                                        uint64_t id,
+                                                        bool assumeInside,
+                                                        float &result,
+                                                        const vec3f &samplePos)
   {
     const VKLUnstructuredVolume *self = (const VKLUnstructuredVolume *)userData;
 
@@ -454,10 +457,10 @@ namespace ispc {
     return false;
   }
 
-  inline bool intersectAndSampleHexFast(const void *userData,
-                                        uint64_t id,
-                                        float &result,
-                                        vec3f samplePos)
+  VKL_WA_IGC17746_INLINE bool intersectAndSampleHexFast(const void *userData,
+                                                        uint64_t id,
+                                                        float &result,
+                                                        const vec3f &samplePos)
   {
     const VKLUnstructuredVolume *self = (const VKLUnstructuredVolume *)userData;
 
@@ -570,11 +573,12 @@ namespace ispc {
   static const float HEX_CONVERGED              = 0.0001f;
   static const float HEX_OUTSIDE_CELL_TOLERANCE = 0.000001f;
 
-  inline bool intersectAndSampleHexIterative(const void *userData,
-                                             uint64_t id,
-                                             bool assumeInside,
-                                             float &result,
-                                             vec3f samplePos)
+  VKL_WA_IGC17746_INLINE bool intersectAndSampleHexIterative(
+      const void *userData,
+      uint64_t id,
+      bool assumeInside,
+      float &result,
+      const vec3f &samplePos)
   {
     const VKLUnstructuredVolume *self = (const VKLUnstructuredVolume *)userData;
 
@@ -665,11 +669,12 @@ namespace ispc {
     return false;
   }
 
-  inline bool intersectAndSampleCell(const void *userData,
-                                     uint64_t id,
-                                     float &result,
-                                     vec3f samplePos,
-                                     const VKLFeatureFlags featureFlags)
+  VKL_WA_IGC17746_INLINE bool intersectAndSampleCell(
+      const void *userData,
+      uint64_t id,
+      float &result,
+      const vec3f &samplePos,
+      const VKLFeatureFlags featureFlags)
   {
     bool hit = false;
 

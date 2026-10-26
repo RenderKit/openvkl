@@ -74,6 +74,7 @@ jobs:
       timeout-minutes: 60
       force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '[ "build", "x86_64" ]'
+      msvc-version: 2022
       artifact-out: windows
       artifact-path: ./*.zip
       cmd: |
@@ -89,7 +90,6 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '[ "build", "x86_64" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
-      msvc-version: 2022
       artifact-out: windows_sycl
       artifact-path: ./*.zip
       cmd: |
@@ -155,6 +155,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       runs-on: '[ "x86_64" ]'
+      msvc-version: 2022
       artifact-in: windows
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"
@@ -169,7 +170,6 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '[ "bmg" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
-      msvc-version: 2022
       artifact-in: windows_sycl
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.2"

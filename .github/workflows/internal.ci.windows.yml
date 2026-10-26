@@ -13,53 +13,49 @@ concurrency:
 permissions: read-all
 
 jobs:
-  build-windows-msvc16:
+  build-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { vs: 16, msvc: 2019 }
+          - { vs: 17, msvc: 2022 }
+          - { vs: 18, msvc: 2026 }
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '[ "build", "x86_64" ]'
-      artifact-out: build-windows-msvc16
+      msvc-version: ${{ matrix.msvc }}
+      artifact-out: build-windows-msvc${{ matrix.vs }}
       artifact-path: ./build/install
-      cmd: .github\scripts\build.bat "Visual Studio 16 2019" "Release" '"-DBUILD_EMBREE_FROM_SOURCE=OFF"'
+      cmd: .github\scripts\build.bat "Visual Studio ${{ matrix.vs }} ${{ matrix.msvc }}" "Release" '"-DBUILD_EMBREE_FROM_SOURCE=OFF"'
 
-  test-windows-msvc16:
-    needs: build-windows-msvc16
+  build-windows-source:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { vs: 17, msvc: 2022 }
+          - { vs: 18, msvc: 2026 }
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      runs-on: '[ "build", "x86_64" ]'
+      msvc-version: ${{ matrix.msvc }}
+      cmd: .github\scripts\build.bat "Visual Studio ${{ matrix.vs }} ${{ matrix.msvc }}" "Release"
+
+  test-windows:
+    needs: build-windows
+    strategy:
+      fail-fast: false
+      matrix:
+        vs: [16, 17] # TODO 18 when fix of https://developercommunity.visualstudio.com/t/MSVC-x64-O1-miscompiles-size_t-loop-aft/11163646 is released
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       runs-on: '[ "build", "x86_64" ]'
-      artifact-in: build-windows-msvc16
+      artifact-in: build-windows-msvc${{ matrix.vs }}
       cmd: |
         .github\scripts\run_tests.bat
-
-
-  build-windows-msvc17:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "build", "x86_64" ]'
-      artifact-out: build-windows-msvc17
-      artifact-path: ./build/install
-      cmd: .github\scripts\build.bat "Visual Studio 17 2022" "Release" '"-DBUILD_EMBREE_FROM_SOURCE=OFF"'
-
-  build-windows-msvc17-source:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
-    with:
-      force-delete: true    # guarantees .gitattributes are respected in working dir
-      runs-on: '[ "build", "x86_64" ]'
-      cmd: .github\scripts\build.bat "Visual Studio 17 2022" "Release"
-
-  test-windows-msvc17:
-    needs: build-windows-msvc17
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
-    with:
-      runs-on: '[ "build", "x86_64" ]'
-      artifact-in: build-windows-msvc17
-      cmd: |
-        .github\scripts\run_tests.bat
-
-# TODO add msvc18, but VC 2026 v18.9 miscompiles

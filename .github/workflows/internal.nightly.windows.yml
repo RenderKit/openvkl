@@ -20,6 +20,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       runs-on: '[ "build", "x86_64" ]'
+      msvc-version: 2022
       artifact-out: build-windows-msvc17-debug
       artifact-path: ./build/install
       cmd: .github\scripts\build.bat "Visual Studio 17 2022" "Debug"

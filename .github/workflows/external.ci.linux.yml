@@ -28,7 +28,7 @@ jobs:
         dnf group install "Development Tools" -y
 
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Build OpenVKL
       run: |
@@ -36,7 +36,7 @@ jobs:
         scl enable gcc-toolset-11 .github/scripts/build.sh
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: build-rocky-8
         path: build/install
@@ -54,7 +54,7 @@ jobs:
         dnf install libglvnd-glx libglvnd-opengl -y
 
     - name: Download Artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: build-rocky-8
 
@@ -84,13 +84,13 @@ jobs:
         apt-get install build-essential cmake ninja-build libglfw3-dev libgl1-mesa-dev git -y
 
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Build OpenVKL
       run: .github/scripts/build.sh -G Ninja -D BUILD_GLFW=OFF
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: build-ubuntu-2204
         path: build/install
@@ -110,7 +110,7 @@ jobs:
         apt-get install libglfw3 libopengl0 -y
 
     - name: Download Artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: build-ubuntu-2204
 

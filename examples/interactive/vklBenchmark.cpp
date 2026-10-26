@@ -67,8 +67,13 @@ static bool rendererIsCompatibleWithDevice(const std::string &rendererType,
       std::cerr << "skipping benchmark capture: " << #FUNC << ", "             \
                 << #TEST_CASE_NAME << "\n\t" << errorString << std::endl;      \
     } else {                                                                   \
-      BENCHMARK_CAPTURE(                                                       \
-          FUNC, TEST_CASE_NAME, RENDERER_TYPE, WINDOW_SIZE, VOLUME_DIMENSION); \
+      /* not BENCHMARK_CAPTURE: its lambdas in main() get same mangled name */ \
+      /* with dpcpp 7.2, see https://github.com/intel/llvm/issues/23624     */ \
+      benchmark::RegisterBenchmark(#FUNC "/" #TEST_CASE_NAME,                  \
+                                   FUNC,                                       \
+                                   RENDERER_TYPE,                              \
+                                   WINDOW_SIZE,                                \
+                                   VOLUME_DIMENSION);                          \
     }                                                                          \
   }
 

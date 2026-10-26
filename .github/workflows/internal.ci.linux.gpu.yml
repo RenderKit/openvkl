@@ -62,7 +62,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 45
-      image: ubuntu:22.04
+      image: ubuntu:24.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
@@ -77,7 +77,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 45
-      image: ubuntu:22.04
+      image: ubuntu:24.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
@@ -93,7 +93,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 45
-      image: ubuntu:22.04
+      image: ubuntu:24.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
       artifact-out: test-examples-pvc
@@ -111,7 +111,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 45
-      image: ubuntu:22.04
+      image: ubuntu:24.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
@@ -127,7 +127,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 45
-      image: ubuntu:22.04
+      image: ubuntu:24.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
       artifact-out: test-examples-dg2
@@ -145,7 +145,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       timeout-minutes: 45
-      image: ubuntu:22.04
+      image: ubuntu:24.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
       artifact-out: test-examples-big-volume-pvc
